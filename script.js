@@ -1812,7 +1812,7 @@
           <div class="empty-state" style="grid-column: 1/-1; padding: 3rem 1rem; text-align: center; color: var(--text-muted);">
             <div style="font-size:2.5rem; margin-bottom:0.5rem;">🏋️</div>
             <p>Bu kas grubuna ait hareket bulunamadı.</p>
-            <button class="btn btn-primary btn-sm" style="margin-top:0.75rem;" onclick="Workout.openExerciseModal()">+ Hareket Ekle</button>
+            <button class="btn btn-primary btn-sm" style="margin-top:0.75rem;" onclick="ASI.workout.openExerciseModal()">+ Hareket Ekle</button>
           </div>`;
         return;
       }
@@ -2978,7 +2978,7 @@
             <div style="font-size:3.5rem; margin-bottom:0.75rem;">📚</div>
             <p style="font-size:1.25rem; font-weight:700; color:var(--text-primary); margin-bottom:0.35rem;">Kitaplığınız Henüz Boş</p>
             <p style="font-size:0.95rem; color:var(--text-secondary); max-width:440px; margin:0 auto 1.25rem;">Okuduğunuz veya okumak istediğiniz kitapları ekleyerek kişisel kütüphanenizi oluşturmaya hemen başlayabilirsiniz.</p>
-            <button class="btn btn-primary btn-md" onclick="Books.openBookModal()">+ İlk Kitabını Ekle</button>
+            <button class="btn btn-primary btn-md" onclick="ASI.books.openBookModal()">+ İlk Kitabını Ekle</button>
           </div>
         `;
         return;
@@ -2990,7 +2990,7 @@
             <div style="font-size:3rem; margin-bottom:0.75rem;">🔍</div>
             <p style="font-size:1.1rem; font-weight:600; color:var(--text-primary);">Aramanıza uygun kitap bulunamadı</p>
             <p style="font-size:0.9rem;">Filtreleri değiştirebilir veya yeni bir kitap ekleyebilirsiniz.</p>
-            <button class="btn btn-primary btn-sm" style="margin-top:1rem;" onclick="Books.openBookModal()">+ Yeni Kitap Ekle</button>
+            <button class="btn btn-primary btn-sm" style="margin-top:1rem;" onclick="ASI.books.openBookModal()">+ Yeni Kitap Ekle</button>
           </div>
         `;
         return;
@@ -3558,7 +3558,7 @@
             <div style="font-size:3rem; margin-bottom:0.75rem;">⏱️</div>
             <p style="font-size:1.1rem; font-weight:600; color:var(--text-primary);">Henüz kayıtlı okuma oturumu yok</p>
             <p style="font-size:0.9rem;">Kitap okudukça sayfa ve süre oturumlarını kaydedebilirsiniz.</p>
-            <button class="btn btn-primary btn-sm" style="margin-top:1rem;" onclick="Books.openSessionModal()">+ İlk Oturumu Ekle</button>
+            <button class="btn btn-primary btn-sm" style="margin-top:1rem;" onclick="ASI.books.openSessionModal()">+ İlk Oturumu Ekle</button>
           </div>
         `;
         return;
@@ -3645,9 +3645,10 @@
         $('#book-category').value = 'Polisiye / Dedektif';
         $('#book-total-pages').value = 300;
         $('#book-current-page').value = 0;
-        $('#book-status').value = 'reading';
+        const defaultStatus = ['reading', 'to_read', 'on_hold'].includes(this.statusFilter) ? this.statusFilter : 'reading';
+        $('#book-status').value = defaultStatus;
         $('#book-rating').value = 0;
-        $('#book-start-date').value = formatDateShort(new Date());
+        $('#book-start-date').value = defaultStatus === 'reading' ? formatDateShort(new Date()) : '';
         $('#book-finish-date').value = '';
         $('#book-notes').value = '';
       }
@@ -3702,7 +3703,7 @@
         finishDate,
         notes,
         coverImage,
-        coverColor: ['#0284C7', '#8B5CF6', '#10B981', '#F59E0B', '#EC4899'][Math.floor(Math.random() * 5)]
+        coverColor: (id && this._books.find(b => b.id === id)?.coverColor) || ['#0284C7', '#8B5CF6', '#10B981', '#F59E0B', '#EC4899'][Math.floor(Math.random() * 5)]
       };
 
       if (id) {
@@ -3715,6 +3716,21 @@
 
       // Başarılı kayıttan sonra başlığı temizle
       if ($('#book-title')) $('#book-title').value = '';
+
+      // Kaydedilen kitap aktif filtreye uymuyorsa görünmez kalmasın
+      if (this.statusFilter !== 'all' && this.statusFilter !== status) {
+        this.statusFilter = 'all';
+        $$('.book-pill-btn').forEach(b => b.classList.toggle('active', (b.dataset.status || 'all') === 'all'));
+      }
+      if (this.categoryFilter !== 'all' && this.categoryFilter !== category) {
+        this.categoryFilter = 'all';
+        const cf = $('#book-category-filter');
+        if (cf) cf.value = 'all';
+      }
+      this.searchQuery = '';
+      const si = $('#book-search-input');
+      if (si) si.value = '';
+      $('#book-search-clear')?.classList.add('hidden');
 
       closeModal('book-modal');
       await this.render();
@@ -4081,7 +4097,7 @@
         <div class="book-detail-sessions-wrap">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
             <strong>⏱️ Okuma Oturumları (${bookSessions.length})</strong>
-            <button class="btn btn-sm btn-primary" onclick="closeModal('book-detail-modal'); Books.openSessionModal('${book.id}')">+ Yeni Oturum</button>
+            <button class="btn btn-sm btn-primary" onclick="ASI.closeModal('book-detail-modal'); ASI.books.openSessionModal('${book.id}')">+ Yeni Oturum</button>
           </div>
           ${bookSessions.length === 0
             ? '<p class="text-muted" style="font-size:0.85rem;">Bu kitap için henüz oturum kaydedilmemiş.</p>'
@@ -5150,6 +5166,8 @@
     pomodoro: Pomodoro,
     workout: Workout,
     books: Books,
+    openModal,
+    closeModal,
   };
 
   // Motivasyon yenile butonu
