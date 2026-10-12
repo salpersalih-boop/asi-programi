@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="ASİ ✨ — Kişisel Ajanda ve Üretkenlik Uygulaması. Görevler, dersler, hedefler, notlar ve odaklanma sayacı.">
+  <title>ASİ ✨ — Kişisel Ajanda</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <!-- ═══════════════════ AÇILIŞ EKRANI ═══════════════════ -->
+  <div id="splash-screen" class="splash-screen">
+    <canvas id="splash-canvas"></canvas>
+    <div class="splash-content">
+      <h1 class="splash-title">YENİ HAYATINA<br>BAŞLIYORUZ. ✨</h1>
+      <p class="splash-subtitle">Yeni hedefler, yeni alışkanlıklar, yeni bir sen.<br>Her şey bugün başlıyor.</p>
+      <button id="splash-btn" class="splash-btn">Hadi Başlayalım ✨</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════ ANA UYGULAMA ═══════════════════ -->
+  <div id="app" class="app hidden">
+
+    <!-- ─── Üst Çubuk ─── -->
+    <header class="top-bar">
+      <div class="top-bar-left">
+        <button id="menu-toggle" class="menu-toggle" aria-label="Menü">
+          <span></span><span></span><span></span>
+        </button>
+        <h1 class="app-logo">ASİ <span class="sparkle">✨</span></h1>
+      </div>
+      <div class="top-bar-right">
+        <div id="top-datetime" class="top-datetime">
+          <div class="datetime-item datetime-date-wrap">
+            <span class="datetime-icon">📅</span>
+            <span id="top-date" class="top-date"></span>
+          </div>
+          <span class="datetime-sep">|</span>
+          <div class="datetime-item datetime-time-wrap">
+            <span class="datetime-icon">🕒</span>
+            <span id="top-clock" class="top-clock"></span>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- ─── Kenar Menüsü ─── -->
+    <nav id="sidebar" class="sidebar">
+      <div class="sidebar-header">
+        <h2 class="sidebar-logo">ASİ <span class="sparkle">✨</span></h2>
+      </div>
+      <ul class="nav-list">
+        <li><a href="#" class="nav-link active" data-page="dashboard"><span class="nav-icon">🏠</span> Ana Sayfa</a></li>
+        <li><a href="#" class="nav-link" data-page="kanban"><span class="nav-icon">📋</span> Görev Panosu</a></li>
+        <li><a href="#" class="nav-link" data-page="schedule"><span class="nav-icon">🏋️</span> Spor Programı</a></li>
+        <li><a href="#" class="nav-link" data-page="attendance"><span class="nav-icon">🎓</span> Devamsızlık Takibi</a></li>
+        <li><a href="#" class="nav-link" data-page="goals"><span class="nav-icon">🎯</span> Haftalık Hedefler</a></li>
+        <li><a href="#" class="nav-link" data-page="notebook"><span class="nav-icon">📝</span> Not Defterim</a></li>
+        <li><a href="#" class="nav-link" data-page="pomodoro"><span class="nav-icon">⏱️</span> Pomodoro</a></li>
+        <li><a href="#" class="nav-link" data-page="settings"><span class="nav-icon">⚙️</span> Ayarlar</a></li>
+      </ul>
+    </nav>
+    <div id="sidebar-overlay" class="sidebar-overlay"></div>
+
+    <!-- ─── İçerik Alanı ─── -->
+    <main id="main-content" class="main-content">
+
+      <!-- ════════ DASHBOARD ════════ -->
+      <section id="page-dashboard" class="page active">
+        <div class="page-header">
+          <h2>Merhaba! 👋</h2>
+          <p id="dashboard-date" class="date-text"></p>
+        </div>
+
+        <!-- Motivasyon -->
+        <div class="motivation-card glass-card">
+          <p id="motivation-text" class="motivation-text"></p>
+          <button id="new-quote-btn" class="btn btn-sm btn-ghost">Yeni Söz ✨</button>
+        </div>
+
+        <!-- İstatistikler -->
+        <div class="stats-grid">
+          <div class="stat-card glass-card">
+            <div class="stat-icon">✅</div>
+            <div class="stat-info">
+              <span id="stat-done" class="stat-number">0</span>
+              <span class="stat-label">Tamamlanan Görev</span>
+            </div>
+          </div>
+          <div class="stat-card glass-card">
+            <div class="stat-icon">📋</div>
+            <div class="stat-info">
+              <span id="stat-total" class="stat-number">0</span>
+              <span class="stat-label">Toplam Görev</span>
+            </div>
+          </div>
+          <div class="stat-card glass-card">
+            <div class="stat-icon">🎯</div>
+            <div class="stat-info">
+              <span id="stat-weekly" class="stat-number">%0</span>
+              <span class="stat-label">Haftalık İlerleme</span>
+            </div>
+          </div>
+          <div class="stat-card glass-card">
+            <div class="stat-icon">📝</div>
+            <div class="stat-info">
+              <span id="stat-notes" class="stat-number">0</span>
+              <span class="stat-label">Kaydedilmiş Not</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pomodoro Mini & Günlük Görevler -->
+        <div class="dashboard-row">
+          <div class="dash-pomodoro glass-card">
+            <h3>⏱️ Odaklanma Sayacı</h3>
+            <div id="dash-pomo-display" class="dash-pomo-display">25:00</div>
+            <div class="dash-pomo-controls">
+              <button class="btn btn-sm btn-primary" onclick="ASI.pomodoro.quickStart(25)">25dk</button>
+              <button class="btn btn-sm btn-primary" onclick="ASI.pomodoro.quickStart(45)">45dk</button>
+              <button class="btn btn-sm btn-ghost" onclick="ASI.navigateTo('pomodoro')">Tam Ekran →</button>
+            </div>
+          </div>
+          <div class="dash-tasks glass-card">
+            <h3>📌 Bugünkü Görevler</h3>
+            <ul id="dash-today-tasks" class="dash-task-list">
+              <li class="empty-state">Henüz görev eklenmemiş</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Hızlı Erişim -->
+        <div class="quick-access">
+          <h3>Hızlı Erişim</h3>
+          <div class="quick-cards">
+            <button type="button" class="quick-card glass-card" onclick="ASI.navigateTo('kanban')">
+              <span class="quick-icon">📋</span>
+              <span>Görev Panosu</span>
+            </button>
+            <button type="button" class="quick-card glass-card" onclick="ASI.navigateTo('schedule')">
+              <span class="quick-icon">🏋️</span>
+              <span>Spor Programı</span>
+            </button>
+            <button type="button" class="quick-card glass-card" onclick="ASI.navigateTo('attendance')">
+              <span class="quick-icon">🎓</span>
+              <span>Devamsızlık Takibi</span>
+            </button>
+            <button type="button" class="quick-card glass-card" onclick="ASI.navigateTo('goals')">
+              <span class="quick-icon">🎯</span>
+              <span>Haftalık Hedefler</span>
+            </button>
+            <button type="button" class="quick-card glass-card" onclick="ASI.navigateTo('notebook')">
+              <span class="quick-icon">📝</span>
+              <span>Not Defterim</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ════════ KANBAN ════════ -->
+      <section id="page-kanban" class="page">
+        <div class="page-header">
+          <h2>📋 Görev Panosu</h2>
+          <button type="button" id="add-task-btn" class="btn btn-primary">+ Yeni Görev</button>
+        </div>
+        <div class="kanban-board">
+          <div class="kanban-column" data-status="todo">
+            <div class="column-header">
+              <h3>📝 Yapılacaklar</h3>
+              <span id="count-todo" class="task-count">0</span>
+            </div>
+            <div class="kanban-list" id="kanban-todo" data-status="todo"></div>
+          </div>
+          <div class="kanban-column" data-status="doing">
+            <div class="column-header">
+              <h3>🔄 Yapılıyor</h3>
+              <span id="count-doing" class="task-count">0</span>
+            </div>
+            <div class="kanban-list" id="kanban-doing" data-status="doing"></div>
+          </div>
+          <div class="kanban-column" data-status="done">
+            <div class="column-header">
+              <h3>✅ Yapıldı</h3>
+              <span id="count-done" class="task-count">0</span>
+            </div>
+            <div class="kanban-list" id="kanban-done" data-status="done"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ════════ SPOR PROGRAMI ════════ -->
+      <section id="page-schedule" class="page">
+        <div class="page-header workout-header">
+          <div>
+            <h2>🏋️ Spor & Egzersiz Programı</h2>
+            <p class="workout-subtitle">Günlük antrenman hareketlerini takip et, tamamladıklarını tek dokunuşla işaretle.</p>
+          </div>
+          <div class="workout-header-btns">
+            <button type="button" id="add-workout-exercise-btn" class="btn btn-primary btn-sm">+ Yeni Hareket Ekle</button>
+            <button type="button" id="reset-workout-exercises-btn" class="btn btn-ghost btn-sm" title="Varsayılan 21 hareketi sıfırla/geri yükle">↺ Varsayılanları Yükle</button>
+          </div>
+        </div>
+
+        <!-- Gün Seçici / Tarih Gezinti Kartı -->
+        <div class="workout-date-card glass-card">
+          <div class="workout-date-nav">
+            <button type="button" id="workout-prev-day-btn" class="btn btn-sm btn-ghost" title="Önceki Gün">← Önceki Gün</button>
+            <div class="workout-date-info">
+              <input type="date" id="workout-date-input" class="workout-date-input" aria-label="Tarih seçin">
+              <div class="workout-date-text-wrap">
+                <span id="workout-date-label" class="workout-date-label">12 Ekim 2026, Pazartesi</span>
+                <span id="workout-today-badge" class="badge-today">Bugün</span>
+              </div>
+            </div>
+            <button type="button" id="workout-next-day-btn" class="btn btn-sm btn-ghost" title="Sonraki Gün">Sonraki Gün →</button>
+          </div>
+          <button type="button" id="workout-today-btn" class="btn btn-sm btn-secondary workout-today-btn">📅 Bugüne Git</button>
+        </div>
+
+        <!-- Günlük İlerleme & Tamamlanma Kartı -->
+        <div class="workout-progress-card glass-card">
+          <div class="workout-progress-top">
+            <div class="workout-progress-title-box">
+              <div class="workout-icon-badge">💪</div>
+              <div>
+                <h3 class="workout-progress-title">Günün Antrenman İlerlemesi</h3>
+                <span id="workout-progress-status-desc" class="workout-progress-sub">Antrenmana başlamak için hareketleri tamamlandıkça tikleyin.</span>
+              </div>
+            </div>
+            <div class="workout-pct-badge" id="workout-pct-badge">%0</div>
+          </div>
+          <div class="progress-bar workout-progress-track">
+            <div id="workout-progress-bar-fill" class="progress-fill workout-progress-fill" style="width:0%"></div>
+          </div>
+          <div class="workout-stats-row">
+            <div class="workout-stat-item">
+              <span class="workout-stat-num text-success" id="workout-done-count">0</span>
+              <span class="workout-stat-lbl">Tamamlanan</span>
+            </div>
+            <div class="workout-stat-sep">/</div>
+            <div class="workout-stat-item">
+              <span class="workout-stat-num" id="workout-total-count">21</span>
+              <span class="workout-stat-lbl">Toplam Hareket</span>
+            </div>
+            <div class="workout-stat-sep">•</div>
+            <div class="workout-stat-item">
+              <span class="workout-stat-num text-warning" id="workout-remaining-count">21</span>
+              <span class="workout-stat-lbl">Kalan Hareket</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Kas Grubu Filtreleme Butonları -->
+        <div class="workout-filter-bar">
+          <div class="workout-filter-scroll">
+            <button type="button" class="workout-cat-btn active" data-cat="all">⚡ Tümü (<span id="cat-count-all">21</span>)</button>
+            <button type="button" class="workout-cat-btn" data-cat="gogus">🫁 Göğüs (<span id="cat-count-gogus">4</span>)</button>
+            <button type="button" class="workout-cat-btn" data-cat="sirt">🦇 Sırt (<span id="cat-count-sirt">3</span>)</button>
+            <button type="button" class="workout-cat-btn" data-cat="omuz">🛡️ Omuz (<span id="cat-count-omuz">3</span>)</button>
+            <button type="button" class="workout-cat-btn" data-cat="bacak">🦵 Bacak (<span id="cat-count-bacak">5</span>)</button>
+            <button type="button" class="workout-cat-btn" data-cat="kol">💪 Kol (<span id="cat-count-kol">3</span>)</button>
+            <button type="button" class="workout-cat-btn" data-cat="karin">🍫 Karın (<span id="cat-count-karin">3</span>)</button>
+          </div>
+        </div>
+
+        <!-- Egzersiz Listesi Grid -->
+        <div id="workout-exercise-list" class="workout-exercise-grid">
+          <!-- JS ile doldurulacak -->
+        </div>
+      </section>
+
+      <!-- ════════ DEVAMSIZLIK TAKİBİ ════════ -->
+      <section id="page-attendance" class="page">
+        <div class="page-header">
+          <div>
+            <h2>🎓 Üniversite Devamsızlık Takibi</h2>
+            <p>Derslerine katılım durumunu işaretle, 14 haftalık devamsızlık ve kalan haklarını canlı takip et.</p>
+          </div>
+          <div class="att-header-btns">
+            <button id="add-att-course-btn" class="btn btn-primary btn-sm">+ Yeni Ders Ekle</button>
+            <button id="reset-attendance-btn" class="btn btn-ghost btn-sm">↺ Varsayılan Dersleri Yükle</button>
+          </div>
+        </div>
+
+        <!-- Hafta Gezinti Kartı -->
+        <div class="att-nav-card glass-card">
+          <div class="att-nav-row">
+            <button id="att-prev-week" class="btn btn-sm btn-ghost">← Önceki</button>
+            <div class="att-week-title-box">
+              <span id="att-week-badge" class="att-week-badge">5. HAFTA</span>
+              <span class="att-week-sub">Toplam 14 Hafta • Geçmişi İstediğin Zaman İncele</span>
+            </div>
+            <button id="att-next-week" class="btn btn-sm btn-ghost">Sonraki →</button>
+          </div>
+          <!-- 1'den 14'e Hızlı Hafta Atlama Butonları -->
+          <div class="att-pills-scroll">
+            <div id="att-week-pills" class="att-week-pills"></div>
+          </div>
+        </div>
+
+        <!-- Özet İstatistikleri -->
+        <div class="stats-grid">
+          <div class="stat-card glass-card">
+            <div class="stat-icon">🎓</div>
+            <div class="stat-info">
+              <span id="stat-att-courses" class="stat-number">7</span>
+              <span class="stat-label">Dönemlik Ders</span>
+            </div>
+          </div>
+          <div class="stat-card glass-card">
+            <div class="stat-icon">✅</div>
+            <div class="stat-info">
+              <span id="stat-att-attended" class="stat-number">0</span>
+              <span class="stat-label">Toplam Katılınan</span>
+            </div>
+          </div>
+          <div class="stat-card glass-card">
+            <div class="stat-icon">❌</div>
+            <div class="stat-info">
+              <span id="stat-att-absent" class="stat-number">0</span>
+              <span class="stat-label">Toplam Devamsızlık</span>
+            </div>
+          </div>
+          <div class="stat-card glass-card">
+            <div class="stat-icon">⚠️</div>
+            <div class="stat-info">
+              <span id="stat-att-risk" class="stat-number">0</span>
+              <span class="stat-label">Kritik / Riskli Ders</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 14 Haftalık Genel Dönem Matrisi Tablosu (Ana Hızlı İşaretleme Alanı) -->
+        <div class="att-matrix-card glass-card">
+          <div class="att-matrix-header">
+            <div>
+              <h3>📊 14 Haftalık Doğrudan Devamsızlık Tablosu</h3>
+              <p>Yuvarlaklara doğrudan dokunarak katılım durumunuzu saniyeler içinde işaretleyin.</p>
+              <div class="att-quick-guide-banner">
+                👉 <strong>Doğrudan Dokunun:</strong> 
+                <span class="guide-badge green">1. Tık: ✅ Girdim</span> 
+                <span class="guide-badge red">2. Tık: ❌ Gitmedim</span> 
+                <span class="guide-badge slate">3. Tık: ⏸️ Tatil</span> 
+                <span class="guide-badge gray">4. Tık: · Temizle</span>
+              </div>
+            </div>
+            <div class="att-legend">
+              <span class="legend-item"><span class="legend-dot attended">✓</span> Girdi</span>
+              <span class="legend-item"><span class="legend-dot absent">✗</span> Gitmedi</span>
+              <span class="legend-item"><span class="legend-dot cancelled">⏸</span> İptal/Tatil</span>
+              <span class="legend-item"><span class="legend-dot none">·</span> İşlenmedi</span>
+            </div>
+          </div>
+          <div class="att-table-responsive">
+            <table class="att-table">
+              <thead>
+                <tr>
+                  <th class="th-course">Ders</th>
+                  <th class="th-time">Gün / Saat</th>
+                  <th class="th-weeks">1</th>
+                  <th class="th-weeks">2</th>
+                  <th class="th-weeks">3</th>
+                  <th class="th-weeks">4</th>
+                  <th class="th-weeks">5</th>
+                  <th class="th-weeks">6</th>
+                  <th class="th-weeks">7</th>
+                  <th class="th-weeks">8</th>
+                  <th class="th-weeks">9</th>
+                  <th class="th-weeks">10</th>
+                  <th class="th-weeks">11</th>
+                  <th class="th-weeks">12</th>
+                  <th class="th-weeks">13</th>
+                  <th class="th-weeks">14</th>
+                  <th class="th-stat">Dev.</th>
+                  <th class="th-stat">Hak</th>
+                  <th class="th-status">Durum</th>
+                </tr>
+              </thead>
+              <tbody id="att-matrix-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Seçili Haftanın Ders Kartları -->
+        <div class="att-courses-section">
+          <div class="att-section-header">
+            <h3 id="att-active-week-heading">📅 Haftalık Ayrıntılı Kartlar</h3>
+            <span class="att-hint-badge">💡 Seçtiğiniz haftanın detaylı kart görünümü</span>
+          </div>
+          <div id="att-courses-container" class="att-courses-grid"></div>
+        </div>
+      </section>
+
+      <!-- ════════ HAFTALIK HEDEFLER ════════ -->
+      <section id="page-goals" class="page">
+        <div class="page-header">
+          <h2>🎯 Haftalık Hedefler</h2>
+          <div class="goals-week-nav">
+            <button id="prev-week-btn" class="btn btn-sm btn-ghost">← Önceki</button>
+            <span id="goals-week-label" class="week-label"></span>
+            <button id="next-week-btn" class="btn btn-sm btn-ghost">Sonraki →</button>
+          </div>
+        </div>
+        <div class="goals-overview glass-card">
+          <div class="progress-info">
+            <span>Haftalık İlerleme</span>
+            <span id="goals-progress-text">0%</span>
+          </div>
+          <div class="progress-bar">
+            <div id="goals-progress-bar" class="progress-fill" style="width:0%"></div>
+          </div>
+        </div>
+        <div id="goals-days" class="goals-days"></div>
+      </section>
+
+      <!-- ════════ NOT DEFTERİ (AKILLI DERS & SINAV SİSTEMİ) ════════ -->
+      <section id="page-notebook" class="page">
+        <div class="page-header notebook-header-wrap">
+          <div>
+            <h2>📝 Akıllı Ders & Sınav Not Defteri</h2>
+            <p class="section-subtitle">Ders sırasında hızlıca not alın, sınavda çıkabilecek önemli konuları işaretleyin ve eve gelince tek tıkla çalışın.</p>
+          </div>
+          <div class="notebook-header-stats">
+            <div class="nb-stat-badge stat-exam" id="stat-nb-exam" title="Sınavda çıkabilecek işaretlenmiş konular">
+              <span class="nb-stat-icon">🎯</span>
+              <span class="nb-stat-label">Sınavda Çıkabilir:</span>
+              <strong id="nb-count-exam">0</strong>
+            </div>
+            <div class="nb-stat-badge stat-important" id="stat-nb-important" title="Önemli işaretli konular">
+              <span class="nb-stat-icon">⭐</span>
+              <span class="nb-stat-label">Önemli:</span>
+              <strong id="nb-count-important">0</strong>
+            </div>
+            <div class="nb-stat-badge stat-review" id="stat-nb-review" title="Tekrar çalışılması gerekenler">
+              <span class="nb-stat-icon">🔄</span>
+              <span class="nb-stat-label">Tekrar Çalış:</span>
+              <strong id="nb-count-review">0</strong>
+            </div>
+            <button id="add-note-btn" class="btn btn-primary">+ Detaylı Yeni Not</button>
+          </div>
+        </div>
+
+        <!-- 1. DERSLERİN KISA İSİMLERİ (KOLAY SEÇİM HAPLARI) -->
+        <div class="notebook-course-selector-bar glass-card">
+          <div class="course-selector-label">
+            <span>📚 Dersler (Hızlı Seçim):</span>
+          </div>
+          <div id="notebook-course-pills" class="notebook-course-pills">
+            <!-- JavaScript ile dinamik render edilir -->
+          </div>
+        </div>
+
+        <!-- 2. DERS SIRASINDA HIZLI NOT ALMA ALANI (HOCA "SINAVDA ÇIKABİLİR" DEDİĞİNDE ANINDA YAZ!) -->
+        <div class="quick-lecture-note-card glass-card">
+          <div class="qln-header">
+            <div class="qln-title-group">
+              <span class="qln-badge-pulse">⚡ DERSTE HIZLI NOT AL</span>
+              <span class="qln-hint">Hoca “Bu konu sınavda çıkabilir” dediğinde saniyeler içinde not edin!</span>
+            </div>
+            <div class="qln-active-course-tag qln-active-course-display" id="qln-active-course-display">
+              📍 Seçili Ders: <strong>Tüm Dersler</strong>
+            </div>
+          </div>
+
+          <form id="quick-lecture-note-form" class="qln-form">
+            <div class="qln-row-top">
+              <div class="qln-field qln-course-field">
+                <label for="qln-course-select">Ders:</label>
+                <select id="qln-course-select" class="qln-select">
+                  <!-- Dinamik yüklenecek -->
+                </select>
+              </div>
+
+              <div class="qln-field qln-tag-field">
+                <label>Önem / İşaret:</label>
+                <div class="qln-tag-picker" id="qln-tag-picker">
+                  <button type="button" class="qln-tag-btn active" data-tag="exam">
+                    <span class="tag-emoji">🎯</span> Sınavda Çıkabilir
+                  </button>
+                  <button type="button" class="qln-tag-btn" data-tag="important">
+                    <span class="tag-emoji">⭐</span> Önemli
+                  </button>
+                  <button type="button" class="qln-tag-btn" data-tag="review">
+                    <span class="tag-emoji">🔄</span> Tekrar Çalış
+                  </button>
+                  <button type="button" class="qln-tag-btn" data-tag="general">
+                    <span class="tag-emoji">💡</span> Genel Not
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div class="qln-row-inputs">
+              <input type="text" id="qln-title-input" class="qln-input-title" 
+                     placeholder="📌 Konu / Başlık: Örneğin 'Vize için Sayfa 45 Karar Ağaçları Budama Formülü'..." required autocomplete="off">
+              <button type="submit" class="btn btn-primary qln-submit-btn" id="qln-submit-btn">
+                <span>⚡ Hemen Not Al</span>
+              </button>
+            </div>
+
+            <div class="qln-row-extra">
+              <textarea id="qln-content-input" class="qln-textarea-content" rows="2" 
+                        placeholder="Ek açıklama, hocanın ipucu, sınav sorusu örneği (isteğe bağlı)..."></textarea>
+            </div>
+          </form>
+        </div>
+
+        <!-- 3. ARAMA & FİLTRELEME ÇUBUĞU -->
+        <div class="notebook-filter-bar">
+          <div class="nb-search-wrap">
+            <span class="nb-search-icon">🔍</span>
+            <input type="text" id="notebook-search-input" placeholder="Notlarda, konularda veya derslerde ara (ör: formül, algoritma, soru, vize)...">
+            <button id="notebook-search-clear" class="btn-clear-search hidden" title="Aramayı temizle">✕</button>
+          </div>
+
+          <div class="nb-filter-pills" id="notebook-tag-filter-pills">
+            <button class="nb-filter-pill active" data-filter="all">Tüm Notlar</button>
+            <button class="nb-filter-pill filter-exam" data-filter="exam">🎯 Sınavda Çıkabilir</button>
+            <button class="nb-filter-pill filter-important" data-filter="important">⭐ Önemli</button>
+            <button class="nb-filter-pill filter-review" data-filter="review">🔄 Tekrar Çalış</button>
+          </div>
+        </div>
+
+        <!-- 4. ANA DÜZEN: SOL LİSTE & SAĞ DETAYLI DÜZENLEYİCİ -->
+        <div class="notebook-layout">
+          <div id="notes-sidebar" class="notes-sidebar">
+            <div class="notes-sidebar-header">
+              <span id="notes-sidebar-counter" class="notes-counter-text">0 not</span>
+            </div>
+            <div id="notes-list" class="notes-list"></div>
+          </div>
+          <div id="note-editor" class="note-editor glass-card">
+            <div class="note-editor-empty">
+              <p>📝 Soldan bir not seçin veya yukarıdan hızlıca derste not alın</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ════════ POMODORO ════════ -->
+      <section id="page-pomodoro" class="page">
+        <div class="page-header">
+          <h2>⏱️ Pomodoro Odaklanma Sayacı</h2>
+        </div>
+        <div class="pomodoro-container">
+          <div class="pomo-card glass-card">
+            <div class="pomo-presets">
+              <button class="pomo-preset active" data-minutes="5">5 dk</button>
+              <button class="pomo-preset" data-minutes="10">10 dk</button>
+              <button class="pomo-preset" data-minutes="25">25 dk</button>
+              <button class="pomo-preset" data-minutes="45">45 dk</button>
+              <button class="pomo-preset" data-minutes="60">60 dk</button>
+            </div>
+            <div class="pomo-ring">
+              <svg class="pomo-svg" viewBox="0 0 200 200">
+                <circle class="pomo-bg-circle" cx="100" cy="100" r="90" />
+                <circle id="pomo-progress-circle" class="pomo-progress-circle" cx="100" cy="100" r="90" />
+              </svg>
+              <div class="pomo-time-display">
+                <span id="pomo-time">05:00</span>
+              </div>
+            </div>
+            <div class="pomo-controls">
+              <button id="pomo-start" class="btn btn-primary btn-lg">▶ Başlat</button>
+              <button id="pomo-pause" class="btn btn-secondary btn-lg hidden">⏸ Duraklat</button>
+              <button id="pomo-resume" class="btn btn-primary btn-lg hidden">▶ Devam</button>
+              <button id="pomo-reset" class="btn btn-ghost btn-lg">↺ Sıfırla</button>
+            </div>
+            <div id="pomo-complete-msg" class="pomo-complete-msg hidden">
+              🎉 Tebrikler! Odaklanma süresi tamamlandı!
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ════════ AYARLAR ════════ -->
+      <section id="page-settings" class="page">
+        <div class="page-header">
+          <h2>⚙️ Ayarlar</h2>
+        </div>
+        <div class="settings-grid">
+          <div class="settings-card glass-card">
+            <h3>💾 Veri Yedekleme</h3>
+            <p>Verilerini JSON dosyası olarak dışa aktar veya önceki bir yedeği içe aktar.</p>
+            <div class="settings-actions">
+              <button id="export-btn" class="btn btn-primary">📤 Dışa Aktar</button>
+              <button id="import-btn" class="btn btn-secondary">📥 İçe Aktar</button>
+              <input type="file" id="import-file" accept=".json" class="hidden">
+            </div>
+          </div>
+
+          <div class="settings-card glass-card">
+            <h3>🗑️ Verileri Sıfırla</h3>
+            <p>Tüm verileri silmek ve uygulamayı sıfırlamak için bu butonu kullan. Bu işlem geri alınamaz!</p>
+            <div class="settings-actions">
+              <button id="reset-all-btn" class="btn btn-danger">Tüm Verileri Sil</button>
+            </div>
+          </div>
+          <div class="settings-card glass-card">
+            <h3>ℹ️ Hakkında</h3>
+            <p><strong>ASİ ✨</strong> — Kişisel Ajanda ve Üretkenlik Uygulaması</p>
+            <p class="text-muted">Verileriniz kendi bilgisayarınızda çalışan ASP.NET Core API üzerinden yerel SQLite veritabanında (<code>asi.db</code>) saklanır.</p>
+            <p class="text-muted">Farklı bir cihaza veri taşımak için yedekleme özelliğini kullanın.</p>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ═══════════════════ HIZLI NOT PANELİ ═══════════════════ -->
+  <div id="quick-note-panel" class="quick-note-panel">
+    <div class="qn-header">
+      <h3>📌 Hızlı Notlar</h3>
+      <button id="qn-close" class="qn-close">✕</button>
+    </div>
+    <div class="qn-input-area">
+      <input type="text" id="qn-input" class="qn-input" placeholder="Hızlı not yaz..." maxlength="200">
+      <button id="qn-add" class="btn btn-sm btn-primary">Ekle</button>
+    </div>
+    <ul id="qn-list" class="qn-list"></ul>
+  </div>
+  <button id="qn-toggle" class="qn-toggle">
+    📌
+    <span id="qn-badge" class="qn-badge hidden">0</span>
+  </button>
+
+  <!-- ═══════════════════ MODALLAR ═══════════════════ -->
+
+  <!-- Görev Modal -->
+  <div id="task-modal" class="modal-overlay hidden">
+    <div class="modal glass-card">
+      <div class="modal-header">
+        <h3 id="task-modal-title">Yeni Görev</h3>
+        <button type="button" class="modal-close" data-modal="task-modal">✕</button>
+      </div>
+      <form id="task-form" class="modal-form">
+        <input type="hidden" id="task-id">
+        <div class="form-group">
+          <label for="task-title">Görev Başlığı</label>
+          <input type="text" id="task-title" required placeholder="Görev adı...">
+        </div>
+        <div class="form-group">
+          <label for="task-desc">Açıklama (isteğe bağlı)</label>
+          <textarea id="task-desc" rows="3" placeholder="Detaylar..."></textarea>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="task-color">Renk</label>
+            <div class="color-picker">
+              <label class="color-option"><input type="radio" name="task-color" value="#F97316" checked><span style="background:#F97316"></span></label>
+              <label class="color-option"><input type="radio" name="task-color" value="#06B6D4"><span style="background:#06B6D4"></span></label>
+              <label class="color-option"><input type="radio" name="task-color" value="#1E293B"><span style="background:#1E293B"></span></label>
+              <label class="color-option"><input type="radio" name="task-color" value="#10B981"><span style="background:#10B981"></span></label>
+              <label class="color-option"><input type="radio" name="task-color" value="#8B5CF6"><span style="background:#8B5CF6"></span></label>
+              <label class="color-option"><input type="radio" name="task-color" value="#EC4899"><span style="background:#EC4899"></span></label>
+            </div>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-ghost" data-modal="task-modal">İptal</button>
+          <button type="submit" class="btn btn-primary">Kaydet</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Spor Hareketi Modal (Ekle / Düzenle) -->
+  <div id="workout-exercise-modal" class="modal-overlay hidden">
+    <div class="modal glass-card">
+      <div class="modal-header">
+        <h3 id="workout-modal-title">Hareketi Düzenle</h3>
+        <button type="button" class="modal-close" data-modal="workout-exercise-modal">✕</button>
+      </div>
+      <form id="workout-exercise-form" class="modal-form">
+        <input type="hidden" id="workout-exercise-id">
+        <div class="form-group">
+          <label for="workout-exercise-name">Hareket Adı</label>
+          <input type="text" id="workout-exercise-name" required placeholder="Örn: Bench Press">
+        </div>
+        <div class="form-group">
+          <label for="workout-exercise-cat">Kas Grubu</label>
+          <select id="workout-exercise-cat" class="form-select" required>
+            <option value="gogus">🫁 Göğüs</option>
+            <option value="sirt">🦇 Sırt</option>
+            <option value="omuz">🛡️ Omuz</option>
+            <option value="bacak">🦵 Bacak</option>
+            <option value="kol">💪 Kol</option>
+            <option value="karin">🍫 Karın</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="workout-exercise-sets">Set Sayısı</label>
+            <input type="number" id="workout-exercise-sets" min="1" max="20" value="3" required>
+          </div>
+          <div class="form-group">
+            <label for="workout-exercise-reps">Tekrar Sayısı</label>
+            <input type="number" id="workout-exercise-reps" min="1" max="100" value="10" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="workout-exercise-weight">Ağırlık / Not</label>
+          <input type="text" id="workout-exercise-weight" placeholder="Örn: 50 kg veya Vücut Ağırlığı">
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-ghost" data-modal="workout-exercise-modal">İptal</button>
+          <button type="submit" class="btn btn-primary">Kaydet</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Onay Modal -->
+  <div id="confirm-modal" class="modal-overlay hidden">
+    <div class="modal glass-card modal-sm">
+      <div class="modal-header">
+        <h3>Emin misiniz?</h3>
+        <button type="button" class="modal-close" data-modal="confirm-modal">✕</button>
+      </div>
+      <p id="confirm-message" class="confirm-msg"></p>
+      <div class="modal-actions">
+        <button type="button" id="confirm-cancel" class="btn btn-ghost" data-modal="confirm-modal">İptal</button>
+        <button type="button" id="confirm-ok" class="btn btn-danger">Evet, Sil</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Ders Ekle / Düzenle Modal (Devamsızlık Sistemi) -->
+  <div id="att-course-modal" class="modal-overlay hidden">
+    <div class="modal glass-card">
+      <div class="modal-header">
+        <h3 id="att-course-modal-title">Yeni Üniversite Dersi</h3>
+        <button type="button" class="modal-close" data-modal="att-course-modal">✕</button>
+      </div>
+      <form id="att-course-form" class="modal-form">
+        <input type="hidden" id="att-course-id">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="att-code">Ders Kodu</label>
+            <input type="text" id="att-code" required placeholder="YZL 312">
+          </div>
+          <div class="form-group">
+            <label for="att-day">Ders Günü</label>
+            <select id="att-day" class="form-select" required>
+              <option value="Pazartesi">Pazartesi</option>
+              <option value="Salı">Salı</option>
+              <option value="Çarşamba">Çarşamba</option>
+              <option value="Perşembe">Perşembe</option>
+              <option value="Cuma">Cuma</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="att-name">Ders Adı</label>
+          <input type="text" id="att-name" required placeholder="Veri Madenciliği">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="att-time">Ders Saati</label>
+            <input type="text" id="att-time" required placeholder="10:00 - 12:00">
+          </div>
+          <div class="form-group">
+            <label for="att-hours">Haftalık Ders Saati</label>
+            <input type="number" id="att-hours" min="1" max="10" value="2" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="att-max-weeks">Devamsızlık Sınırı (Hafta Sayısı)</label>
+          <input type="number" id="att-max-weeks" min="1" max="14" value="4" required>
+          <small class="text-muted">Genellikle 14 haftalık dönemde %30 = 4 hafta veya lab için 3 hafta</small>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-ghost" data-modal="att-course-modal">İptal</button>
+          <button type="submit" class="btn btn-primary">Kaydet</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast Bildirimi -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <script src="script.js"></script>
+</body>
+</html>

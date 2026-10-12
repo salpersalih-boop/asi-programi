@@ -1,0 +1,18 @@
+# Visual Studio & VS Code
+.vs/
+.vscode/
+*.user
+*.suo
+
+# Build & Output
+bin/
+obj/
+*.dll
+*.pdb
+
+# SQLite veritabanı geçici dosyaları
+*.db-shm
+*.db-wal
+
+# Log dosyaları
+*.log
