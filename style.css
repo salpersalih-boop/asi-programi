@@ -84,6 +84,9 @@ html {
   font-size: 16px;
   scroll-behavior: smooth;
   -webkit-text-size-adjust: 100%;
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
 }
 
 body {
@@ -92,7 +95,20 @@ body {
   color: var(--text-primary);
   line-height: 1.6;
   overflow-x: hidden;
+  width: 100%;
+  max-width: 100vw;
   min-height: 100vh;
+  position: relative;
+}
+
+.app {
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+canvas, img, svg {
+  max-width: 100%;
 }
 
 ::-webkit-scrollbar { width: 7px; height: 7px; }
@@ -2691,17 +2707,16 @@ input, textarea, select, button {
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, 0.55);
+  background: rgba(15, 23, 42, 0.6);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
-  z-index: 200;
+  z-index: 500;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: env(safe-area-inset-top, 1rem) env(safe-area-inset-right, 1rem) env(safe-area-inset-bottom, 1rem) env(safe-area-inset-left, 1rem);
+  padding: 0.75rem;
+  overflow: hidden;
   animation: fadeIn 0.2s ease;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
 }
 
 @keyframes fadeIn {
@@ -2712,8 +2727,8 @@ input, textarea, select, button {
 .modal {
   width: 100%;
   max-width: 520px;
-  max-height: 90vh;
-  max-height: 90dvh;
+  max-height: 86vh;
+  max-height: 86dvh;
   background: #FFFFFF;
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -2723,7 +2738,7 @@ input, textarea, select, button {
   flex-direction: column;
   overflow: hidden;
   position: relative;
-  margin: auto;
+  margin: 0;
 }
 
 .modal-sm { max-width: 400px; }
@@ -2738,7 +2753,7 @@ input, textarea, select, button {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1.15rem 1.5rem 0.85rem;
+  padding: 1.1rem 1.4rem;
   border-bottom: 1px solid var(--border);
   background: #FFFFFF;
   flex-shrink: 0;
@@ -2766,11 +2781,30 @@ input, textarea, select, button {
 
 .modal-close:hover { color: var(--text-primary); background: #F1F5F9; }
 
+.modal-form-wrap {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.modal-form-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 1.1rem 1.4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+}
+
 .modal-form {
   display: flex;
   flex-direction: column;
   gap: 1.1rem;
-  padding: 1.2rem 1.5rem;
+  padding: 1.2rem 1.4rem;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   flex: 1;
@@ -3546,8 +3580,11 @@ input, textarea, select, button {
   }
 
   .main-content {
-    margin-left: 0;
-    padding: 1.3rem;
+    margin-left: 0 !important;
+    padding: 1rem 0.85rem 4rem !important;
+    width: 100% !important;
+    max-width: 100vw !important;
+    box-sizing: border-box !important;
   }
 
   .page-header {
@@ -3595,7 +3632,7 @@ input, textarea, select, button {
   }
 
   .modal {
-    margin: 0 0.5rem;
+    margin: 0;
   }
 
   .form-row {
@@ -4827,32 +4864,61 @@ input, textarea, select, button {
   }
 
   /* Modal Tam Ekran Dokunmatik Optimizasyonu */
+  .modal-overlay {
+    padding: 0 !important;
+    align-items: flex-end !important;
+    justify-content: center !important;
+    overflow: hidden !important;
+  }
+
   .modal {
-    width: calc(100% - 0.75rem) !important;
-    max-height: 94dvh !important;
-    max-height: 94vh !important;
-    border-radius: 14px !important;
-    margin: auto !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    max-height: 86vh !important;
+    max-height: 86dvh !important;
+    border-radius: 20px 20px 0 0 !important;
+    margin: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
   }
 
   .modal-header {
-    padding: 0.9rem 1.1rem 0.75rem !important;
+    padding: 0.9rem 1.1rem !important;
+    flex-shrink: 0 !important;
   }
 
-  .modal-form {
+  .modal-form-wrap {
+    display: flex !important;
+    flex-direction: column !important;
+    flex: 1 !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+  }
+
+  .modal-form,
+  .modal-form-body {
     padding: 0.9rem 1.1rem !important;
     gap: 0.85rem !important;
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
   }
 
   .modal-actions {
+    flex-shrink: 0 !important;
     display: grid !important;
-    grid-template-columns: 1fr 1.35fr !important;
+    grid-template-columns: 1fr 1.4fr !important;
     gap: 0.65rem !important;
-    padding: 0.85rem 1.1rem !important;
+    padding: 0.75rem 1.1rem !important;
+    background: #FFFFFF !important;
+    border-top: 1px solid var(--border) !important;
+    z-index: 20 !important;
   }
 
   .modal-actions .btn {
-    min-height: 46px !important;
+    min-height: 48px !important;
     font-size: 0.95rem !important;
     font-weight: 700 !important;
     justify-content: center !important;

@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="ASİ ✨ — Kişisel Ajanda ve Üretkenlik Uygulaması. Görevler, dersler, hedefler, notlar ve odaklanma sayacı.">
   <title>ASİ ✨ — Kişisel Ajanda</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=3.1">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -739,7 +739,7 @@
                 </div>
               </div>
               <div class="chart-canvas-wrap">
-                <canvas id="chart-pages-canvas" width="600" height="260"></canvas>
+                <canvas id="chart-pages-canvas" width="600" height="260" style="max-width: 100%; height: auto; display: block;"></canvas>
               </div>
             </div>
 
@@ -752,7 +752,7 @@
                 </div>
               </div>
               <div class="chart-canvas-wrap chart-canvas-donut-wrap">
-                <canvas id="chart-status-canvas" width="400" height="260"></canvas>
+                <canvas id="chart-status-canvas" width="400" height="260" style="max-width: 100%; height: auto; display: block;"></canvas>
                 <div id="chart-status-legend" class="donut-legend"></div>
               </div>
             </div>
@@ -1044,81 +1044,83 @@
         <h3 id="book-modal-title">Yeni Kitap Ekle</h3>
         <button type="button" class="modal-close" data-modal="book-modal">✕</button>
       </div>
-      <form id="book-form" class="modal-form">
-        <input type="hidden" id="book-id">
-        <div class="form-group">
-          <label for="book-title">Kitap Adı <span class="text-danger">*</span></label>
-          <input type="text" id="book-title" required placeholder="Örn: Atomik Alışkanlıklar">
-        </div>
-        <div class="form-row">
+      <form id="book-form" class="modal-form modal-form-wrap">
+        <div class="modal-form-body">
+          <input type="hidden" id="book-id">
           <div class="form-group">
-            <label for="book-author">Yazar Adı</label>
-            <input type="text" id="book-author" placeholder="Örn: James Clear">
+            <label for="book-title">Kitap Adı <span class="text-danger">*</span></label>
+            <input type="text" id="book-title" required placeholder="Örn: Atomik Alışkanlıklar">
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="book-author">Yazar Adı</label>
+              <input type="text" id="book-author" placeholder="Örn: James Clear">
+            </div>
+            <div class="form-group">
+              <label for="book-category">Tür / Kategori</label>
+              <select id="book-category" class="form-select">
+                <option value="Polisiye / Dedektif">🔍 Polisiye / Dedektif</option>
+                <option value="Roman / Edebiyat">📖 Roman / Edebiyat</option>
+                <option value="Kişisel Gelişim">🌱 Kişisel Gelişim</option>
+                <option value="Tarih & Felsefe">🏛️ Tarih & Felsefe</option>
+                <option value="Psikoloji">🧠 Psikoloji</option>
+                <option value="Bilim Kurgu / Fantastik">🚀 Bilim Kurgu / Fantastik</option>
+                <option value="Diğer">✨ Diğer</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="book-total-pages">Toplam Sayfa Sayısı <span class="text-danger">*</span></label>
+              <input type="number" id="book-total-pages" min="1" max="10000" value="300" required>
+            </div>
+            <div class="form-group">
+              <label for="book-current-page">Şu Anki Sayfa</label>
+              <input type="number" id="book-current-page" min="0" max="10000" value="0">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="book-status">Okuma Durumu</label>
+              <select id="book-status" class="form-select">
+                <option value="reading">📖 Okunuyor</option>
+                <option value="to_read">⏳ Okunacak</option>
+                <option value="completed">✅ Tamamlandı</option>
+                <option value="on_hold">⏸️ Ara Verildi</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="book-rating">Puanlama</label>
+              <select id="book-rating" class="form-select">
+                <option value="0">Puan Verilmedi</option>
+                <option value="5">⭐⭐⭐⭐⭐ (5 - Mükemmel)</option>
+                <option value="4">⭐⭐⭐⭐ (4 - Çok İyi)</option>
+                <option value="3">⭐⭐⭐ (3 - İyi)</option>
+                <option value="2">⭐⭐ (2 - Orta)</option>
+                <option value="1">⭐ (1 - Zayıf)</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="book-start-date">Başlama Tarihi</label>
+              <input type="date" id="book-start-date">
+            </div>
+            <div class="form-group">
+              <label for="book-finish-date">Bitirme Tarihi</label>
+              <input type="date" id="book-finish-date">
+            </div>
           </div>
           <div class="form-group">
-            <label for="book-category">Tür / Kategori</label>
-            <select id="book-category" class="form-select">
-              <option value="Polisiye / Dedektif">🔍 Polisiye / Dedektif</option>
-              <option value="Roman / Edebiyat">📖 Roman / Edebiyat</option>
-              <option value="Kişisel Gelişim">🌱 Kişisel Gelişim</option>
-              <option value="Tarih & Felsefe">🏛️ Tarih & Felsefe</option>
-              <option value="Psikoloji">🧠 Psikoloji</option>
-              <option value="Bilim Kurgu / Fantastik">🚀 Bilim Kurgu / Fantastik</option>
-              <option value="Diğer">✨ Diğer</option>
-            </select>
-          </div>
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label for="book-total-pages">Toplam Sayfa Sayısı <span class="text-danger">*</span></label>
-            <input type="number" id="book-total-pages" min="1" max="10000" value="300" required>
+            <label for="book-cover-input">Kapak Görseli (İsteğe Bağlı)</label>
+            <input type="file" id="book-cover-input" accept="image/*" class="form-file-input">
+            <input type="hidden" id="book-cover-data">
+            <small class="text-muted">Kapak yüklenmezse şık bir minimalist tasarım otomatik oluşturulur.</small>
           </div>
           <div class="form-group">
-            <label for="book-current-page">Şu Anki Sayfa</label>
-            <input type="number" id="book-current-page" min="0" max="10000" value="0">
+            <label for="book-notes">Kişisel Notlar ve Değerlendirme</label>
+            <textarea id="book-notes" rows="3" placeholder="Kitap hakkında önemli çıkarımların veya değerlendirmen..."></textarea>
           </div>
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label for="book-status">Okuma Durumu</label>
-            <select id="book-status" class="form-select">
-              <option value="reading">📖 Okunuyor</option>
-              <option value="to_read">⏳ Okunacak</option>
-              <option value="completed">✅ Tamamlandı</option>
-              <option value="on_hold">⏸️ Ara Verildi</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label for="book-rating">Puanlama</label>
-            <select id="book-rating" class="form-select">
-              <option value="0">Puan Verilmedi</option>
-              <option value="5">⭐⭐⭐⭐⭐ (5 - Mükemmel)</option>
-              <option value="4">⭐⭐⭐⭐ (4 - Çok İyi)</option>
-              <option value="3">⭐⭐⭐ (3 - İyi)</option>
-              <option value="2">⭐⭐ (2 - Orta)</option>
-              <option value="1">⭐ (1 - Zayıf)</option>
-            </select>
-          </div>
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label for="book-start-date">Başlama Tarihi</label>
-            <input type="date" id="book-start-date">
-          </div>
-          <div class="form-group">
-            <label for="book-finish-date">Bitirme Tarihi</label>
-            <input type="date" id="book-finish-date">
-          </div>
-        </div>
-        <div class="form-group">
-          <label for="book-cover-input">Kapak Görseli (İsteğe Bağlı)</label>
-          <input type="file" id="book-cover-input" accept="image/*" class="form-file-input">
-          <input type="hidden" id="book-cover-data">
-          <small class="text-muted">Kapak yüklenmezse şık bir minimalist tasarım otomatik oluşturulur.</small>
-        </div>
-        <div class="form-group">
-          <label for="book-notes">Kişisel Notlar ve Değerlendirme</label>
-          <textarea id="book-notes" rows="3" placeholder="Kitap hakkında önemli çıkarımların veya değerlendirmen..."></textarea>
         </div>
         <div class="modal-actions">
           <button type="button" class="btn btn-ghost" data-modal="book-modal">İptal</button>
@@ -1135,42 +1137,44 @@
         <h3 id="session-modal-title">⏱️ Okuma Oturumu Ekle</h3>
         <button type="button" class="modal-close" data-modal="book-session-modal">✕</button>
       </div>
-      <form id="book-session-form" class="modal-form">
-        <input type="hidden" id="session-id">
-        <div class="form-group">
-          <label for="session-book-select">Okunan Kitap <span class="text-danger">*</span></label>
-          <select id="session-book-select" class="form-select" required>
-            <!-- JS ile doldurulacak -->
-          </select>
-        </div>
-        <div class="form-row">
+      <form id="book-session-form" class="modal-form modal-form-wrap">
+        <div class="modal-form-body">
+          <input type="hidden" id="session-id">
           <div class="form-group">
-            <label for="session-date">Oturum Tarihi <span class="text-danger">*</span></label>
-            <input type="date" id="session-date" required>
+            <label for="session-book-select">Okunan Kitap <span class="text-danger">*</span></label>
+            <select id="session-book-select" class="form-select" required>
+              <!-- JS ile doldurulacak -->
+            </select>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="session-date">Oturum Tarihi <span class="text-danger">*</span></label>
+              <input type="date" id="session-date" required>
+            </div>
+            <div class="form-group">
+              <label for="session-duration">Okuma Süresi (Dakika)</label>
+              <input type="number" id="session-duration" min="1" max="1440" value="30" placeholder="Örn: 25">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="session-start-page">Başlangıç Sayfası</label>
+              <input type="number" id="session-start-page" min="0" value="0">
+            </div>
+            <div class="form-group">
+              <label for="session-end-page">Bitiş Sayfası</label>
+              <input type="number" id="session-end-page" min="1" value="20">
+            </div>
           </div>
           <div class="form-group">
-            <label for="session-duration">Okuma Süresi (Dakika)</label>
-            <input type="number" id="session-duration" min="1" max="1440" value="30" placeholder="Örn: 25">
-          </div>
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label for="session-start-page">Başlangıç Sayfası</label>
-            <input type="number" id="session-start-page" min="0" value="0">
+            <label for="session-pages-read">Okunan Toplam Sayfa</label>
+            <input type="number" id="session-pages-read" min="1" value="20" required>
+            <small class="text-muted">Başlangıç ve bitiş sayfalarından otomatik hesaplanır veya doğrudan yazılabilir.</small>
           </div>
           <div class="form-group">
-            <label for="session-end-page">Bitiş Sayfası</label>
-            <input type="number" id="session-end-page" min="1" value="20">
+            <label for="session-notes">Oturum Notu (İsteğe Bağlı)</label>
+            <input type="text" id="session-notes" placeholder="Örn: 3. Bölüm tamamlandı, ilgi çekici bir kavram öğrendim...">
           </div>
-        </div>
-        <div class="form-group">
-          <label for="session-pages-read">Okunan Toplam Sayfa</label>
-          <input type="number" id="session-pages-read" min="1" value="20" required>
-          <small class="text-muted">Başlangıç ve bitiş sayfalarından otomatik hesaplanır veya doğrudan yazılabilir.</small>
-        </div>
-        <div class="form-group">
-          <label for="session-notes">Oturum Notu (İsteğe Bağlı)</label>
-          <input type="text" id="session-notes" placeholder="Örn: 3. Bölüm tamamlandı, ilgi çekici bir kavram öğrendim...">
         </div>
         <div class="modal-actions">
           <button type="button" class="btn btn-ghost" data-modal="book-session-modal">İptal</button>
@@ -1187,18 +1191,20 @@
         <h3>🎯 Okuma Hedefleri</h3>
         <button type="button" class="modal-close" data-modal="book-goals-modal">✕</button>
       </div>
-      <form id="book-goals-form" class="modal-form">
-        <div class="form-group">
-          <label for="goal-daily-pages-input">Günlük Sayfa Hedefi</label>
-          <input type="number" id="goal-daily-pages-input" min="1" max="1000" value="20" required>
-        </div>
-        <div class="form-group">
-          <label for="goal-weekly-pages-input">Haftalık Sayfa Hedefi</label>
-          <input type="number" id="goal-weekly-pages-input" min="5" max="7000" value="150" required>
-        </div>
-        <div class="form-group">
-          <label for="goal-daily-minutes-input">Günlük Süre Hedefi (Dakika)</label>
-          <input type="number" id="goal-daily-minutes-input" min="5" max="300" value="30">
+      <form id="book-goals-form" class="modal-form modal-form-wrap">
+        <div class="modal-form-body">
+          <div class="form-group">
+            <label for="goal-daily-pages-input">Günlük Sayfa Hedefi</label>
+            <input type="number" id="goal-daily-pages-input" min="1" max="1000" value="20" required>
+          </div>
+          <div class="form-group">
+            <label for="goal-weekly-pages-input">Haftalık Sayfa Hedefi</label>
+            <input type="number" id="goal-weekly-pages-input" min="5" max="7000" value="150" required>
+          </div>
+          <div class="form-group">
+            <label for="goal-daily-minutes-input">Günlük Süre Hedefi (Dakika)</label>
+            <input type="number" id="goal-daily-minutes-input" min="5" max="300" value="30">
+          </div>
         </div>
         <div class="modal-actions">
           <button type="button" class="btn btn-ghost" data-modal="book-goals-modal">İptal</button>
@@ -1242,6 +1248,6 @@
   <!-- Toast Bildirimi -->
   <div id="toast-container" class="toast-container"></div>
 
-  <script src="script.js"></script>
+  <script src="script.js?v=3.1"></script>
 </body>
 </html>
