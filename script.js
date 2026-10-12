@@ -3052,14 +3052,42 @@
               </div>
             </div>
 
+            <!-- Son Kaldığım Sayfa & Hızlı İlerleme Kutusu -->
+            <div class="book-quick-progress-box">
+              <div class="quick-prog-head">
+                <span class="quick-prog-label">📍 Son Kaldığım Sayfa</span>
+                <span class="quick-prog-indicator"><strong>${cur}</strong> / ${total} sf (%${pct})</span>
+              </div>
+              <div class="quick-prog-input-wrap">
+                <input type="number" 
+                       class="quick-page-input" 
+                       data-id="${b.id}" 
+                       min="0" 
+                       max="${total}" 
+                       value="${cur}" 
+                       placeholder="Sayfa">
+                <button type="button" 
+                        class="btn btn-secondary btn-sm quick-save-page-btn" 
+                        data-id="${b.id}"
+                        title="Kaldığın sayfayı kaydet">
+                  İlerlemeyi Kaydet
+                </button>
+              </div>
+            </div>
+
             <!-- Kart Altı Aksiyonları -->
             <div class="book-card-footer">
-              <button type="button" class="btn btn-sm btn-ghost btn-session-quick" data-id="${b.id}" title="Okuma Oturumu Ekle">
-                ⏱️ Oku
-              </button>
-              <button type="button" class="btn btn-sm btn-ghost btn-detail-quick" data-id="${b.id}" title="Detay & İstatistik">
-                ℹ️ Detay
-              </button>
+              <div class="book-card-actions-left">
+                <button type="button" 
+                        class="btn btn-sm btn-primary btn-start-reading ${b.status === 'reading' ? 'is-reading' : ''}" 
+                        data-id="${b.id}"
+                        title="${b.status === 'reading' ? 'Okumaya devam et' : 'Bu kitabı okumaya başla'}">
+                  ${b.status === 'reading' ? '📖 Okumaya Devam Et' : (b.status === 'completed' ? '🔄 Yeniden Oku' : '📖 Okumaya Başla')}
+                </button>
+                <button type="button" class="btn btn-sm btn-ghost btn-detail-quick" data-id="${b.id}" title="Detay & İstatistik">
+                  ℹ️ Detay
+                </button>
+              </div>
               <div class="book-card-icons">
                 <button type="button" class="book-action-icon edit-book-btn" data-id="${b.id}" title="Düzenle">✏️</button>
                 <button type="button" class="book-action-icon del-book-btn" data-id="${b.id}" title="Sil">🗑️</button>
@@ -3073,6 +3101,36 @@
     },
 
     bindGridEvents() {
+      // Okumaya Başla / Devam Et
+      $$('.btn-start-reading').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          this.startReading(btn.dataset.id);
+        });
+      });
+
+      // Hızlı Sayfa Kaydet (İlerlemeyi Kaydet)
+      $$('.quick-save-page-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          const bookId = btn.dataset.id;
+          const input = $(`.quick-page-input[data-id="${bookId}"]`);
+          if (input) {
+            this.updateQuickPage(bookId, input.value);
+          }
+        });
+      });
+
+      // Enter tuşuna basıldığında sayfayı kaydet
+      $$('.quick-page-input').forEach(input => {
+        input.addEventListener('keypress', (e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            this.updateQuickPage(input.dataset.id, input.value);
+          }
+        });
+      });
+
       // Hızlı Okuma Oturumu Ekle
       $$('.btn-session-quick').forEach(btn => {
         btn.addEventListener('click', (e) => {
@@ -3603,17 +3661,33 @@
       const author = $('#book-author').value.trim();
       const category = $('#book-category').value;
       const totalPages = parseInt($('#book-total-pages').value, 10) || 100;
-      const currentPage = parseInt($('#book-current-page').value, 10) || 0;
-      const status = $('#book-status').value;
+      let currentPage = parseInt($('#book-current-page').value, 10) || 0;
+      let status = $('#book-status').value;
       const rating = parseInt($('#book-rating').value, 10) || 0;
-      const startDate = $('#book-start-date').value;
-      const finishDate = $('#book-finish-date').value;
+      let startDate = $('#book-start-date').value;
+      let finishDate = $('#book-finish-date').value;
       const notes = $('#book-notes').value.trim();
       const coverImage = $('#book-cover-data')?.value || '';
 
       if (!title) {
         showToast('Lütfen kitap adını girin', 'error');
         return;
+      }
+
+      if (currentPage < 0) currentPage = 0;
+      if (currentPage > totalPages) currentPage = totalPages;
+
+      // Son sayfaya ulaşıldıysa otomatik tamamla (Requirement 4)
+      if (currentPage >= totalPages) {
+        status = 'completed';
+        if (!finishDate) finishDate = formatDateShort(new Date());
+      } else if (status === 'completed' && currentPage < totalPages) {
+        status = 'reading';
+        finishDate = '';
+      }
+
+      if (status === 'reading' && !startDate) {
+        startDate = formatDateShort(new Date());
       }
 
       const bookData = {
@@ -3639,8 +3713,170 @@
         showToast('Yeni kitap eklendi 📚', 'success');
       }
 
+      // Başarılı kayıttan sonra başlığı temizle
+      if ($('#book-title')) $('#book-title').value = '';
+
       closeModal('book-modal');
       await this.render();
+    },
+
+    // ─── Okumaya Başla / Devam Et ───
+    async startReading(bookId) {
+      const book = this._books.find(b => b.id === bookId);
+      if (!book) return;
+
+      const cur = book.currentPage || 0;
+      const total = book.totalPages || 100;
+      const isCompleted = book.status === 'completed';
+
+      if (isCompleted) {
+        confirmAction(`"${book.title}" kitabını zaten bitirdiniz. Baştan tekrar okumaya başlamak istiyor musunuz?`, async () => {
+          book.status = 'reading';
+          book.currentPage = 0;
+          book.startDate = formatDateShort(new Date());
+          book.finishDate = '';
+          await apiFetch(`/books/${book.id}`, 'PUT', book);
+          await this.render();
+          showToast(`📖 "${book.title}" yeniden okumaya başlandı! (0/${total} sayfa)`, 'info');
+        });
+        return;
+      }
+
+      book.status = 'reading';
+      if (!book.startDate) {
+        book.startDate = formatDateShort(new Date());
+      }
+
+      await apiFetch(`/books/${book.id}`, 'PUT', book);
+      await this.render();
+
+      if (cur > 0) {
+        showToast(`📖 "${book.title}" okumasına devam ediliyor! Son kaldığınız sayfa: ${cur} / ${total}`, 'info');
+      } else {
+        showToast(`📖 "${book.title}" için okumaya başlandı! (0/${total} sayfa)`, 'success');
+      }
+    },
+
+    // ─── Son Kaldığım Sayfayı Kaydet & Otomatik Tamamlama ───
+    async updateQuickPage(bookId, newPage) {
+      const book = this._books.find(b => b.id === bookId);
+      if (!book) return;
+
+      const total = book.totalPages || 100;
+      const cur = book.currentPage || 0;
+
+      newPage = parseInt(newPage, 10);
+      if (isNaN(newPage)) {
+        showToast('Lütfen geçerli bir sayfa numarası girin!', 'error');
+        return;
+      }
+
+      if (newPage < 0) {
+        showToast('Sayfa numarası 0\'dan küçük olamaz!', 'error');
+        return;
+      }
+
+      if (newPage > total) {
+        showToast(`Sayfa numarası toplam sayfa sayısından (${total}) büyük olamaz!`, 'error');
+        return;
+      }
+
+      if (newPage === cur) {
+        showToast(`Zaten ${cur}. sayfadasınız, değişiklik yapılmadı.`, 'info');
+        return;
+      }
+
+      const delta = newPage - cur;
+
+      // İleri gidildiyse otomatik oturum kaydet (istatistik ve grafikler için)
+      if (delta > 0) {
+        const today = formatDateShort(new Date());
+        const approxDuration = Math.max(10, Math.round(delta * 1.5));
+        await apiFetch('/reading/sessions', 'POST', {
+          bookId: book.id,
+          bookTitle: book.title,
+          date: today,
+          startPage: cur,
+          endPage: newPage,
+          pagesRead: delta,
+          duration: approxDuration,
+          notes: `${newPage}. sayfaya ulaşıldı`
+        });
+      }
+
+      book.currentPage = newPage;
+
+      // Son sayfaya ulaşıldığında otomatik tamamlama (Requirement 4)
+      if (newPage >= total) {
+        book.status = 'completed';
+        book.finishDate = formatDateShort(new Date());
+        this.playVictoryChime();
+        showToast(`🏆 Tebrikler! "${book.title}" kitabının son sayfasına ulaştınız ve kitap tamamlandı! 🎉`, 'success');
+      } else if (book.status === 'completed' && newPage < total) {
+        // Kullanıcı yanlışlıkla son sayfayı girdiyse ve geri aldıysa
+        book.status = 'reading';
+        book.finishDate = '';
+        showToast(`"${book.title}" sayfa sayısı güncellendi, kitap tekrar Okunuyor durumuna alındı.`, 'info');
+      } else if (book.status === 'to_read') {
+        book.status = 'reading';
+        if (!book.startDate) book.startDate = formatDateShort(new Date());
+        showToast(`✓ "${book.title}" okumaya başlandı: ${newPage}/${total} sayfa (%${Math.round((newPage / total) * 100)}).`, 'success');
+      } else {
+        const pct = Math.round((newPage / total) * 100);
+        showToast(`✓ "${book.title}" kaydedildi: ${newPage}/${total} sayfa (%${pct}).`, 'success');
+      }
+
+      await apiFetch(`/books/${book.id}`, 'PUT', book);
+      await this.render();
+    },
+
+    // ─── Manuel Durum Değiştirme ───
+    async toggleBookStatus(bookId, newStatus) {
+      const book = this._books.find(b => b.id === bookId);
+      if (!book) return;
+
+      book.status = newStatus;
+      if (newStatus === 'completed') {
+        book.currentPage = book.totalPages;
+        if (!book.finishDate) book.finishDate = formatDateShort(new Date());
+        this.playVictoryChime();
+        showToast(`🏆 "${book.title}" tamamlandı olarak işaretlendi! 🎉`, 'success');
+      } else if (newStatus === 'reading') {
+        if (!book.startDate) book.startDate = formatDateShort(new Date());
+        book.finishDate = '';
+        showToast(`📖 "${book.title}" okunuyor olarak işaretlendi.`, 'info');
+      } else {
+        showToast(`Durum güncellendi: ${newStatus}`, 'info');
+      }
+
+      await apiFetch(`/books/${book.id}`, 'PUT', book);
+      await this.render();
+    },
+
+    // Başarı Sesi (Web Audio API)
+    playVictoryChime() {
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+        const ctx = new AudioCtx();
+        const freqs = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6 Arpej
+        freqs.forEach((freq, idx) => {
+          setTimeout(() => {
+            try {
+              const osc = ctx.createOscillator();
+              const gain = ctx.createGain();
+              osc.type = 'triangle';
+              osc.frequency.setValueAtTime(freq, ctx.currentTime);
+              gain.gain.setValueAtTime(0.25, ctx.currentTime);
+              gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+              osc.connect(gain);
+              gain.connect(ctx.destination);
+              osc.start();
+              osc.stop(ctx.currentTime + 0.4);
+            } catch (_) {}
+          }, idx * 110);
+        });
+      } catch (_) {}
     },
 
     openSessionModal(preselectedBookId = null) {
@@ -3759,6 +3995,8 @@
       const cur = book.currentPage || 0;
       const total = book.totalPages || 100;
       const pct = total > 0 ? Math.min(100, Math.round((cur / total) * 100)) : 0;
+      const isReading = book.status === 'reading';
+      const isCompleted = book.status === 'completed';
 
       const esc = Dashboard.escapeHtml;
 
@@ -3773,13 +4011,34 @@
           <div class="book-detail-info">
             <h3>${esc(book.title)}</h3>
             <p class="text-muted">✍️ ${esc(book.author)} • 🏷️ ${esc(book.category)}</p>
-            <div style="margin: 0.5rem 0;">
+            <div style="margin: 0.5rem 0; display:flex; align-items:center; gap:0.6rem; flex-wrap:wrap;">
               ${book.rating > 0 ? `<span style="font-size:1.1rem;">${'⭐'.repeat(book.rating)}</span>` : '<span class="text-muted">Puanlanmadı</span>'}
+              <span class="badge ${isCompleted ? 'badge-success' : (isReading ? 'badge-info' : 'badge-warning')}">
+                ${isCompleted ? '✅ Tamamlandı' : (isReading ? '📖 Okunuyor' : '⏳ Okunacak')}
+              </span>
             </div>
             <div class="book-detail-dates">
               <span>📅 <strong>Başlama:</strong> ${esc(book.startDate || 'Belirtilmedi')}</span>
-              <span>🏁 <strong>Bitiş:</strong> ${esc(book.finishDate || (book.status === 'completed' ? 'Tamamlandı' : 'Devam Ediyor'))}</span>
+              <span>🏁 <strong>Bitiş:</strong> ${esc(book.finishDate || (isCompleted ? 'Tamamlandı' : 'Devam Ediyor'))}</span>
             </div>
+            <div style="margin-top:0.6rem; display:flex; gap:0.5rem; flex-wrap:wrap;">
+              <button type="button" class="btn btn-sm btn-primary detail-start-reading-btn">
+                ${isReading ? '📖 Okumaya Devam Et' : (isCompleted ? '🔄 Baştan Oku' : '📖 Okumaya Başla')}
+              </button>
+              ${!isCompleted ? `<button type="button" class="btn btn-sm btn-ghost detail-mark-done-btn">✅ Tamamlandı Yap</button>` : `<button type="button" class="btn btn-sm btn-ghost detail-reopen-btn">🔄 Okunuyor Yap</button>`}
+            </div>
+          </div>
+        </div>
+
+        <!-- Hızlı Sayfa İlerleme Alanı -->
+        <div class="book-quick-progress-box" style="margin: 1.1rem 0;">
+          <div class="quick-prog-head">
+            <span style="font-weight:700; color:var(--text-primary); font-size:0.88rem;">📍 Son Kaldığım Sayfayı Güncelle:</span>
+            <span class="quick-prog-indicator"><strong>${cur}</strong> / ${total} sayfa (%${pct})</span>
+          </div>
+          <div class="quick-prog-input-wrap" style="margin-top:0.35rem;">
+            <input type="number" id="detail-modal-page-input" class="quick-page-input" style="width:110px;" min="0" max="${total}" value="${cur}" placeholder="Sayfa No">
+            <button type="button" id="detail-modal-save-page-btn" class="btn btn-primary btn-sm quick-save-page-btn">İlerlemeyi Kaydet</button>
           </div>
         </div>
 
@@ -3839,6 +4098,41 @@
           }
         </div>
       `;
+
+      // Detay modalı içindeki butonların dinleyicileri
+      bodyEl.querySelector('.detail-start-reading-btn')?.addEventListener('click', async () => {
+        await this.startReading(book.id);
+        this.openDetailModal(book.id);
+      });
+
+      bodyEl.querySelector('.detail-mark-done-btn')?.addEventListener('click', async () => {
+        await this.toggleBookStatus(book.id, 'completed');
+        this.openDetailModal(book.id);
+      });
+
+      bodyEl.querySelector('.detail-reopen-btn')?.addEventListener('click', async () => {
+        await this.toggleBookStatus(book.id, 'reading');
+        this.openDetailModal(book.id);
+      });
+
+      bodyEl.querySelector('#detail-modal-save-page-btn')?.addEventListener('click', async () => {
+        const input = bodyEl.querySelector('#detail-modal-page-input');
+        if (input) {
+          await this.updateQuickPage(book.id, input.value);
+          this.openDetailModal(book.id);
+        }
+      });
+
+      bodyEl.querySelector('#detail-modal-page-input')?.addEventListener('keypress', async (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          const input = bodyEl.querySelector('#detail-modal-page-input');
+          if (input) {
+            await this.updateQuickPage(book.id, input.value);
+            this.openDetailModal(book.id);
+          }
+        }
+      });
 
       openModal('book-detail-modal');
     }

@@ -2691,15 +2691,17 @@ input, textarea, select, button {
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, 0.45);
+  background: rgba(15, 23, 42, 0.55);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
   z-index: 200;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 1rem;
+  padding: env(safe-area-inset-top, 1rem) env(safe-area-inset-right, 1rem) env(safe-area-inset-bottom, 1rem) env(safe-area-inset-left, 1rem);
   animation: fadeIn 0.2s ease;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 @keyframes fadeIn {
@@ -2709,16 +2711,23 @@ input, textarea, select, button {
 
 .modal {
   width: 100%;
-  max-width: 490px;
-  padding: 1.8rem;
+  max-width: 520px;
+  max-height: 90vh;
+  max-height: 90dvh;
   background: #FFFFFF;
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.25);
+  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.28);
   animation: modalIn 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+  margin: auto;
 }
 
-.modal-sm { max-width: 390px; }
+.modal-sm { max-width: 400px; }
+.modal-lg { max-width: 720px; }
 
 @keyframes modalIn {
   0% { opacity: 0; transform: scale(0.95) translateY(10px); }
@@ -2729,31 +2738,44 @@ input, textarea, select, button {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1.3rem;
-  padding-bottom: 0.6rem;
+  padding: 1.15rem 1.5rem 0.85rem;
   border-bottom: 1px solid var(--border);
+  background: #FFFFFF;
+  flex-shrink: 0;
+  z-index: 2;
 }
 
 .modal-header h3 {
   font-size: 1.2rem;
   font-weight: 800;
   color: var(--text-primary);
+  margin: 0;
 }
 
 .modal-close {
   background: none;
   border: none;
   color: var(--text-muted);
-  font-size: 1.25rem;
+  font-size: 1.3rem;
   cursor: pointer;
-  padding: 0.3rem 0.5rem;
+  padding: 0.35rem 0.55rem;
   border-radius: var(--radius-xs);
   transition: all var(--transition-fast);
+  line-height: 1;
 }
 
 .modal-close:hover { color: var(--text-primary); background: #F1F5F9; }
 
-.modal-form { display: flex; flex-direction: column; gap: 1.1rem; }
+.modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+  padding: 1.2rem 1.5rem;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  flex: 1;
+  min-height: 0;
+}
 
 .form-group { display: flex; flex-direction: column; gap: 0.35rem; }
 
@@ -2821,8 +2843,16 @@ input, textarea, select, button {
 .modal-actions {
   display: flex;
   justify-content: flex-end;
+  align-items: center;
   gap: 0.75rem;
-  margin-top: 0.6rem;
+  padding: 0.9rem 1.5rem;
+  background: #FFFFFF;
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
+  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.03);
 }
 
 .confirm-msg {
@@ -4511,4 +4541,366 @@ input, textarea, select, button {
   gap: 0.8rem;
   margin-top: 1rem;
 }
+
+/* ═══════════════════════════════════════════════════════
+   KİTAP HIZLI İLERLEME (KALDIĞIM SAYFA) & OKUMAYA BAŞLA
+   ═══════════════════════════════════════════════════════ */
+
+.book-quick-progress-box {
+  background: var(--bg-box);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xs);
+  padding: 0.65rem 0.85rem;
+  margin: 0.65rem 0 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  transition: border-color var(--transition-fast);
+}
+
+.book-quick-progress-box:focus-within {
+  border-color: #0284C7;
+  background: #F0F9FF;
+}
+
+.quick-prog-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+
+.quick-prog-head strong {
+  color: var(--text-primary);
+}
+
+.quick-prog-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.quick-page-input {
+  width: 90px;
+  flex-shrink: 0;
+  padding: 0.45rem 0.65rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-align: center;
+  background: #FFFFFF;
+  border: 1.5px solid #CBD5E1;
+  border-radius: var(--radius-xs);
+  color: var(--text-primary);
+  outline: none;
+  transition: all var(--transition-fast);
+}
+
+.quick-page-input:focus {
+  border-color: #0284C7;
+  box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15);
+}
+
+.quick-save-page-btn {
+  flex: 1;
+  padding: 0.45rem 0.75rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  white-space: nowrap;
+  justify-content: center;
+  background: #0284C7;
+  color: #FFFFFF;
+  border: none;
+}
+
+.quick-save-page-btn:hover {
+  background: #0369A1;
+  color: #FFFFFF;
+}
+
+/* Okumaya Başla / Devam Et Butonu */
+.btn-start-reading {
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  box-shadow: 0 2px 8px rgba(2, 132, 199, 0.25);
+  transition: all 0.2s ease;
+}
+
+.btn-start-reading:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.35);
+}
+
+.btn-start-reading.is-reading {
+  background: #0D9488;
+  border-color: #0D9488;
+}
+
+.btn-start-reading.is-reading:hover {
+  background: #0F766E;
+  border-color: #0F766E;
+}
+
+/* ═══════════════════════════════════════════════════════
+   KİTAPLIĞIM MOBİL UYUMLULUK DÜZENLEMELERİ (320px - 768px)
+   ═══════════════════════════════════════════════════════ */
+
+@media (max-width: 768px) {
+  .books-header-wrap {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.85rem;
+  }
+
+  .books-header-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+    width: 100%;
+  }
+
+  .books-header-actions .btn {
+    width: 100%;
+    justify-content: center;
+    min-height: 44px;
+    font-size: 0.88rem;
+  }
+
+  #set-book-goals-btn {
+    grid-column: 1 / -1;
+  }
+
+  .books-stats-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.65rem;
+    margin-bottom: 1.2rem;
+  }
+
+  .book-grid {
+    grid-template-columns: 1fr !important;
+    gap: 1rem;
+  }
+
+  .books-filter-bar {
+    padding: 0.9rem;
+    gap: 0.75rem;
+  }
+
+  .books-filter-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+
+  .books-status-pills {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    flex-wrap: nowrap;
+    padding-bottom: 0.35rem;
+    gap: 0.35rem;
+  }
+
+  .book-pill-btn {
+    white-space: nowrap;
+    flex-shrink: 0;
+    padding: 0.4rem 0.75rem;
+  }
+
+  .books-cat-select-wrap {
+    width: 100%;
+  }
+
+  .books-cat-select-wrap select {
+    width: 100%;
+    min-height: 44px;
+    font-size: 0.9rem;
+  }
+
+  .reading-heatmap-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 0.6rem 0;
+  }
+
+  .charts-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .chart-card {
+    padding: 1.1rem;
+  }
+
+  .analytics-time-bar {
+    padding: 0.85rem;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .analytics-time-pills {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    flex-wrap: nowrap;
+    padding-bottom: 0.35rem;
+  }
+
+  .analytics-pill-btn {
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .analytics-period-summary {
+    padding: 0.85rem 1rem;
+    gap: 0.6rem;
+    font-size: 0.82rem;
+  }
+
+  .period-stat-sep {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .books-header-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .books-stats-grid {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 0.5rem;
+  }
+
+  .books-stats-grid .stat-card {
+    padding: 0.85rem;
+  }
+
+  .books-stats-grid .stat-number {
+    font-size: 1.15rem;
+  }
+
+  .book-card {
+    padding: 1rem;
+  }
+
+  .book-card-top {
+    gap: 0.75rem;
+  }
+
+  .book-cover-placeholder,
+  .book-cover-img {
+    width: 68px !important;
+    height: 96px !important;
+  }
+
+  .book-card-footer {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.65rem;
+  }
+
+  .book-card-actions-left {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap: 0.5rem;
+    width: 100%;
+  }
+
+  .book-card-actions-left .btn {
+    min-height: 42px;
+    justify-content: center;
+    font-size: 0.84rem;
+  }
+
+  .book-card-icons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.6rem;
+    padding-top: 0.35rem;
+    border-top: 1px dashed var(--border);
+  }
+
+  .book-card-icons button {
+    padding: 0.35rem 0.65rem;
+    font-size: 0.95rem;
+  }
+
+  /* Modal Tam Ekran Dokunmatik Optimizasyonu */
+  .modal {
+    width: calc(100% - 0.75rem) !important;
+    max-height: 94dvh !important;
+    max-height: 94vh !important;
+    border-radius: 14px !important;
+    margin: auto !important;
+  }
+
+  .modal-header {
+    padding: 0.9rem 1.1rem 0.75rem !important;
+  }
+
+  .modal-form {
+    padding: 0.9rem 1.1rem !important;
+    gap: 0.85rem !important;
+  }
+
+  .modal-actions {
+    display: grid !important;
+    grid-template-columns: 1fr 1.35fr !important;
+    gap: 0.65rem !important;
+    padding: 0.85rem 1.1rem !important;
+  }
+
+  .modal-actions .btn {
+    min-height: 46px !important;
+    font-size: 0.95rem !important;
+    font-weight: 700 !important;
+    justify-content: center !important;
+  }
+
+  .book-detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .detail-metrics-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.5rem !important;
+  }
+}
+
+/* 320px - 360px Ultra Dar Ekranlar (iPhone SE, vb.) */
+@media (max-width: 360px) {
+  .books-stats-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .modal-actions {
+    display: flex !important;
+    flex-direction: column-reverse !important;
+  }
+
+  .modal-actions .btn {
+    width: 100% !important;
+    min-height: 44px !important;
+  }
+
+  .quick-prog-input-wrap {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .quick-page-input {
+    width: 100% !important;
+  }
+
+  .quick-save-page-btn {
+    width: 100%;
+    min-height: 40px;
+  }
+
+  .book-card-actions-left {
+    grid-template-columns: 1fr;
+  }
+}
+
 
