@@ -1612,42 +1612,6 @@
       await this.loadData();
       const courses = this.getCourses();
       const records = this.getRecords();
-      const week = this.currentWeek;
-
-      // Hafta başlıkları
-      const weekBadge = $('#att-week-badge');
-      if (weekBadge) weekBadge.textContent = `${week}. HAFTA`;
-
-      const heading = $('#att-active-week-heading');
-      if (heading) heading.textContent = `📅 ${week}. Hafta Dersleri & Yoklama İşaretleme`;
-
-      // 1-14 Hafta Hapları (Pills)
-      const pillsContainer = $('#att-week-pills');
-      if (pillsContainer) {
-        pillsContainer.innerHTML = Array.from({ length: this.totalWeeks }, (_, i) => {
-          const w = i + 1;
-          const isActive = w === week;
-          let hasAbsent = false;
-          for (const c of courses) {
-            if (records[c.id] && records[c.id][w] === 'absent') {
-              hasAbsent = true;
-              break;
-            }
-          }
-          return `
-            <button class="att-week-pill ${isActive ? 'active' : ''} ${hasAbsent ? 'has-absent' : ''}" data-week="${w}">
-              ${w}. Hafta ${hasAbsent ? '<span class="pill-dot">●</span>' : ''}
-            </button>
-          `;
-        }).join('');
-
-        $$('.att-week-pill').forEach(btn => {
-          btn.addEventListener('click', () => {
-            this.currentWeek = parseInt(btn.dataset.week, 10);
-            this.render();
-          });
-        });
-      }
 
       // İstatistik Hesaplama
       let totalAttended = 0;
@@ -1681,9 +1645,6 @@
 
       const statRiskEl = $('#stat-att-risk');
       if (statRiskEl) statRiskEl.textContent = riskCount;
-
-      // Seçili Haftanın Ders Kartları
-      this.renderCourseCards(courses, records, week);
 
       // 14 Haftalık Matris Tablosu
       this.renderMatrixTable(courses, records);
@@ -1869,6 +1830,10 @@
             <td class="td-stat-num text-orange"><strong>${absentCount}</strong> hf</td>
             <td class="td-stat-num"><strong>${max}</strong> hf</td>
             <td class="td-status-cell">${badgeHtml}</td>
+            <td class="td-actions-cell">
+              <button type="button" class="att-tbl-btn att-tbl-edit" data-id="${c.id}" title="Dersi Düzenle">✏️</button>
+              <button type="button" class="att-tbl-btn att-tbl-del" data-id="${c.id}" title="Dersi Sil">🗑️</button>
+            </td>
           </tr>
         `;
       }).join('');
@@ -1917,6 +1882,27 @@
           } else {
             showToast(`${cCode} • ${w}. Hafta: İşaret temizlendi`, 'info');
           }
+        });
+      });
+
+      // Ders Düzenle & Sil Butonları
+      $$('.att-tbl-edit').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          this.openCourseForm(btn.dataset.id);
+        });
+      });
+
+      $$('.att-tbl-del').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          confirmAction('Bu dersi ve tüm devamsızlık kayıtlarını silmek istiyor musunuz?', async () => {
+            const list = this.getCourses().filter(c => c.id !== btn.dataset.id);
+            await apiFetch('/attendance/courses', 'POST', list);
+            this._courses = list;
+            await this.render();
+            showToast('Ders silindi', 'success');
+          });
         });
       });
     },

@@ -3408,6 +3408,52 @@ input, textarea, select, button {
 .status-pill.warn { background: #FEF3C7; color: #B45309; }
 .status-pill.danger { background: #FEE2E2; color: #B91C1C; }
 
+/* Devamsızlık Tablosu İşlem Butonları */
+.td-actions-cell {
+  white-space: nowrap;
+}
+
+.att-tbl-btn {
+  background: var(--bg-box);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.25rem 0.45rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+  margin: 0 2px;
+  transition: all 0.15s ease;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.att-tbl-btn:hover {
+  background: var(--bg-hover);
+  transform: translateY(-1px);
+}
+
+.att-tbl-del:hover {
+  background: #FEE2E2;
+  border-color: #FCA5A5;
+}
+
+@media (max-width: 768px) {
+  .att-table th.th-course,
+  .att-table td.td-course-name {
+    position: sticky;
+    left: 0;
+    z-index: 2;
+    background: #FFFFFF;
+    box-shadow: 2px 0 6px rgba(0, 0, 0, 0.06);
+  }
+  .att-table th.th-course {
+    background: var(--bg-box);
+    z-index: 3;
+  }
+}
+
+
 /* Form Select */
 .form-select {
   padding: 0.65rem 0.9rem;
