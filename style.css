@@ -4346,6 +4346,35 @@ input, textarea, select, button {
 .status-badge.completed { background: #ECFDF5; color: #059669; }
 .status-badge.on_hold { background: #F1F5F9; color: #64748B; }
 
+/* Kapak Görseli Önizleme & Optimizasyon Stilleri */
+.book-cover-preview-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  margin-top: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: #F8FAFC;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.book-cover-preview-thumb {
+  width: 44px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 4px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+  background: #CBD5E1;
+  flex-shrink: 0;
+}
+
+.book-cover-preview-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
 /* ─── Analiz & Grafikler Görünümü ─── */
 .analytics-time-bar {
   padding: 0.85rem 1.3rem;

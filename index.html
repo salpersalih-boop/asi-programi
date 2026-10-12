@@ -1115,6 +1115,13 @@
             <label for="book-cover-input">Kapak Görseli (İsteğe Bağlı)</label>
             <input type="file" id="book-cover-input" accept="image/*" class="form-file-input">
             <input type="hidden" id="book-cover-data">
+            <div id="book-cover-preview-container" class="book-cover-preview-wrap hidden">
+              <img id="book-cover-preview" alt="Kapak önizleme" class="book-cover-preview-thumb">
+              <div class="book-cover-preview-info">
+                <span class="text-xs text-muted">Optimize edildi (JPEG ~25KB)</span>
+                <button type="button" id="book-cover-remove-btn" class="btn btn-ghost btn-xs text-danger" style="padding: 2px 6px; font-size: 0.78rem; align-self: flex-start;">Kapağı Kaldır</button>
+              </div>
+            </div>
             <small class="text-muted">Kapak yüklenmezse şık bir minimalist tasarım otomatik oluşturulur.</small>
           </div>
           <div class="form-group">
@@ -1248,6 +1255,6 @@
   <!-- Toast Bildirimi -->
   <div id="toast-container" class="toast-container"></div>
 
-  <script src="script.js?v=3.1"></script>
+  <script src="script.js?v=3.2"></script>
 </body>
 </html>

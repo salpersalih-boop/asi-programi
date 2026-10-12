@@ -94,7 +94,71 @@
     lastRestSec: 300   // 5 dk
   };
 
-  // ─── Güvenli LocalStorage Yardımcısı ───
+  // ─── Güvenli Görsel Sıkıştırma ve Yeniden Boyutlandırma (Canvas + JPEG %70) ───
+  // Mobil galerilerden gelen yüksek çözünürlüklü fotoğrafları LocalStorage (5MB) kotasını aşmayacak şekilde
+  // maksimum 300x400 piksel boyutuna küçültür ve ~20-30 KB boyutunda JPEG formatında sıkıştırır.
+  function compressImageFile(fileOrDataUrl, maxWidth = 300, maxHeight = 400, quality = 0.7) {
+    return new Promise((resolve) => {
+      if (!fileOrDataUrl) return resolve('');
+
+      const processImage = (src) => {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => {
+          try {
+            let width = img.naturalWidth || img.width || 300;
+            let height = img.naturalHeight || img.height || 400;
+
+            if (width <= 0 || height <= 0) {
+              return resolve(src);
+            }
+
+            // En-boy oranını koruyarak yeniden boyutlandırma
+            if (width > maxWidth || height > maxHeight) {
+              const ratio = Math.min(maxWidth / width, maxHeight / height);
+              width = Math.max(1, Math.round(width * ratio));
+              height = Math.max(1, Math.round(height * ratio));
+            }
+
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            if (!ctx) return resolve(src);
+
+            // Şeffaf PNG'lerin JPEG'e dönüşürken siyah olmaması için beyaz arka plan
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(0, 0, width, height);
+            ctx.drawImage(img, 0, 0, width, height);
+
+            const compressed = canvas.toDataURL('image/jpeg', quality);
+            resolve(compressed);
+          } catch (err) {
+            console.warn('Canvas görsel sıkıştırma hatası, orijinal kaynak kullanılıyor:', err);
+            resolve(src);
+          }
+        };
+        img.onerror = () => {
+          console.warn('Görsel okunamadı veya yüklenemedi');
+          resolve(typeof fileOrDataUrl === 'string' ? fileOrDataUrl : '');
+        };
+        img.src = src;
+      };
+
+      if (typeof fileOrDataUrl === 'string') {
+        processImage(fileOrDataUrl);
+      } else if (fileOrDataUrl instanceof Blob || fileOrDataUrl instanceof File) {
+        const reader = new FileReader();
+        reader.onload = (e) => processImage(e.target.result);
+        reader.onerror = () => resolve('');
+        reader.readAsDataURL(fileOrDataUrl);
+      } else {
+        resolve('');
+      }
+    });
+  }
+
+  // ─── Güvenli LocalStorage Yardımcısı (Kota Kontrollü & Hata Yakalamalı) ───
   const Storage = {
     get(key, fallback) {
       try {
@@ -108,14 +172,29 @@
     set(key, val) {
       try {
         localStorage.setItem(key, JSON.stringify(val));
+        return true;
       } catch (e) {
         console.error('Storage yazma hatası:', key, e);
+        const isQuota = e.name === 'QuotaExceededError' || e.code === 22 || e.code === 1014 || (e.number && e.number === -2147024882);
+        if (isQuota) {
+          if (typeof showToast === 'function') {
+            showToast('⚠️ Tarayıcı depolama kotası (5MB) aşıldı! Görsel çok büyük olabilir.', 'error');
+          }
+        } else {
+          if (typeof showToast === 'function') {
+            showToast('⚠️ Veri kaydedilemedi: Yerel depolama yazma hatası.', 'error');
+          }
+        }
+        return false;
       }
     },
     remove(key) {
       try {
         localStorage.removeItem(key);
-      } catch (e) {}
+        return true;
+      } catch (e) {
+        return false;
+      }
     }
   };
 
@@ -583,7 +662,22 @@
             updated: Date.now()
           };
           books.unshift(newBook);
-          Storage.set('asi_books', books);
+          const ok = Storage.set('asi_books', books);
+          if (!ok) {
+            // Kota aşıldıysa kapak görseli olmadan kaydetmeyi dene (otomatik kurtarma mekanizması)
+            if (newBook.coverImage) {
+              console.warn('Görsel kotayı aştı, kapaksız kurtarma deneniyor...');
+              newBook.coverImage = '';
+              const retryOk = Storage.set('asi_books', books);
+              if (retryOk) {
+                if (typeof showToast === 'function') {
+                  showToast('ℹ️ Kitap eklendi ancak görsel boyutu kotayı aştığı için kapaksız kaydedildi.', 'warning');
+                }
+                return newBook;
+              }
+            }
+            return null;
+          }
           return newBook;
         }
       }
@@ -596,8 +690,20 @@
           const idx = books.findIndex(b => b.id === id);
           if (idx !== -1) {
             books[idx] = { ...books[idx], ...body, id, updated: Date.now() };
-            Storage.set('asi_books', books);
-            return books[idx];
+            const ok = Storage.set('asi_books', books);
+            if (!ok && books[idx].coverImage) {
+              console.warn('Görsel kotayı aştı, kapaksız kurtarma deneniyor...');
+              books[idx].coverImage = '';
+              const retryOk = Storage.set('asi_books', books);
+              if (retryOk) {
+                if (typeof showToast === 'function') {
+                  showToast('ℹ️ Kitap güncellendi fakat görsel kotayı aştığı için kapaksız kaydedildi.', 'warning');
+                }
+                return books[idx];
+              }
+              return null;
+            }
+            return ok ? books[idx] : null;
           }
           return body;
         }
@@ -2771,17 +2877,40 @@
         this.saveBook();
       });
 
-      // Kapak resmi okuyucu (Base64)
-      $('#book-cover-input')?.addEventListener('change', (e) => {
+      // Kapak resmi okuyucu ve otomatik sıkıştırma (Canvas + JPEG %70)
+      $('#book-cover-input')?.addEventListener('change', async (e) => {
         const file = e.target.files[0];
         if (file) {
-          const reader = new FileReader();
-          reader.onload = (ev) => {
+          try {
+            showToast('Görsel optimize ediliyor...', 'info');
+            const compressed = await compressImageFile(file, 300, 400, 0.7);
             const dataInput = $('#book-cover-data');
-            if (dataInput) dataInput.value = ev.target.result;
-          };
-          reader.readAsDataURL(file);
+            if (dataInput) dataInput.value = compressed;
+
+            const previewImg = $('#book-cover-preview');
+            const previewContainer = $('#book-cover-preview-container');
+            if (previewImg && previewContainer) {
+              previewImg.src = compressed;
+              previewContainer.classList.remove('hidden');
+            }
+            showToast('Kapak görseli optimize edildi ✓', 'success');
+          } catch (err) {
+            console.error('Kapak sıkıştırma hatası:', err);
+            showToast('Görsel işlenemedi, lütfen tekrar deneyin.', 'error');
+          }
         }
+      });
+
+      // Kapak görseli kaldırma butonu
+      $('#book-cover-remove-btn')?.addEventListener('click', () => {
+        const fileInput = $('#book-cover-input');
+        const dataInput = $('#book-cover-data');
+        const previewImg = $('#book-cover-preview');
+        const previewContainer = $('#book-cover-preview-container');
+        if (fileInput) fileInput.value = '';
+        if (dataInput) dataInput.value = '';
+        if (previewImg) previewImg.src = '';
+        if (previewContainer) previewContainer.classList.add('hidden');
       });
 
       // Oturum Formu
@@ -3619,7 +3748,14 @@
       const titleEl = $('#book-modal-title');
       const idInput = $('#book-id');
       const coverData = $('#book-cover-data');
+      const coverFile = $('#book-cover-input');
+      const previewImg = $('#book-cover-preview');
+      const previewContainer = $('#book-cover-preview-container');
+
       if (coverData) coverData.value = '';
+      if (coverFile) coverFile.value = '';
+      if (previewImg) previewImg.src = '';
+      if (previewContainer) previewContainer.classList.add('hidden');
 
       if (editId) {
         const book = this._books.find(b => b.id === editId);
@@ -3637,6 +3773,10 @@
         $('#book-finish-date').value = book.finishDate || '';
         $('#book-notes').value = book.notes || '';
         if (coverData) coverData.value = book.coverImage || '';
+        if (book.coverImage && previewImg && previewContainer) {
+          previewImg.src = book.coverImage;
+          previewContainer.classList.remove('hidden');
+        }
       } else {
         if (titleEl) titleEl.textContent = 'Yeni Kitap Ekle';
         if (idInput) idInput.value = '';
@@ -3668,11 +3808,30 @@
       let startDate = $('#book-start-date').value;
       let finishDate = $('#book-finish-date').value;
       const notes = $('#book-notes').value.trim();
-      const coverImage = $('#book-cover-data')?.value || '';
+      let coverImage = $('#book-cover-data')?.value || '';
 
       if (!title) {
         showToast('Lütfen kitap adını girin', 'error');
         return;
+      }
+
+      // Dosya inputu seçiliyse ve async sıkıştırma henüz bitmemişse güvenli sıkıştır
+      const coverFileInput = $('#book-cover-input');
+      if (coverFileInput && coverFileInput.files && coverFileInput.files[0] && !coverImage) {
+        try {
+          coverImage = await compressImageFile(coverFileInput.files[0], 300, 400, 0.7);
+        } catch (e) {
+          console.warn('Kapak sıkıştırma hatası:', e);
+        }
+      }
+
+      // Mevcut coverImage çok büyükse (örn. eski kayıttan kalan) anında optimize et
+      if (coverImage && coverImage.length > 80000) {
+        try {
+          coverImage = await compressImageFile(coverImage, 300, 400, 0.7);
+        } catch (e) {
+          console.warn('Kapak optimizasyon hatası:', e);
+        }
       }
 
       if (currentPage < 0) currentPage = 0;
@@ -3706,33 +3865,58 @@
         coverColor: (id && this._books.find(b => b.id === id)?.coverColor) || ['#0284C7', '#8B5CF6', '#10B981', '#F59E0B', '#EC4899'][Math.floor(Math.random() * 5)]
       };
 
+      let result = null;
       if (id) {
-        await apiFetch(`/books/${id}`, 'PUT', bookData);
+        result = await apiFetch(`/books/${id}`, 'PUT', bookData);
+        if (!result) {
+          showToast('⚠️ Kitap güncellenemedi (Depolama hatası)', 'error');
+          return;
+        }
         showToast('Kitap güncellendi ✓', 'success');
       } else {
-        await apiFetch('/books', 'POST', bookData);
+        result = await apiFetch('/books', 'POST', bookData);
+        if (!result) {
+          showToast('⚠️ Yeni kitap kaydedilemedi (Depolama hatası)', 'error');
+          return;
+        }
         showToast('Yeni kitap eklendi 📚', 'success');
       }
 
-      // Başarılı kayıttan sonra başlığı temizle
+      // Başarılı kayıttan sonra form alanlarını temizle
       if ($('#book-title')) $('#book-title').value = '';
+      if ($('#book-cover-input')) $('#book-cover-input').value = '';
+      if ($('#book-cover-data')) $('#book-cover-data').value = '';
+      const previewContainer = $('#book-cover-preview-container');
+      if (previewContainer) previewContainer.classList.add('hidden');
 
-      // Kaydedilen kitap aktif filtreye uymuyorsa görünmez kalmasın
-      if (this.statusFilter !== 'all' && this.statusFilter !== status) {
-        this.statusFilter = 'all';
-        $$('.book-pill-btn').forEach(b => b.classList.toggle('active', (b.dataset.status || 'all') === 'all'));
-      }
-      if (this.categoryFilter !== 'all' && this.categoryFilter !== category) {
-        this.categoryFilter = 'all';
-        const cf = $('#book-category-filter');
-        if (cf) cf.value = 'all';
-      }
+      // ─── 1. SENKRONİZASYON VE FİLTRE SIFIRLAMA ───
+      // Kullanıcının yeni eklenen kitabı hemen görebilmesi için sekme ve filtreleri sıfırla
+      this.currentTab = 'library';
+      $$('.book-tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === 'library'));
+      $$('.book-tab-content').forEach(c => {
+        const isTarget = c.id === 'book-tab-content-library';
+        c.classList.toggle('active', isTarget);
+        c.classList.toggle('hidden', !isTarget);
+      });
+
+      // Durum sekmesini "Tümü" yap
+      this.statusFilter = 'all';
+      $$('.book-pill-btn').forEach(b => b.classList.toggle('active', (b.dataset.status || 'all') === 'all'));
+
+      // Kategori filtresini sıfırla ("all")
+      this.categoryFilter = 'all';
+      const cf = $('#book-category-filter');
+      if (cf) cf.value = 'all';
+
+      // Arama sorgusunu sıfırla
       this.searchQuery = '';
       const si = $('#book-search-input');
       if (si) si.value = '';
       $('#book-search-clear')?.classList.add('hidden');
 
       closeModal('book-modal');
+
+      // Tüm listeyi, filtre sayaçlarını ve istatistikleri senkronize olarak yeniden çiz
       await this.render();
     },
 
