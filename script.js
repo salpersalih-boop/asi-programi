@@ -572,7 +572,7 @@
             totalPages: parseInt(body?.totalPages, 10) || 100,
             currentPage: parseInt(body?.currentPage, 10) || 0,
             status: body?.status || 'to_read',
-            category: body?.category || 'Roman / Edebiyat',
+            category: body?.category || 'Polisiye / Dedektif',
             rating: parseInt(body?.rating, 10) || 0,
             startDate: body?.startDate || '',
             finishDate: body?.finishDate || '',
@@ -3584,10 +3584,10 @@
         if (idInput) idInput.value = '';
         $('#book-title').value = '';
         $('#book-author').value = '';
-        $('#book-category').value = 'Roman / Edebiyat';
+        $('#book-category').value = 'Polisiye / Dedektif';
         $('#book-total-pages').value = 300;
         $('#book-current-page').value = 0;
-        $('#book-status').value = 'to_read';
+        $('#book-status').value = 'reading';
         $('#book-rating').value = 0;
         $('#book-start-date').value = formatDateShort(new Date());
         $('#book-finish-date').value = '';
