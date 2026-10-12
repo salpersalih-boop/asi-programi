@@ -60,6 +60,7 @@
         <li><a href="#" class="nav-link" data-page="attendance"><span class="nav-icon">🎓</span> Devamsızlık Takibi</a></li>
         <li><a href="#" class="nav-link" data-page="goals"><span class="nav-icon">🎯</span> Haftalık Hedefler</a></li>
         <li><a href="#" class="nav-link" data-page="notebook"><span class="nav-icon">📝</span> Not Defterim</a></li>
+        <li><a href="#" class="nav-link" data-page="books"><span class="nav-icon">📚</span> Kitaplığım</a></li>
         <li><a href="#" class="nav-link" data-page="pomodoro"><span class="nav-icon">⏱️</span> Pomodoro</a></li>
         <li><a href="#" class="nav-link" data-page="settings"><span class="nav-icon">⚙️</span> Ayarlar</a></li>
       </ul>
@@ -157,6 +158,10 @@
               <span class="quick-icon">📝</span>
               <span>Not Defterim</span>
             </button>
+            <button type="button" class="quick-card glass-card" onclick="ASI.navigateTo('books')">
+              <span class="quick-icon">📚</span>
+              <span>Kitaplığım</span>
+            </button>
           </div>
         </div>
       </section>
@@ -200,8 +205,34 @@
             <p class="workout-subtitle">Günlük antrenman hareketlerini takip et, tamamladıklarını tek dokunuşla işaretle.</p>
           </div>
           <div class="workout-header-btns">
+            <button type="button" id="workout-history-btn" class="btn btn-secondary btn-sm" title="Antrenman geçmişi ve kullanılan ağırlıklar">📜 Geçmiş Antrenmanlar</button>
             <button type="button" id="add-workout-exercise-btn" class="btn btn-primary btn-sm">+ Yeni Hareket Ekle</button>
             <button type="button" id="reset-workout-exercises-btn" class="btn btn-ghost btn-sm" title="Varsayılan 21 hareketi sıfırla/geri yükle">↺ Varsayılanları Yükle</button>
+          </div>
+        </div>
+
+        <!-- ⏱️ Otomatik Dinlenme Sayacı Kartı -->
+        <div id="workout-rest-card" class="workout-rest-card glass-card hidden">
+          <div class="workout-rest-content">
+            <div class="workout-rest-indicator">
+              <span class="workout-rest-icon pulse">⏱️</span>
+              <div class="workout-rest-info">
+                <div class="workout-rest-title-row">
+                  <strong id="workout-rest-title">Dinlenme Süresi</strong>
+                  <span id="workout-rest-tag" class="badge badge-info">2 dk</span>
+                </div>
+                <span id="workout-rest-subtitle" class="workout-rest-sub">Bench Press • Set 1 tamamlandı</span>
+              </div>
+            </div>
+            <div class="workout-rest-clock-box">
+              <span id="workout-rest-time" class="workout-rest-time">02:00</span>
+            </div>
+            <div class="workout-rest-actions">
+              <button type="button" id="workout-rest-pause-btn" class="btn btn-sm btn-ghost" title="Duraklat">⏸️ Duraklat</button>
+              <button type="button" id="workout-rest-resume-btn" class="btn btn-sm btn-primary hidden" title="Devam Et">▶️ Devam</button>
+              <button type="button" id="workout-rest-skip-btn" class="btn btn-sm btn-secondary" title="Süreyi beklemeden sonraki sete geç">⏭️ Seti Geç</button>
+              <button type="button" id="workout-rest-reset-btn" class="btn btn-sm btn-ghost" title="Sayacı Kapat">✕ Kapat</button>
+            </div>
           </div>
         </div>
 
@@ -517,6 +548,254 @@
         </div>
       </section>
 
+      <!-- ════════ KİTAPLIĞIM & OKUMA TAKİBİ ════════ -->
+      <section id="page-books" class="page">
+        <div class="page-header books-header-wrap">
+          <div>
+            <h2>📚 Kitaplığım & Okuma Takibi</h2>
+            <p class="section-subtitle">Okuduğun kitapları kaydet, günlük okuma oturumlarını takip et ve gelişimini grafiklerle incele.</p>
+          </div>
+          <div class="books-header-actions">
+            <button type="button" id="add-book-btn" class="btn btn-primary btn-sm">+ Yeni Kitap Ekle</button>
+            <button type="button" id="add-book-session-btn" class="btn btn-secondary btn-sm">⏱️ Okuma Oturumu Ekle</button>
+            <button type="button" id="set-book-goals-btn" class="btn btn-ghost btn-sm" title="Günlük ve haftalık okuma hedeflerini ayarla">🎯 Hedefler</button>
+          </div>
+        </div>
+
+        <!-- Özet İstatistik Sayaçları -->
+        <div class="stats-grid books-stats-grid">
+          <div class="stat-card glass-card">
+            <div class="stat-icon">📖</div>
+            <div class="stat-info">
+              <span id="stat-book-total-pages" class="stat-number">0</span>
+              <span class="stat-label">Okunan Sayfa</span>
+            </div>
+          </div>
+          <div class="stat-card glass-card">
+            <div class="stat-icon">⏱️</div>
+            <div class="stat-info">
+              <span id="stat-book-total-time" class="stat-number">0 sa</span>
+              <span class="stat-label">Okuma Süresi</span>
+            </div>
+          </div>
+          <div class="stat-card glass-card">
+            <div class="stat-icon">📚</div>
+            <div class="stat-info">
+              <span id="stat-book-reading-count" class="stat-number">0</span>
+              <span class="stat-label">Okunan / Aktif Kitap</span>
+            </div>
+          </div>
+          <div class="stat-card glass-card">
+            <div class="stat-icon">🏆</div>
+            <div class="stat-info">
+              <span id="stat-book-completed-count" class="stat-number">0</span>
+              <span class="stat-label">Tamamlanan Kitap</span>
+            </div>
+          </div>
+          <div class="stat-card glass-card">
+            <div class="stat-icon">📅</div>
+            <div class="stat-info">
+              <span id="stat-book-active-days" class="stat-number">0 gün</span>
+              <span class="stat-label">Aktif Okuma Günü</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Okuma Hedefleri Kartı -->
+        <div class="book-goals-card glass-card">
+          <div class="book-goals-header">
+            <div class="book-goals-title-box">
+              <span class="book-goals-icon">🎯</span>
+              <div>
+                <strong>Okuma Hedefleri İlerlemesi</strong>
+                <span id="book-goals-status-desc" class="book-goals-sub">Hedeflerine ulaşmak için her gün okuma oturumu kaydet.</span>
+              </div>
+            </div>
+            <button type="button" class="btn btn-sm btn-ghost" id="quick-edit-goals-btn">⚙️ Hedefleri Düzenle</button>
+          </div>
+          <div class="book-goals-grid">
+            <div class="book-goal-item">
+              <div class="goal-label-row">
+                <span>📅 Günlük Sayfa Hedefi</span>
+                <strong id="goal-daily-pages-text">0 / 20 sayfa (%0)</strong>
+              </div>
+              <div class="progress-bar">
+                <div id="goal-daily-pages-bar" class="progress-fill" style="width:0%"></div>
+              </div>
+            </div>
+            <div class="book-goal-item">
+              <div class="goal-label-row">
+                <span>🗓️ Haftalık Sayfa Hedefi</span>
+                <strong id="goal-weekly-pages-text">0 / 150 sayfa (%0)</strong>
+              </div>
+              <div class="progress-bar">
+                <div id="goal-weekly-pages-bar" class="progress-fill" style="width:0%"></div>
+              </div>
+            </div>
+            <div class="book-goal-item">
+              <div class="goal-label-row">
+                <span>⏱️ Günlük Süre Hedefi</span>
+                <strong id="goal-daily-time-text">0 / 30 dk (%0)</strong>
+              </div>
+              <div class="progress-bar">
+                <div id="goal-daily-time-bar" class="progress-fill" style="width:0%"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sekme Butonları -->
+        <div class="books-nav-tabs">
+          <button type="button" class="book-tab-btn active" data-tab="library">📚 Kitaplığım</button>
+          <button type="button" class="book-tab-btn" data-tab="analytics">📈 Grafikler & Raporlar</button>
+          <button type="button" class="book-tab-btn" data-tab="sessions">⏱️ Okuma Günlüğü (<span id="sessions-count-badge">0</span>)</button>
+        </div>
+
+        <!-- SEKME 1: KİTAPLARIM -->
+        <div id="book-tab-content-library" class="book-tab-content active">
+          <!-- Arama & Filtre Çubuğu -->
+          <div class="books-filter-bar glass-card">
+            <div class="books-search-wrap">
+              <span class="books-search-icon">🔍</span>
+              <input type="text" id="book-search-input" placeholder="Kitap veya yazar adına göre ara...">
+              <button type="button" id="book-search-clear" class="btn-clear-search hidden">✕</button>
+            </div>
+            <div class="books-filter-row">
+              <div class="books-status-pills" id="book-status-pills">
+                <button type="button" class="book-pill-btn active" data-status="all">Tümü (<span id="pill-count-all">0</span>)</button>
+                <button type="button" class="book-pill-btn" data-status="reading">📖 Okunuyor (<span id="pill-count-reading">0</span>)</button>
+                <button type="button" class="book-pill-btn" data-status="to_read">⏳ Okunacak (<span id="pill-count-to-read">0</span>)</button>
+                <button type="button" class="book-pill-btn" data-status="completed">✅ Tamamlandı (<span id="pill-count-completed">0</span>)</button>
+                <button type="button" class="book-pill-btn" data-status="on_hold">⏸️ Ara Verildi (<span id="pill-count-on-hold">0</span>)</button>
+              </div>
+              <div class="books-cat-select-wrap">
+                <select id="book-category-filter" class="form-select form-select-sm" aria-label="Tür Filtresi">
+                  <option value="all">Tüm Türler / Kategoriler</option>
+                  <option value="Roman / Edebiyat">Roman / Edebiyat</option>
+                  <option value="Kişisel Gelişim">Kişisel Gelişim</option>
+                  <option value="Bilim & Mühendislik">Bilim & Mühendislik</option>
+                  <option value="Yazılım & Teknoloji">Yazılım & Teknoloji</option>
+                  <option value="Tarih & Felsefe">Tarih & Felsefe</option>
+                  <option value="Psikoloji">Psikoloji</option>
+                  <option value="Diğer">Diğer</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Kitap Kartları Grid'i -->
+          <div id="book-grid" class="book-grid">
+            <!-- JS ile doldurulacak -->
+          </div>
+        </div>
+
+        <!-- SEKME 2: GRAFİKLER & ANALİZ -->
+        <div id="book-tab-content-analytics" class="book-tab-content hidden">
+          <!-- Zaman Filtresi Seçimi -->
+          <div class="analytics-time-bar glass-card">
+            <div class="analytics-time-label">
+              <span>📅 Zaman Aralığı:</span>
+            </div>
+            <div class="analytics-time-pills" id="analytics-time-pills">
+              <button type="button" class="analytics-pill-btn active" data-range="daily">Günlük (Son 14 Gün)</button>
+              <button type="button" class="analytics-pill-btn" data-range="weekly">Haftalık (Son 8 Hafta)</button>
+              <button type="button" class="analytics-pill-btn" data-range="monthly">Aylık (Son 6 Ay)</button>
+              <button type="button" class="analytics-pill-btn" data-range="yearly">Yıllık Gelişim</button>
+              <button type="button" class="analytics-pill-btn" data-range="all">Tüm Zamanlar</button>
+            </div>
+          </div>
+
+          <!-- Seçilen Döneme Özel Özet Metrikleri -->
+          <div class="analytics-period-summary glass-card" id="analytics-period-summary">
+            <div class="period-stat">
+              <span class="period-stat-lbl">Seçili Dönemde Okunan:</span>
+              <strong id="analytics-period-pages" class="text-primary">0 Sayfa</strong>
+            </div>
+            <div class="period-stat-sep">•</div>
+            <div class="period-stat">
+              <span class="period-stat-lbl">Toplam Süre:</span>
+              <strong id="analytics-period-time">0 dk</strong>
+            </div>
+            <div class="period-stat-sep">•</div>
+            <div class="period-stat">
+              <span class="period-stat-lbl">Günlük Ortalama:</span>
+              <strong id="analytics-period-avg-pages">0 sayfa/gün</strong>
+            </div>
+            <div class="period-stat-sep">•</div>
+            <div class="period-stat">
+              <span class="period-stat-lbl">Hedefe Ulaşma Oranı:</span>
+              <strong id="analytics-period-goal-pct" class="text-success">%0</strong>
+            </div>
+          </div>
+
+          <!-- Grafikler Grid -->
+          <div class="charts-grid">
+            <!-- Grafik 1: Sayfa Okuma Grafiği -->
+            <div class="chart-card glass-card">
+              <div class="chart-header">
+                <div>
+                  <h3 id="chart-main-title">📊 Günlük Okuma Grafiği</h3>
+                  <p id="chart-main-subtitle" class="text-muted">Seçilen günlerde okunan sayfa sayıları</p>
+                </div>
+              </div>
+              <div class="chart-canvas-wrap">
+                <canvas id="chart-pages-canvas" width="600" height="260"></canvas>
+              </div>
+            </div>
+
+            <!-- Grafik 2: Kitap Tamamlama ve Durum Dağılımı -->
+            <div class="chart-card glass-card">
+              <div class="chart-header">
+                <div>
+                  <h3>🥧 Kitap Durum Dağılımı</h3>
+                  <p class="text-muted">Okunan, hedeflenen ve biten kitaplar</p>
+                </div>
+              </div>
+              <div class="chart-canvas-wrap chart-canvas-donut-wrap">
+                <canvas id="chart-status-canvas" width="400" height="260"></canvas>
+                <div id="chart-status-legend" class="donut-legend"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Okuma Alışkanlığı Takvimi (Heatmap) -->
+          <div class="chart-card glass-card heatmap-card">
+            <div class="chart-header">
+              <div>
+                <h3>🗓️ Okuma Alışkanlığı Takvimi (Son 90 Gün)</h3>
+                <p class="text-muted">Kutucukların renk yoğunluğu okunan sayfa sayısını gösterir. Üzerine gelerek detayları görebilirsiniz.</p>
+              </div>
+              <div class="heatmap-legend">
+                <span class="heatmap-legend-lbl">Az</span>
+                <span class="heatmap-cell level-0"></span>
+                <span class="heatmap-cell level-1"></span>
+                <span class="heatmap-cell level-2"></span>
+                <span class="heatmap-cell level-3"></span>
+                <span class="heatmap-cell level-4"></span>
+                <span class="heatmap-legend-lbl">Çok</span>
+              </div>
+            </div>
+            <div id="reading-heatmap-container" class="reading-heatmap-container">
+              <!-- JS ile çizilecek -->
+            </div>
+          </div>
+        </div>
+
+        <!-- SEKME 3: OKUMA OTURUMLARI GEÇMİŞİ -->
+        <div id="book-tab-content-sessions" class="book-tab-content hidden">
+          <div class="sessions-header-card glass-card">
+            <div>
+              <h3>⏱️ Kaydedilmiş Okuma Oturumları</h3>
+              <p class="text-muted">Her gün hangi kitabı kaç dakika okuduğunuzun ayrıntılı listesi</p>
+            </div>
+            <button type="button" id="sessions-add-btn" class="btn btn-primary btn-sm">+ Yeni Oturum Ekle</button>
+          </div>
+          <div id="book-sessions-list" class="book-sessions-list">
+            <!-- JS ile doldurulacak -->
+          </div>
+        </div>
+      </section>
+
       <!-- ════════ POMODORO ════════ -->
       <section id="page-pomodoro" class="page">
         <div class="page-header">
@@ -755,6 +1034,208 @@
           <button type="submit" class="btn btn-primary">Kaydet</button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- Kitap Ekle / Düzenle Modal -->
+  <div id="book-modal" class="modal-overlay hidden">
+    <div class="modal glass-card">
+      <div class="modal-header">
+        <h3 id="book-modal-title">Yeni Kitap Ekle</h3>
+        <button type="button" class="modal-close" data-modal="book-modal">✕</button>
+      </div>
+      <form id="book-form" class="modal-form">
+        <input type="hidden" id="book-id">
+        <div class="form-group">
+          <label for="book-title">Kitap Adı <span class="text-danger">*</span></label>
+          <input type="text" id="book-title" required placeholder="Örn: Atomik Alışkanlıklar">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="book-author">Yazar Adı</label>
+            <input type="text" id="book-author" placeholder="Örn: James Clear">
+          </div>
+          <div class="form-group">
+            <label for="book-category">Tür / Kategori</label>
+            <select id="book-category" class="form-select">
+              <option value="Kişisel Gelişim">Kişisel Gelişim</option>
+              <option value="Roman / Edebiyat">Roman / Edebiyat</option>
+              <option value="Bilim & Mühendislik">Bilim & Mühendislik</option>
+              <option value="Yazılım & Teknoloji">Yazılım & Teknoloji</option>
+              <option value="Tarih & Felsefe">Tarih & Felsefe</option>
+              <option value="Psikoloji">Psikoloji</option>
+              <option value="Diğer">Diğer</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="book-total-pages">Toplam Sayfa Sayısı <span class="text-danger">*</span></label>
+            <input type="number" id="book-total-pages" min="1" max="10000" value="300" required>
+          </div>
+          <div class="form-group">
+            <label for="book-current-page">Şu Anki Sayfa</label>
+            <input type="number" id="book-current-page" min="0" max="10000" value="0">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="book-status">Okuma Durumu</label>
+            <select id="book-status" class="form-select">
+              <option value="reading">📖 Okunuyor</option>
+              <option value="to_read">⏳ Okunacak</option>
+              <option value="completed">✅ Tamamlandı</option>
+              <option value="on_hold">⏸️ Ara Verildi</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="book-rating">Puanlama</label>
+            <select id="book-rating" class="form-select">
+              <option value="0">Puan Verilmedi</option>
+              <option value="5">⭐⭐⭐⭐⭐ (5 - Mükemmel)</option>
+              <option value="4">⭐⭐⭐⭐ (4 - Çok İyi)</option>
+              <option value="3">⭐⭐⭐ (3 - İyi)</option>
+              <option value="2">⭐⭐ (2 - Orta)</option>
+              <option value="1">⭐ (1 - Zayıf)</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="book-start-date">Başlama Tarihi</label>
+            <input type="date" id="book-start-date">
+          </div>
+          <div class="form-group">
+            <label for="book-finish-date">Bitirme Tarihi</label>
+            <input type="date" id="book-finish-date">
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="book-cover-input">Kapak Görseli (İsteğe Bağlı)</label>
+          <input type="file" id="book-cover-input" accept="image/*" class="form-file-input">
+          <input type="hidden" id="book-cover-data">
+          <small class="text-muted">Kapak yüklenmezse şık bir minimalist tasarım otomatik oluşturulur.</small>
+        </div>
+        <div class="form-group">
+          <label for="book-notes">Kişisel Notlar ve Değerlendirme</label>
+          <textarea id="book-notes" rows="3" placeholder="Kitap hakkında önemli çıkarımların veya değerlendirmen..."></textarea>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-ghost" data-modal="book-modal">İptal</button>
+          <button type="submit" class="btn btn-primary">Kaydet</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Okuma Oturumu Ekle Modal -->
+  <div id="book-session-modal" class="modal-overlay hidden">
+    <div class="modal glass-card">
+      <div class="modal-header">
+        <h3 id="session-modal-title">⏱️ Okuma Oturumu Ekle</h3>
+        <button type="button" class="modal-close" data-modal="book-session-modal">✕</button>
+      </div>
+      <form id="book-session-form" class="modal-form">
+        <input type="hidden" id="session-id">
+        <div class="form-group">
+          <label for="session-book-select">Okunan Kitap <span class="text-danger">*</span></label>
+          <select id="session-book-select" class="form-select" required>
+            <!-- JS ile doldurulacak -->
+          </select>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="session-date">Oturum Tarihi <span class="text-danger">*</span></label>
+            <input type="date" id="session-date" required>
+          </div>
+          <div class="form-group">
+            <label for="session-duration">Okuma Süresi (Dakika)</label>
+            <input type="number" id="session-duration" min="1" max="1440" value="30" placeholder="Örn: 25">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="session-start-page">Başlangıç Sayfası</label>
+            <input type="number" id="session-start-page" min="0" value="0">
+          </div>
+          <div class="form-group">
+            <label for="session-end-page">Bitiş Sayfası</label>
+            <input type="number" id="session-end-page" min="1" value="20">
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="session-pages-read">Okunan Toplam Sayfa</label>
+          <input type="number" id="session-pages-read" min="1" value="20" required>
+          <small class="text-muted">Başlangıç ve bitiş sayfalarından otomatik hesaplanır veya doğrudan yazılabilir.</small>
+        </div>
+        <div class="form-group">
+          <label for="session-notes">Oturum Notu (İsteğe Bağlı)</label>
+          <input type="text" id="session-notes" placeholder="Örn: 3. Bölüm tamamlandı, ilgi çekici bir kavram öğrendim...">
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-ghost" data-modal="book-session-modal">İptal</button>
+          <button type="submit" class="btn btn-primary">Oturumu Kaydet</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Okuma Hedefleri Modal -->
+  <div id="book-goals-modal" class="modal-overlay hidden">
+    <div class="modal glass-card modal-sm">
+      <div class="modal-header">
+        <h3>🎯 Okuma Hedefleri</h3>
+        <button type="button" class="modal-close" data-modal="book-goals-modal">✕</button>
+      </div>
+      <form id="book-goals-form" class="modal-form">
+        <div class="form-group">
+          <label for="goal-daily-pages-input">Günlük Sayfa Hedefi</label>
+          <input type="number" id="goal-daily-pages-input" min="1" max="1000" value="20" required>
+        </div>
+        <div class="form-group">
+          <label for="goal-weekly-pages-input">Haftalık Sayfa Hedefi</label>
+          <input type="number" id="goal-weekly-pages-input" min="5" max="7000" value="150" required>
+        </div>
+        <div class="form-group">
+          <label for="goal-daily-minutes-input">Günlük Süre Hedefi (Dakika)</label>
+          <input type="number" id="goal-daily-minutes-input" min="5" max="300" value="30">
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-ghost" data-modal="book-goals-modal">İptal</button>
+          <button type="submit" class="btn btn-primary">Hedefleri Kaydet</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Kitap Detay ve İstatistik Modalı -->
+  <div id="book-detail-modal" class="modal-overlay hidden">
+    <div class="modal glass-card modal-lg">
+      <div class="modal-header">
+        <h3 id="book-detail-modal-title">📖 Kitap İncelemesi ve İstatistikleri</h3>
+        <button type="button" class="modal-close" data-modal="book-detail-modal">✕</button>
+      </div>
+      <div id="book-detail-modal-body" class="book-detail-body">
+        <!-- JS ile doldurulacak -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Geçmiş Antrenmanlar Modalı (Spor Takip) -->
+  <div id="workout-history-modal" class="modal-overlay hidden">
+    <div class="modal glass-card modal-lg">
+      <div class="modal-header">
+        <h3>📜 Antrenman Geçmişi ve Gelişim Takibi</h3>
+        <button type="button" class="modal-close" data-modal="workout-history-modal">✕</button>
+      </div>
+      <div class="workout-history-body">
+        <div class="workout-history-subbar">
+          <span class="text-muted">Geçmişte tamamladığınız antrenmanlar ve kullanılan ağırlıklar:</span>
+        </div>
+        <div id="workout-history-list" class="workout-history-list">
+          <!-- JS ile doldurulacak -->
+        </div>
+      </div>
     </div>
   </div>
 

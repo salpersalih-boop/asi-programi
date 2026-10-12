@@ -79,6 +79,21 @@
     { id: 'qn-1', text: 'Kütüphaneden Algoritmalar kitabını almayı unutma! 📚', created: Date.now() }
   ];
 
+  // Kullanıcının kendi kitaplarını ve oturumlarını sıfırdan ekleyebilmesi için boş liste
+  const DEFAULT_BOOKS = [];
+  const DEFAULT_READING_SESSIONS = [];
+
+  const DEFAULT_READING_GOALS = {
+    dailyPages: 20,
+    weeklyPages: 150,
+    dailyMinutes: 30
+  };
+
+  const DEFAULT_WORKOUT_SETTINGS = {
+    normalRestSec: 120, // 2 dk
+    lastRestSec: 300   // 5 dk
+  };
+
   // ─── Güvenli LocalStorage Yardımcısı ───
   const Storage = {
     get(key, fallback) {
@@ -238,32 +253,100 @@
         const existing = logs.find(l => l.date === targetDate && l.exerciseId === exId);
 
         if (existing) {
-          existing.completed = (typeof body?.completed === 'boolean') ? body.completed : !existing.completed;
+          if (typeof body?.completed === 'boolean') {
+            existing.completed = body.completed;
+            if (!body.completed) existing.completedSets = [];
+            else if (!existing.completedSets || existing.completedSets.length === 0) {
+              const sCount = existing.sets || 3;
+              existing.completedSets = Array.from({ length: sCount }, (_, i) => i + 1);
+            }
+          } else if (Array.isArray(body?.completedSets)) {
+            existing.completedSets = body.completedSets;
+            const targetSets = body?.sets || existing.sets || 3;
+            existing.completed = existing.completedSets.length >= targetSets;
+          } else {
+            existing.completed = !existing.completed;
+          }
+
           if (body?.sets) existing.sets = body.sets;
           if (body?.reps) existing.reps = body.reps;
           if (body?.weight) existing.weight = body.weight;
           existing.completedAt = Date.now();
           Storage.set('asi_workouts', logs);
+
+          // Antrenman geçmişine kaydet
+          if (existing.completedSets && existing.completedSets.length > 0) {
+            let history = Storage.get('asi_workout_history', []);
+            const histIdx = history.findIndex(h => h.date === targetDate && h.exerciseId === exId);
+            const histItem = {
+              id: 'wh-' + Date.now().toString(36) + Math.random().toString(36).substr(2, 3),
+              date: targetDate,
+              exerciseId: exId,
+              exerciseName: existing.exerciseName,
+              completedSets: existing.completedSets,
+              sets: existing.sets,
+              reps: existing.reps,
+              weight: existing.weight,
+              completed: existing.completed,
+              timestamp: Date.now()
+            };
+            if (histIdx >= 0) history[histIdx] = histItem;
+            else history.unshift(histItem);
+            Storage.set('asi_workout_history', history);
+          }
+
           return existing;
         } else {
           const exercises = Storage.get('asi_exercises', DEFAULT_EXERCISES);
           const ex = exercises.find(e => e.id === exId);
+          const targetSets = body?.sets ?? (ex ? ex.sets : 3);
+          const completedSets = Array.isArray(body?.completedSets)
+            ? body.completedSets
+            : (body?.completed ? Array.from({ length: targetSets }, (_, i) => i + 1) : []);
+          const isComp = typeof body?.completed === 'boolean'
+            ? body.completed
+            : (completedSets.length >= targetSets);
+
           const newLog = {
             id: Date.now() + Math.floor(Math.random() * 1000),
             date: targetDate,
             exerciseId: exId,
             exerciseName: ex ? ex.name : 'Egzersiz',
             category: ex ? ex.category : 'gogus',
-            completed: typeof body?.completed === 'boolean' ? body.completed : true,
-            sets: body?.sets ?? (ex ? ex.sets : 3),
+            completed: isComp,
+            completedSets: completedSets,
+            sets: targetSets,
             reps: body?.reps ?? (ex ? ex.reps : 10),
             weight: body?.weight ?? (ex ? ex.weight : 'Vücut Ağırlığı'),
             completedAt: Date.now()
           };
           logs.push(newLog);
           Storage.set('asi_workouts', logs);
+
+          if (completedSets.length > 0) {
+            let history = Storage.get('asi_workout_history', []);
+            history.unshift({
+              id: 'wh-' + Date.now().toString(36),
+              date: targetDate,
+              exerciseId: exId,
+              exerciseName: newLog.exerciseName,
+              completedSets: completedSets,
+              sets: newLog.sets,
+              reps: newLog.reps,
+              weight: newLog.weight,
+              completed: newLog.completed,
+              timestamp: Date.now()
+            });
+            Storage.set('asi_workout_history', history);
+          }
+
           return newLog;
         }
+      }
+
+      if (cleanPath === '/workouts/history') {
+        let history = Storage.get('asi_workout_history', []);
+        return history.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
       }
 
       if (cleanPath.startsWith('/workouts/log/')) {
@@ -469,6 +552,144 @@
         }
       }
 
+      // ─── /books ───
+      if (cleanPath === '/books') {
+        let books = Storage.get('asi_books', null);
+        if (books === null) {
+          books = JSON.parse(JSON.stringify(DEFAULT_BOOKS));
+          Storage.set('asi_books', books);
+        }
+
+        if (method === 'GET') {
+          return [...books].sort((a, b) => (b.updated || b.created || 0) - (a.updated || a.created || 0));
+        }
+
+        if (method === 'POST') {
+          const newBook = {
+            id: body?.id || 'book-' + Date.now().toString(36) + Math.random().toString(36).substr(2, 4),
+            title: body?.title || 'İsimsiz Kitap',
+            author: body?.author || 'Bilinmeyen Yazar',
+            totalPages: parseInt(body?.totalPages, 10) || 100,
+            currentPage: parseInt(body?.currentPage, 10) || 0,
+            status: body?.status || 'to_read',
+            category: body?.category || 'Roman / Edebiyat',
+            rating: parseInt(body?.rating, 10) || 0,
+            startDate: body?.startDate || '',
+            finishDate: body?.finishDate || '',
+            notes: body?.notes || '',
+            coverImage: body?.coverImage || '',
+            coverColor: body?.coverColor || '#0284C7',
+            created: Date.now(),
+            updated: Date.now()
+          };
+          books.unshift(newBook);
+          Storage.set('asi_books', books);
+          return newBook;
+        }
+      }
+
+      if (cleanPath.startsWith('/books/')) {
+        const id = cleanPath.replace('/books/', '');
+        let books = Storage.get('asi_books', DEFAULT_BOOKS);
+
+        if (method === 'PUT') {
+          const idx = books.findIndex(b => b.id === id);
+          if (idx !== -1) {
+            books[idx] = { ...books[idx], ...body, id, updated: Date.now() };
+            Storage.set('asi_books', books);
+            return books[idx];
+          }
+          return body;
+        }
+
+        if (method === 'DELETE') {
+          books = books.filter(b => b.id !== id);
+          Storage.set('asi_books', books);
+          // İlgili okuma oturumlarını da temizle
+          let sessions = Storage.get('asi_reading_sessions', DEFAULT_READING_SESSIONS);
+          sessions = sessions.filter(s => s.bookId !== id);
+          Storage.set('asi_reading_sessions', sessions);
+          return true;
+        }
+      }
+
+      // ─── /reading/sessions ───
+      if (cleanPath === '/reading/sessions') {
+        let sessions = Storage.get('asi_reading_sessions', null);
+        if (sessions === null) {
+          sessions = JSON.parse(JSON.stringify(DEFAULT_READING_SESSIONS));
+          Storage.set('asi_reading_sessions', sessions);
+        }
+
+        if (method === 'GET') {
+          return [...sessions].sort((a, b) => (b.date || '').localeCompare(a.date || '') || (b.timestamp || 0) - (a.timestamp || 0));
+        }
+
+        if (method === 'POST') {
+          const newSession = {
+            id: body?.id || 'sess-' + Date.now().toString(36) + Math.random().toString(36).substr(2, 4),
+            bookId: body?.bookId,
+            bookTitle: body?.bookTitle || '',
+            date: body?.date || formatDateShort(new Date()),
+            startPage: parseInt(body?.startPage, 10) || 0,
+            endPage: parseInt(body?.endPage, 10) || 0,
+            pagesRead: parseInt(body?.pagesRead, 10) || Math.max(0, (parseInt(body?.endPage, 10) || 0) - (parseInt(body?.startPage, 10) || 0)),
+            duration: parseInt(body?.duration, 10) || 20,
+            notes: body?.notes || '',
+            timestamp: Date.now()
+          };
+          sessions.unshift(newSession);
+          Storage.set('asi_reading_sessions', sessions);
+
+          // İlgili kitabın mevcut sayfasını ve durumunu güncelle
+          if (newSession.bookId) {
+            let books = Storage.get('asi_books', DEFAULT_BOOKS);
+            const bIdx = books.findIndex(b => b.id === newSession.bookId);
+            if (bIdx !== -1) {
+              const book = books[bIdx];
+              if (newSession.endPage > (book.currentPage || 0)) {
+                book.currentPage = Math.min(book.totalPages, newSession.endPage);
+              }
+              if (book.currentPage >= book.totalPages) {
+                book.status = 'completed';
+                if (!book.finishDate) book.finishDate = newSession.date;
+              } else if (book.status === 'to_read') {
+                book.status = 'reading';
+                if (!book.startDate) book.startDate = newSession.date;
+              }
+              book.updated = Date.now();
+              Storage.set('asi_books', books);
+            }
+          }
+
+          return newSession;
+        }
+      }
+
+      if (cleanPath.startsWith('/reading/sessions/')) {
+        const id = cleanPath.replace('/reading/sessions/', '');
+        let sessions = Storage.get('asi_reading_sessions', DEFAULT_READING_SESSIONS);
+
+        if (method === 'DELETE') {
+          sessions = sessions.filter(s => s.id !== id);
+          Storage.set('asi_reading_sessions', sessions);
+          return true;
+        }
+      }
+
+      // ─── /reading/goals ───
+      if (cleanPath === '/reading/goals') {
+        let goals = Storage.get('asi_reading_goals', DEFAULT_READING_GOALS);
+        if (method === 'GET') {
+          return goals;
+        }
+        if (method === 'POST') {
+          goals = { ...goals, ...body };
+          Storage.set('asi_reading_goals', goals);
+          return goals;
+        }
+      }
+
       // ─── /reset ───
       if (cleanPath === '/reset') {
         Storage.remove('asi_tasks');
@@ -479,6 +700,11 @@
         Storage.remove('asi_goals');
         Storage.remove('asi_attendance_courses');
         Storage.remove('asi_attendance_records');
+        Storage.remove('asi_books');
+        Storage.remove('asi_reading_sessions');
+        Storage.remove('asi_reading_goals');
+        Storage.remove('asi_workout_history');
+        Storage.remove('asi_workout_timer');
         return { success: true, message: 'Tüm veriler sıfırlandı.' };
       }
 
@@ -523,7 +749,7 @@
 
     // Dışa aktarma (API'den çeker)
     async exportAll() {
-      const [tasks, notes, quickNotes, goals, courses, records, exercises] = await Promise.all([
+      const [tasks, notes, quickNotes, goals, courses, records, exercises, books, readingSessions, readingGoals, workoutHistory] = await Promise.all([
         apiFetch('/tasks'),
         apiFetch('/notes'),
         apiFetch('/quicknotes'),
@@ -531,12 +757,20 @@
         apiFetch('/attendance/courses'),
         apiFetch('/attendance/records'),
         apiFetch('/exercises'),
+        apiFetch('/books'),
+        apiFetch('/reading/sessions'),
+        apiFetch('/reading/goals'),
+        apiFetch('/workouts/history'),
       ]);
       return {
         tasks, notes, quickNotes, goals,
         attendanceCourses: courses,
         attendanceRecords: records,
-        exercises: exercises,
+        exercises,
+        books,
+        readingSessions,
+        readingGoals,
+        workoutHistory,
         settings: this.loadSettings(),
         _exportDate: new Date().toISOString(),
         _app: 'ASİ ✨'
@@ -568,6 +802,18 @@
         }
         if (Array.isArray(data.exercises)) {
           for (const ex of data.exercises) await apiFetch('/exercises', 'POST', ex);
+        }
+        if (Array.isArray(data.books)) {
+          for (const b of data.books) await apiFetch('/books', 'POST', b);
+        }
+        if (Array.isArray(data.readingSessions)) {
+          for (const s of data.readingSessions) await apiFetch('/reading/sessions', 'POST', s);
+        }
+        if (data.readingGoals && typeof data.readingGoals === 'object') {
+          await apiFetch('/reading/goals', 'POST', data.readingGoals);
+        }
+        if (Array.isArray(data.workoutHistory)) {
+          Storage.set('asi_workout_history', data.workoutHistory);
         }
         return true;
       } catch (e) {
@@ -815,6 +1061,7 @@
         case 'attendance': Attendance.render(); break;
         case 'goals': Goals.render(); break;
         case 'notebook': Notebook.render(); break;
+        case 'books': Books.render(); break;
         case 'pomodoro': Pomodoro.updateDisplay(); break;
       }
     }
@@ -1120,11 +1367,31 @@
     selectedCategory: 'all',
     _exercises: [],
     _logs: [],
+    _history: [],
+
+    // ─── Otomatik Dinlenme Sayacı Durumu ───
+    timerState: {
+      active: false,
+      exerciseId: null,
+      exerciseName: '',
+      setNum: 0,
+      totalSets: 0,
+      isLastSet: false,
+      endTime: 0,
+      durationSec: 120,
+      paused: false,
+      remainingSec: 0,
+      intervalId: null
+    },
 
     init() {
       // Yeni Hareket Ekle butonu
       const addBtn = $('#add-workout-exercise-btn');
       if (addBtn) addBtn.addEventListener('click', () => this.openExerciseModal());
+
+      // Geçmiş Antrenmanlar butonu
+      const histBtn = $('#workout-history-btn');
+      if (histBtn) histBtn.addEventListener('click', () => this.openHistoryModal());
 
       // Varsayılanları Yükle butonu
       const resetBtn = $('#reset-workout-exercises-btn');
@@ -1181,6 +1448,247 @@
           this.renderListOnly();
         });
       });
+
+      // Dinlenme Sayacı Kontrolleri
+      const pauseBtn = $('#workout-rest-pause-btn');
+      if (pauseBtn) pauseBtn.addEventListener('click', () => this.pauseRestTimer());
+
+      const resumeBtn = $('#workout-rest-resume-btn');
+      if (resumeBtn) resumeBtn.addEventListener('click', () => this.resumeRestTimer());
+
+      const skipBtn = $('#workout-rest-skip-btn');
+      if (skipBtn) skipBtn.addEventListener('click', () => this.skipRestTimer());
+
+      const resetTimerBtn = $('#workout-rest-reset-btn');
+      if (resetTimerBtn) resetTimerBtn.addEventListener('click', () => this.cancelRestTimer());
+
+      // Sayfa yenilendiğinde devam eden sayacı geri yükle
+      this.restoreRestTimer();
+    },
+
+    // ─── Dinlenme Sayacı Motoru (Gerçek Zaman Farkı ile) ───
+    restoreRestTimer() {
+      const saved = Storage.get('asi_workout_timer', null);
+      if (saved && saved.active) {
+        const now = Date.now();
+        if (saved.paused) {
+          this.timerState = { ...saved, intervalId: null };
+          this.showRestTimerUI();
+          this.updateRestTimerDisplay(saved.remainingSec || 0);
+          $('#workout-rest-pause-btn')?.classList.add('hidden');
+          $('#workout-rest-resume-btn')?.classList.remove('hidden');
+        } else if (saved.endTime > now) {
+          const diff = Math.max(0, Math.round((saved.endTime - now) / 1000));
+          this.timerState = { ...saved, remainingSec: diff, intervalId: null };
+          this.showRestTimerUI();
+          this.startTimerInterval();
+        } else {
+          // Süre arka plandayken dolmuş
+          Storage.remove('asi_workout_timer');
+        }
+      }
+    },
+
+    startRestTimer(ex, setNum, totalSets) {
+      if (this.timerState.intervalId) {
+        clearInterval(this.timerState.intervalId);
+      }
+
+      const isLast = (setNum >= totalSets);
+      const settings = Storage.get('asi_workout_settings', DEFAULT_WORKOUT_SETTINGS);
+      const duration = isLast ? (settings.lastRestSec || 300) : (settings.normalRestSec || 120);
+      const endTime = Date.now() + duration * 1000;
+
+      this.timerState = {
+        active: true,
+        exerciseId: ex.id,
+        exerciseName: ex.name,
+        setNum,
+        totalSets,
+        isLastSet: isLast,
+        endTime,
+        durationSec: duration,
+        paused: false,
+        remainingSec: duration,
+        intervalId: null
+      };
+
+      Storage.set('asi_workout_timer', {
+        ...this.timerState,
+        intervalId: null
+      });
+
+      this.showRestTimerUI();
+      this.updateRestTimerDisplay(duration);
+      this.startTimerInterval();
+
+      const timeText = isLast ? '5 Dakika' : '2 Dakika';
+      showToast(`⏱️ ${ex.name} (${setNum}/${totalSets}. Set): ${timeText} dinlenme sayacı başladı!`, 'info');
+    },
+
+    startTimerInterval() {
+      if (this.timerState.intervalId) clearInterval(this.timerState.intervalId);
+
+      this.timerState.intervalId = setInterval(() => {
+        if (!this.timerState.active || this.timerState.paused) return;
+
+        const now = Date.now();
+        const diff = Math.max(0, Math.round((this.timerState.endTime - now) / 1000));
+        this.timerState.remainingSec = diff;
+
+        this.updateRestTimerDisplay(diff);
+
+        if (diff <= 0) {
+          this.completeRestTimer();
+        }
+      }, 250);
+    },
+
+    updateRestTimerDisplay(totalSeconds) {
+      const mins = Math.floor(totalSeconds / 60);
+      const secs = totalSeconds % 60;
+      const formatted = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+
+      const timeEl = $('#workout-rest-time');
+      if (timeEl) timeEl.textContent = formatted;
+    },
+
+    showRestTimerUI() {
+      const card = $('#workout-rest-card');
+      if (!card) return;
+
+      const titleEl = $('#workout-rest-title');
+      const tagEl = $('#workout-rest-tag');
+      const subEl = $('#workout-rest-subtitle');
+
+      const isLast = this.timerState.isLastSet;
+      const s = this.timerState.setNum;
+      const total = this.timerState.totalSets;
+
+      if (titleEl) titleEl.textContent = isLast ? '🔥 Son Set Dinlenmesi' : '⏱️ Dinlenme Süresi';
+      if (tagEl) {
+        tagEl.textContent = isLast ? '5 dk' : '2 dk';
+        tagEl.className = `badge ${isLast ? 'badge-warning' : 'badge-info'}`;
+      }
+      if (subEl) {
+        subEl.textContent = isLast
+          ? `${this.timerState.exerciseName} • Tüm setler tamamlandı!`
+          : `${this.timerState.exerciseName} • Set ${s} tamamlandı (${s}/${total})`;
+      }
+
+      $('#workout-rest-pause-btn')?.classList.remove('hidden');
+      $('#workout-rest-resume-btn')?.classList.add('hidden');
+      card.classList.remove('hidden');
+
+      this.renderListOnly();
+    },
+
+    pauseRestTimer() {
+      if (!this.timerState.active || this.timerState.paused) return;
+
+      this.timerState.paused = true;
+      const diff = Math.max(0, Math.round((this.timerState.endTime - Date.now()) / 1000));
+      this.timerState.remainingSec = diff;
+
+      Storage.set('asi_workout_timer', {
+        ...this.timerState,
+        intervalId: null
+      });
+
+      $('#workout-rest-pause-btn')?.classList.add('hidden');
+      $('#workout-rest-resume-btn')?.classList.remove('hidden');
+      showToast('Dinlenme sayacı duraklatıldı', 'info');
+    },
+
+    resumeRestTimer() {
+      if (!this.timerState.active || !this.timerState.paused) return;
+
+      this.timerState.paused = false;
+      this.timerState.endTime = Date.now() + (this.timerState.remainingSec || 0) * 1000;
+
+      Storage.set('asi_workout_timer', {
+        ...this.timerState,
+        intervalId: null
+      });
+
+      $('#workout-rest-pause-btn')?.classList.remove('hidden');
+      $('#workout-rest-resume-btn')?.classList.add('hidden');
+      this.startTimerInterval();
+      showToast('Dinlenme sayacı devam ediyor', 'info');
+    },
+
+    skipRestTimer() {
+      if (!this.timerState.active) return;
+      this.cancelRestTimer(false);
+      showToast('Dinlenme atlandı, sonraki sete geçildi 🚀', 'success');
+    },
+
+    cancelRestTimer(notify = true) {
+      if (this.timerState.intervalId) {
+        clearInterval(this.timerState.intervalId);
+      }
+      this.timerState.active = false;
+      this.timerState.intervalId = null;
+      Storage.remove('asi_workout_timer');
+
+      const card = $('#workout-rest-card');
+      if (card) card.classList.add('hidden');
+
+      this.renderListOnly();
+      if (notify) showToast('Dinlenme sayacı kapatıldı', 'info');
+    },
+
+    completeRestTimer() {
+      if (this.timerState.intervalId) {
+        clearInterval(this.timerState.intervalId);
+      }
+      const isLast = this.timerState.isLastSet;
+      const exName = this.timerState.exerciseName;
+
+      this.timerState.active = false;
+      this.timerState.intervalId = null;
+      Storage.remove('asi_workout_timer');
+
+      const card = $('#workout-rest-card');
+      if (card) card.classList.add('hidden');
+
+      this.playChime();
+
+      if (isLast) {
+        showToast(`🏆 Tebrikler! ${exName} hareketinin son dinlenmesi bitti, egzersiz başarıyla tamamlandı!`, 'success');
+      } else {
+        showToast(`🔔 ${exName}: Dinlenme süresi doldu! Sonraki sete hazırsınız.`, 'success');
+      }
+
+      this.renderListOnly();
+    },
+
+    // Web Audio API ile kısa uyarı sesi
+    playChime() {
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+        const ctx = new AudioCtx();
+        const freqs = [523.25, 659.25, 783.99]; // C5, E5, G5 akoru
+        freqs.forEach((freq, idx) => {
+          setTimeout(() => {
+            try {
+              const osc = ctx.createOscillator();
+              const gain = ctx.createGain();
+              osc.type = 'sine';
+              osc.frequency.setValueAtTime(freq, ctx.currentTime);
+              gain.gain.setValueAtTime(0.25, ctx.currentTime);
+              gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
+              osc.connect(gain);
+              gain.connect(ctx.destination);
+              osc.start();
+              osc.stop(ctx.currentTime + 0.35);
+            } catch (_) {}
+          }, idx * 130);
+        });
+      } catch (_) {
+        // Tarayıcı ses politikası engellerse sessizce devam eder
+      }
     },
 
     changeDay(offsetDays) {
@@ -1210,8 +1718,13 @@
       this._logs = data || [];
     },
 
+    async loadHistory() {
+      const data = await apiFetch('/workouts/history');
+      this._history = data || [];
+    },
+
     async render() {
-      await Promise.all([this.loadExercises(), this.loadLogs()]);
+      await Promise.all([this.loadExercises(), this.loadLogs(), this.loadHistory()]);
       this.updateDateUI();
       this.updateProgressUI();
       this.updateCategoryCounts();
@@ -1270,7 +1783,7 @@
         } else if (done > 0) {
           descEl.textContent = `💪 Harika gidiyorsun! ${done} hareket tamamlandı, ${remaining} kaldı.`;
         } else {
-          descEl.textContent = 'Antrenmana başlamak için hareketleri tamamlandıkça tikleyin.';
+          descEl.textContent = 'Antrenmana başlamak için setleri veya hareketleri tamamlandıkça tikleyin.';
         }
       }
     },
@@ -1318,16 +1831,52 @@
 
       const esc = Dashboard.escapeHtml;
 
+      // Önceki ağırlık haritası (tarih !== selectedDate olan en son kayıt)
+      const prevWeightMap = new Map();
+      this._history.forEach(h => {
+        if (h.date !== this.selectedDate && !prevWeightMap.has(h.exerciseId) && h.weight) {
+          prevWeightMap.set(h.exerciseId, h.weight);
+        }
+      });
+
       container.innerHTML = list.map(ex => {
         const log = logMap.get(ex.id);
-        const isCompleted = !!(log && log.completed);
-        const sets = (log && log.sets) ? log.sets : ex.sets;
-        const reps = (log && log.reps) ? log.reps : ex.reps;
+        const totalSets = (log && log.sets) ? log.sets : (ex.sets || 3);
+        const reps = (log && log.reps) ? log.reps : (ex.reps || 10);
         const weight = (log && log.weight) ? log.weight : (ex.weight || 'Vücut Ağırlığı');
+
+        const completedSets = (log && Array.isArray(log.completedSets))
+          ? log.completedSets
+          : (log && log.completed ? Array.from({ length: totalSets }, (_, i) => i + 1) : []);
+
+        const isCompleted = completedSets.length >= totalSets && totalSets > 0;
+        const prevWeight = prevWeightMap.get(ex.id);
+
+        // Her set için butonlar
+        const setPills = Array.from({ length: totalSets }, (_, i) => {
+          const sNum = i + 1;
+          const isDone = completedSets.includes(sNum);
+          const isLast = (sNum === totalSets);
+          const isTimerActive = this.timerState.active &&
+            this.timerState.exerciseId === ex.id &&
+            this.timerState.setNum === sNum;
+
+          return `
+            <button type="button" 
+                    class="workout-set-btn ${isDone ? 'is-set-done' : ''} ${isLast ? 'is-last-set' : ''} ${isTimerActive ? 'active-timer' : ''}" 
+                    data-ex-id="${ex.id}" 
+                    data-set-num="${sNum}" 
+                    data-total-sets="${totalSets}"
+                    title="${isDone ? `${sNum}. Seti İptal Et` : `${sNum}. Seti Tamamla (${isLast ? '5 dk' : '2 dk'} dinlenme)`}">
+              <span class="set-dot">${isDone ? '✓' : sNum}</span>
+              <span>Set ${sNum}${isLast ? ' ★' : ''}</span>
+            </button>
+          `;
+        }).join('');
 
         return `
           <div class="workout-card ${isCompleted ? 'is-completed' : ''}" data-id="${ex.id}" data-cat="${ex.category}">
-            <button type="button" class="workout-check-btn" data-id="${ex.id}" title="${isCompleted ? 'Tamamlanmadı yap' : 'Tamamlandı olarak işaretle'}">
+            <button type="button" class="workout-check-btn" data-id="${ex.id}" title="${isCompleted ? 'Tamamlanmadı yap' : 'Tüm setleri tamamlandı olarak işaretle'}">
               ✓
             </button>
             <div class="workout-card-body">
@@ -1336,9 +1885,21 @@
                 <span class="workout-muscle-tag cat-${ex.category}">${catNames[ex.category] || ex.category}</span>
               </div>
               <div class="workout-specs-wrap">
-                <span class="workout-spec-badge">${sets} Set</span>
+                <span class="workout-spec-badge">${totalSets} Set</span>
                 <span class="workout-spec-badge">${reps} Tekrar</span>
                 <span class="workout-spec-badge weight-badge">⚖️ ${esc(weight)}</span>
+                ${prevWeight ? `<span class="prev-weight-tag" title="Önceki antrenmanda kullanılan ağırlık">⏱️ Önceki: ${esc(prevWeight)}</span>` : ''}
+              </div>
+
+              <!-- Set Bazlı Tamamlama ve Sayaç Butonları -->
+              <div class="workout-card-sets-wrap">
+                <div class="workout-sets-header">
+                  <span><strong>${completedSets.length}/${totalSets} Set</strong> tamamlandı</span>
+                  ${isCompleted ? '<span class="text-success" style="font-weight:700;">✅ Hareket Bitti</span>' : ''}
+                </div>
+                <div class="workout-sets-pills">
+                  ${setPills}
+                </div>
               </div>
             </div>
             <div class="workout-card-actions">
@@ -1353,7 +1914,7 @@
     },
 
     bindListEvents() {
-      // 1-Tap Toggle
+      // Bütün hareketi tek tıkla bitirme / geri alma (Master Checkbox)
       $$('.workout-check-btn').forEach(btn => {
         btn.addEventListener('click', async (e) => {
           e.preventDefault();
@@ -1363,21 +1924,20 @@
 
           const ex = this._exercises.find(x => x.id === exId);
           const currentLog = this._logs.find(l => l.exerciseId === exId);
-          const newCompleted = !(currentLog && currentLog.completed);
+          const totalSets = ex?.sets || 3;
 
-          // Anında iyimser (optimistic) UI güncellemesi
-          const card = btn.closest('.workout-card');
-          if (card) {
-            if (newCompleted) card.classList.add('is-completed');
-            else card.classList.remove('is-completed');
-          }
+          const isCurrentlyCompleted = !!(currentLog && currentLog.completed);
+          const newCompleted = !isCurrentlyCompleted;
+          const newCompletedSets = newCompleted
+            ? Array.from({ length: totalSets }, (_, i) => i + 1)
+            : [];
 
-          // API çağrısı
           const res = await apiFetch('/workouts/toggle', 'POST', {
             date: this.selectedDate,
             exerciseId: exId,
             completed: newCompleted,
-            sets: ex?.sets,
+            completedSets: newCompletedSets,
+            sets: totalSets,
             reps: ex?.reps,
             weight: ex?.weight
           });
@@ -1386,11 +1946,74 @@
             const idx = this._logs.findIndex(l => l.exerciseId === exId);
             if (idx >= 0) this._logs[idx] = res;
             else this._logs.push(res);
-          } else {
-            await this.loadLogs();
+          }
+
+          if (!newCompleted && this.timerState.active && this.timerState.exerciseId === exId) {
+            this.cancelRestTimer(false);
           }
 
           this.updateProgressUI();
+          this.renderListOnly();
+        });
+      });
+
+      // Tek Tek Set Butonlarına Tıklama (Otomatik 2 dk / 5 dk Dinlenme Sayacı)
+      $$('.workout-set-btn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+
+          const exId = btn.dataset.exId;
+          const setNum = parseInt(btn.dataset.setNum, 10);
+          const totalSets = parseInt(btn.dataset.totalSets, 10) || 3;
+
+          const ex = this._exercises.find(x => x.id === exId);
+          if (!ex) return;
+
+          const currentLog = this._logs.find(l => l.exerciseId === exId);
+          let completedSets = (currentLog && Array.isArray(currentLog.completedSets))
+            ? [...currentLog.completedSets]
+            : (currentLog && currentLog.completed ? Array.from({ length: totalSets }, (_, i) => i + 1) : []);
+
+          const isAlreadyDone = completedSets.includes(setNum);
+
+          if (isAlreadyDone) {
+            // Set işaretini kaldır
+            completedSets = completedSets.filter(s => s !== setNum);
+
+            // Eğer çalışan sayaç bu sete aitse durdur
+            if (this.timerState.active && this.timerState.exerciseId === exId && this.timerState.setNum === setNum) {
+              this.cancelRestTimer(false);
+            }
+          } else {
+            // Seti tamamla
+            completedSets.push(setNum);
+            completedSets.sort((a, b) => a - b);
+
+            // Otomatik Dinlenme Sayacını Başlat (Son set ise 5 dk, diğerleri 2 dk)
+            this.startRestTimer(ex, setNum, totalSets);
+          }
+
+          const isFullyCompleted = completedSets.length >= totalSets;
+
+          const res = await apiFetch('/workouts/toggle', 'POST', {
+            date: this.selectedDate,
+            exerciseId: exId,
+            completed: isFullyCompleted,
+            completedSets,
+            sets: totalSets,
+            reps: ex.reps,
+            weight: ex.weight
+          });
+
+          if (res) {
+            const idx = this._logs.findIndex(l => l.exerciseId === exId);
+            if (idx >= 0) this._logs[idx] = res;
+            else this._logs.push(res);
+          }
+
+          this.updateProgressUI();
+          this.renderListOnly();
         });
       });
 
@@ -1492,6 +2115,76 @@
       this.updateCategoryCounts();
       this.updateProgressUI();
       this.renderListOnly();
+    },
+
+    // ─── Geçmiş Antrenmanlar Modalı ───
+    async openHistoryModal() {
+      await this.loadHistory();
+      const listEl = $('#workout-history-list');
+      if (!listEl) return;
+
+      if (this._history.length === 0) {
+        listEl.innerHTML = `
+          <div class="empty-state" style="padding: 2.5rem 1rem; text-align: center; color: var(--text-muted);">
+            <div style="font-size:2.5rem; margin-bottom:0.5rem;">📜</div>
+            <p>Henüz tamamlanmış bir antrenman kaydı bulunmuyor.</p>
+            <p style="font-size:0.85rem;">Setlerinizi tamamladıkça kayıtlarınız burada listelenir.</p>
+          </div>
+        `;
+        openModal('workout-history-modal');
+        return;
+      }
+
+      // Tarihlere göre grupla
+      const groups = {};
+      this._history.forEach(item => {
+        const d = item.date || 'Tarihsiz';
+        if (!groups[d]) groups[d] = [];
+        groups[d].push(item);
+      });
+
+      const dates = Object.keys(groups).sort((a, b) => b.localeCompare(a));
+      const esc = Dashboard.escapeHtml;
+
+      listEl.innerHTML = dates.map(dateStr => {
+        const items = groups[dateStr];
+        let prettyDate = dateStr;
+        try {
+          const parts = dateStr.split('-');
+          prettyDate = formatDate(new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10)));
+        } catch (_) {}
+
+        const itemChips = items.map(it => {
+          const sCount = it.completedSets ? it.completedSets.length : (it.sets || 3);
+          return `
+            <div class="history-item-chip">
+              <strong style="color:var(--text-primary); font-size:0.9rem;">${esc(it.exerciseName || 'Egzersiz')}</strong>
+              <div style="color:var(--text-secondary); font-size:0.8rem; display:flex; gap:0.5rem; align-items:center;">
+                <span>${sCount}/${it.sets || 3} Set</span>
+                <span>•</span>
+                <span>${it.reps || 10} Tekrar</span>
+              </div>
+              <div style="color:#0284C7; font-weight:700; font-size:0.82rem;">
+                ⚖️ ${esc(it.weight || 'Vücut Ağırlığı')}
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        return `
+          <div class="history-day-card">
+            <div class="history-day-header">
+              <span class="history-day-date">📅 ${esc(prettyDate)}</span>
+              <span class="badge badge-info">${items.length} Hareket Yapıldı</span>
+            </div>
+            <div class="history-items-grid">
+              ${itemChips}
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      openModal('workout-history-modal');
     }
   };
 
@@ -1974,6 +2667,1180 @@
       closeModal('att-course-modal');
       await this.render();
       showToast(id ? 'Ders güncellendi' : 'Yeni ders eklendi', 'success');
+    }
+  };
+
+  // ═══════════════════════════════════════════════════════
+  // KİTAPLIĞIM & OKUMA TAKİBİ SİSTEMİ
+  // ═══════════════════════════════════════════════════════
+
+  const Books = {
+    currentTab: 'library',
+    statusFilter: 'all',
+    categoryFilter: 'all',
+    searchQuery: '',
+    analyticsRange: 'daily',
+    _books: [],
+    _sessions: [],
+    _goals: { dailyPages: 20, weeklyPages: 150, dailyMinutes: 30 },
+
+    init() {
+      // Kullanıcının kendi kitaplarını ekleyebilmesi için önceki demo kitapları temizle
+      if (!Storage.get('asi_user_own_books_clean', false)) {
+        Storage.set('asi_books', []);
+        Storage.set('asi_reading_sessions', []);
+        Storage.set('asi_user_own_books_clean', true);
+      }
+
+      // Sekme geçişleri
+      $$('.book-tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const tab = btn.dataset.tab;
+          if (!tab) return;
+          this.currentTab = tab;
+
+          $$('.book-tab-btn').forEach(b => b.classList.toggle('active', b === btn));
+          $$('.book-tab-content').forEach(c => {
+            const isTarget = c.id === `book-tab-content-${tab}`;
+            c.classList.toggle('active', isTarget);
+            c.classList.toggle('hidden', !isTarget);
+          });
+
+          if (tab === 'library') this.renderBookGrid();
+          else if (tab === 'analytics') this.renderAnalytics();
+          else if (tab === 'sessions') this.renderSessions();
+        });
+      });
+
+      // Arama
+      const searchInput = $('#book-search-input');
+      const searchClear = $('#book-search-clear');
+      if (searchInput) {
+        searchInput.addEventListener('input', () => {
+          this.searchQuery = searchInput.value.toLowerCase().trim();
+          if (searchClear) searchClear.classList.toggle('hidden', !this.searchQuery);
+          this.renderBookGrid();
+        });
+      }
+      if (searchClear) {
+        searchClear.addEventListener('click', () => {
+          if (searchInput) searchInput.value = '';
+          searchClear.classList.add('hidden');
+          this.searchQuery = '';
+          this.renderBookGrid();
+        });
+      }
+
+      // Durum filtre hapları
+      $$('.book-pill-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          this.statusFilter = btn.dataset.status || 'all';
+          $$('.book-pill-btn').forEach(b => b.classList.toggle('active', b === btn));
+          this.renderBookGrid();
+        });
+      });
+
+      // Tür / Kategori filtresi
+      const catFilter = $('#book-category-filter');
+      if (catFilter) {
+        catFilter.addEventListener('change', () => {
+          this.categoryFilter = catFilter.value;
+          this.renderBookGrid();
+        });
+      }
+
+      // Analiz Zaman Aralığı Hapları
+      $$('.analytics-pill-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          this.analyticsRange = btn.dataset.range || 'daily';
+          $$('.analytics-pill-btn').forEach(b => b.classList.toggle('active', b === btn));
+          this.renderAnalytics();
+        });
+      });
+
+      // Modal açma butonları
+      $('#add-book-btn')?.addEventListener('click', () => this.openBookModal());
+      $('#add-book-session-btn')?.addEventListener('click', () => this.openSessionModal());
+      $('#sessions-add-btn')?.addEventListener('click', () => this.openSessionModal());
+      $('#set-book-goals-btn')?.addEventListener('click', () => this.openGoalsModal());
+      $('#quick-edit-goals-btn')?.addEventListener('click', () => this.openGoalsModal());
+
+      // Kitap Formu
+      $('#book-form')?.addEventListener('submit', (e) => {
+        e.preventDefault();
+        this.saveBook();
+      });
+
+      // Kapak resmi okuyucu (Base64)
+      $('#book-cover-input')?.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = (ev) => {
+            const dataInput = $('#book-cover-data');
+            if (dataInput) dataInput.value = ev.target.result;
+          };
+          reader.readAsDataURL(file);
+        }
+      });
+
+      // Oturum Formu
+      $('#book-session-form')?.addEventListener('submit', (e) => {
+        e.preventDefault();
+        this.saveSession();
+      });
+
+      // Oturum sayfa hesaplayıcı
+      const startInput = $('#session-start-page');
+      const endInput = $('#session-end-page');
+      const pagesReadInput = $('#session-pages-read');
+      const bookSelect = $('#session-book-select');
+
+      const updatePagesCalc = () => {
+        const start = parseInt(startInput?.value, 10) || 0;
+        const end = parseInt(endInput?.value, 10) || 0;
+        if (end >= start && pagesReadInput) {
+          pagesReadInput.value = end - start;
+        }
+      };
+
+      startInput?.addEventListener('input', updatePagesCalc);
+      endInput?.addEventListener('input', updatePagesCalc);
+
+      bookSelect?.addEventListener('change', () => {
+        const selectedId = bookSelect.value;
+        const book = this._books.find(b => b.id === selectedId);
+        if (book && startInput && endInput) {
+          const cur = book.currentPage || 0;
+          startInput.value = cur;
+          endInput.value = Math.min(book.totalPages || cur + 20, cur + 20);
+          updatePagesCalc();
+        }
+      });
+
+      // Hedefler Formu
+      $('#book-goals-form')?.addEventListener('submit', (e) => {
+        e.preventDefault();
+        this.saveGoals();
+      });
+    },
+
+    async loadData() {
+      const [books, sessions, goals] = await Promise.all([
+        apiFetch('/books'),
+        apiFetch('/reading/sessions'),
+        apiFetch('/reading/goals')
+      ]);
+      this._books = books || [];
+      this._sessions = sessions || [];
+      this._goals = goals || DEFAULT_READING_GOALS;
+    },
+
+    async render() {
+      await this.loadData();
+      this.renderStats();
+      this.renderGoalsCard();
+      this.renderPillCounts();
+
+      if (this.currentTab === 'library') {
+        this.renderBookGrid();
+      } else if (this.currentTab === 'analytics') {
+        this.renderAnalytics();
+      } else if (this.currentTab === 'sessions') {
+        this.renderSessions();
+      }
+    },
+
+    renderStats() {
+      const totalPages = this._sessions.reduce((acc, s) => acc + (s.pagesRead || 0), 0);
+      const totalMins = this._sessions.reduce((acc, s) => acc + (s.duration || 0), 0);
+      const readingCount = this._books.filter(b => b.status === 'reading').length;
+      const completedCount = this._books.filter(b => b.status === 'completed').length;
+      const activeDays = new Set(this._sessions.map(s => s.date)).size;
+
+      const hours = (totalMins / 60).toFixed(1);
+      const timeStr = totalMins >= 60 ? `${hours} sa` : `${totalMins} dk`;
+
+      const tpEl = $('#stat-book-total-pages');
+      if (tpEl) tpEl.textContent = totalPages.toLocaleString('tr-TR');
+
+      const ttEl = $('#stat-book-total-time');
+      if (ttEl) ttEl.textContent = timeStr;
+
+      const rcEl = $('#stat-book-reading-count');
+      if (rcEl) rcEl.textContent = readingCount;
+
+      const ccEl = $('#stat-book-completed-count');
+      if (ccEl) ccEl.textContent = completedCount;
+
+      const adEl = $('#stat-book-active-days');
+      if (adEl) adEl.textContent = `${activeDays} gün`;
+
+      const sBadge = $('#sessions-count-badge');
+      if (sBadge) sBadge.textContent = this._sessions.length;
+    },
+
+    renderGoalsCard() {
+      const todayStr = formatDateShort(new Date());
+      const mondayStr = formatDateShort(getMonday(new Date()));
+
+      // Bugün okunan
+      const todaySessions = this._sessions.filter(s => s.date === todayStr);
+      const todayPages = todaySessions.reduce((acc, s) => acc + (s.pagesRead || 0), 0);
+      const todayMins = todaySessions.reduce((acc, s) => acc + (s.duration || 0), 0);
+
+      // Bu hafta okunan (Pazartesiden itibaren)
+      const weekSessions = this._sessions.filter(s => (s.date || '') >= mondayStr);
+      const weekPages = weekSessions.reduce((acc, s) => acc + (s.pagesRead || 0), 0);
+
+      const g = this._goals || DEFAULT_READING_GOALS;
+      const dailyPagesGoal = g.dailyPages || 20;
+      const weeklyPagesGoal = g.weeklyPages || 150;
+      const dailyMinsGoal = g.dailyMinutes || 30;
+
+      const dailyPagesPct = Math.min(100, Math.round((todayPages / dailyPagesGoal) * 100));
+      const weeklyPagesPct = Math.min(100, Math.round((weekPages / weeklyPagesGoal) * 100));
+      const dailyMinsPct = Math.min(100, Math.round((todayMins / dailyMinsGoal) * 100));
+
+      const dpText = $('#goal-daily-pages-text');
+      if (dpText) dpText.textContent = `${todayPages} / ${dailyPagesGoal} sayfa (%${dailyPagesPct})`;
+      const dpBar = $('#goal-daily-pages-bar');
+      if (dpBar) dpBar.style.width = `${dailyPagesPct}%`;
+
+      const wpText = $('#goal-weekly-pages-text');
+      if (wpText) wpText.textContent = `${weekPages} / ${weeklyPagesGoal} sayfa (%${weeklyPagesPct})`;
+      const wpBar = $('#goal-weekly-pages-bar');
+      if (wpBar) wpBar.style.width = `${weeklyPagesPct}%`;
+
+      const dtText = $('#goal-daily-time-text');
+      if (dtText) dtText.textContent = `${todayMins} / ${dailyMinsGoal} dk (%${dailyMinsPct})`;
+      const dtBar = $('#goal-daily-time-bar');
+      if (dtBar) dtBar.style.width = `${dailyMinsPct}%`;
+
+      const descEl = $('#book-goals-status-desc');
+      if (descEl) {
+        if (dailyPagesPct >= 100 && weeklyPagesPct >= 100) {
+          descEl.textContent = '🎉 Mükemmel! Bugün ve bu haftaki tüm okuma hedeflerine ulaştın!';
+        } else if (dailyPagesPct >= 100) {
+          descEl.textContent = `🔥 Harika! Bugünkü sayfa hedefine (%100) ulaştın. Haftalık hedefe ${Math.max(0, weeklyPagesGoal - weekPages)} sayfa kaldı.`;
+        } else if (todayPages > 0) {
+          descEl.textContent = `💪 Bugün ${todayPages} sayfa okudun. Günlük hedefine ulaşmak için ${Math.max(0, dailyPagesGoal - todayPages)} sayfa daha oku.`;
+        } else {
+          descEl.textContent = `Bugün henüz okuma yapmadın. Hedefine başlamak için oturum kaydet!`;
+        }
+      }
+    },
+
+    renderPillCounts() {
+      const allCount = this._books.length;
+      const readingCount = this._books.filter(b => b.status === 'reading').length;
+      const toReadCount = this._books.filter(b => b.status === 'to_read').length;
+      const completedCount = this._books.filter(b => b.status === 'completed').length;
+      const onHoldCount = this._books.filter(b => b.status === 'on_hold').length;
+
+      const setVal = (id, val) => {
+        const el = $(id);
+        if (el) el.textContent = val;
+      };
+
+      setVal('#pill-count-all', allCount);
+      setVal('#pill-count-reading', readingCount);
+      setVal('#pill-count-to-read', toReadCount);
+      setVal('#pill-count-completed', completedCount);
+      setVal('#pill-count-on-hold', onHoldCount);
+    },
+
+    renderBookGrid() {
+      const grid = $('#book-grid');
+      if (!grid) return;
+
+      let list = [...this._books];
+
+      // Filtreleme
+      if (this.statusFilter !== 'all') {
+        list = list.filter(b => b.status === this.statusFilter);
+      }
+      if (this.categoryFilter !== 'all') {
+        list = list.filter(b => b.category === this.categoryFilter);
+      }
+      if (this.searchQuery) {
+        const q = this.searchQuery;
+        list = list.filter(b =>
+          (b.title && b.title.toLowerCase().includes(q)) ||
+          (b.author && b.author.toLowerCase().includes(q)) ||
+          (b.category && b.category.toLowerCase().includes(q))
+        );
+      }
+
+      if (this._books.length === 0) {
+        grid.innerHTML = `
+          <div class="empty-state" style="grid-column: 1/-1; padding: 4rem 1rem; text-align: center; color: var(--text-muted);">
+            <div style="font-size:3.5rem; margin-bottom:0.75rem;">📚</div>
+            <p style="font-size:1.25rem; font-weight:700; color:var(--text-primary); margin-bottom:0.35rem;">Kitaplığınız Henüz Boş</p>
+            <p style="font-size:0.95rem; color:var(--text-secondary); max-width:440px; margin:0 auto 1.25rem;">Okuduğunuz veya okumak istediğiniz kitapları ekleyerek kişisel kütüphanenizi oluşturmaya hemen başlayabilirsiniz.</p>
+            <button class="btn btn-primary btn-md" onclick="Books.openBookModal()">+ İlk Kitabını Ekle</button>
+          </div>
+        `;
+        return;
+      }
+
+      if (list.length === 0) {
+        grid.innerHTML = `
+          <div class="empty-state" style="grid-column: 1/-1; padding: 4rem 1rem; text-align: center; color: var(--text-muted);">
+            <div style="font-size:3rem; margin-bottom:0.75rem;">🔍</div>
+            <p style="font-size:1.1rem; font-weight:600; color:var(--text-primary);">Aramanıza uygun kitap bulunamadı</p>
+            <p style="font-size:0.9rem;">Filtreleri değiştirebilir veya yeni bir kitap ekleyebilirsiniz.</p>
+            <button class="btn btn-primary btn-sm" style="margin-top:1rem;" onclick="Books.openBookModal()">+ Yeni Kitap Ekle</button>
+          </div>
+        `;
+        return;
+      }
+
+      const esc = Dashboard.escapeHtml;
+      const statusLabels = {
+        reading: { text: '📖 Okunuyor', cls: 'badge-info' },
+        to_read: { text: '⏳ Okunacak', cls: 'badge-warning' },
+        completed: { text: '✅ Tamamlandı', cls: 'badge-success' },
+        on_hold: { text: '⏸️ Ara Verildi', cls: 'badge-secondary' }
+      };
+
+      grid.innerHTML = list.map(b => {
+        const cur = b.currentPage || 0;
+        const total = b.totalPages || 100;
+        const pct = total > 0 ? Math.min(100, Math.round((cur / total) * 100)) : 0;
+        const st = statusLabels[b.status] || { text: b.status, cls: 'badge-info' };
+
+        // Kapak görseli veya renkli şık kart
+        let coverHtml = '';
+        if (b.coverImage) {
+          coverHtml = `<div class="book-cover-img" style="background-image: url('${b.coverImage}');"></div>`;
+        } else {
+          coverHtml = `
+            <div class="book-cover-placeholder" style="background: linear-gradient(135deg, ${b.coverColor || '#0284C7'}, #0f172a);">
+              <span class="cover-icon">📖</span>
+              <span class="cover-mini-title">${esc(b.title)}</span>
+            </div>
+          `;
+        }
+
+        // Yıldızlar
+        const stars = b.rating > 0 ? '⭐'.repeat(b.rating) : '';
+
+        return `
+          <div class="book-card glass-card" data-id="${b.id}">
+            <div class="book-card-top">
+              ${coverHtml}
+              <div class="book-card-main-info">
+                <div class="book-status-row">
+                  <span class="badge ${st.cls}">${st.text}</span>
+                  <span class="book-cat-tag">${esc(b.category || 'Genel')}</span>
+                </div>
+                <h4 class="book-card-title" title="${esc(b.title)}">${esc(b.title)}</h4>
+                <p class="book-card-author">✍️ ${esc(b.author || 'Bilinmeyen Yazar')}</p>
+                ${stars ? `<div class="book-card-rating">${stars}</div>` : ''}
+              </div>
+            </div>
+
+            <!-- İlerleme Çubuğu -->
+            <div class="book-card-progress-wrap">
+              <div class="book-progress-labels">
+                <span><strong>${cur}</strong> / ${total} sayfa</span>
+                <span class="book-pct-tag">%${pct}</span>
+              </div>
+              <div class="progress-bar">
+                <div class="progress-fill ${pct === 100 ? 'progress-fill-success' : ''}" style="width: ${pct}%;"></div>
+              </div>
+            </div>
+
+            <!-- Kart Altı Aksiyonları -->
+            <div class="book-card-footer">
+              <button type="button" class="btn btn-sm btn-ghost btn-session-quick" data-id="${b.id}" title="Okuma Oturumu Ekle">
+                ⏱️ Oku
+              </button>
+              <button type="button" class="btn btn-sm btn-ghost btn-detail-quick" data-id="${b.id}" title="Detay & İstatistik">
+                ℹ️ Detay
+              </button>
+              <div class="book-card-icons">
+                <button type="button" class="book-action-icon edit-book-btn" data-id="${b.id}" title="Düzenle">✏️</button>
+                <button type="button" class="book-action-icon del-book-btn" data-id="${b.id}" title="Sil">🗑️</button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      this.bindGridEvents();
+    },
+
+    bindGridEvents() {
+      // Hızlı Okuma Oturumu Ekle
+      $$('.btn-session-quick').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          this.openSessionModal(btn.dataset.id);
+        });
+      });
+
+      // Detay Modalı
+      $$('.btn-detail-quick').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          this.openDetailModal(btn.dataset.id);
+        });
+      });
+
+      // Düzenle
+      $$('.edit-book-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          this.openBookModal(btn.dataset.id);
+        });
+      });
+
+      // Sil
+      $$('.del-book-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          const bookId = btn.dataset.id;
+          const book = this._books.find(b => b.id === bookId);
+          confirmAction(`"${book?.title || 'Bu kitap'}" ve ilgili tüm okuma oturumlarını silmek istediğinize emin misiniz?`, async () => {
+            const res = await apiFetch(`/books/${bookId}`, 'DELETE');
+            if (res) {
+              await this.render();
+              showToast('Kitap silindi', 'success');
+            }
+          });
+        });
+      });
+    },
+
+    // ─── Grafikler ve Raporlar (Pure Vanilla Canvas & Heatmap) ───
+    renderAnalytics() {
+      const sessions = [...this._sessions];
+      const range = this.analyticsRange;
+
+      // Döneme göre filtre ve grupla
+      let chartData = [];
+      let totalPages = 0;
+      let totalMins = 0;
+      let daysCount = 14;
+
+      const now = new Date();
+
+      if (range === 'daily') {
+        // Son 14 Gün
+        daysCount = 14;
+        const days = [];
+        for (let i = 13; i >= 0; i--) {
+          const d = new Date(now);
+          d.setDate(d.getDate() - i);
+          const dateStr = formatDateShort(d);
+          const label = `${d.getDate()} ${['Oca','Şub','Mar','Nis','May','Haz','Tem','Ağu','Eyl','Eki','Kas','Ara'][d.getMonth()]}`;
+          days.push({ dateStr, label, pages: 0, mins: 0 });
+        }
+
+        sessions.forEach(s => {
+          const target = days.find(d => d.dateStr === s.date);
+          if (target) {
+            target.pages += (s.pagesRead || 0);
+            target.mins += (s.duration || 0);
+          }
+        });
+
+        chartData = days;
+        totalPages = chartData.reduce((acc, d) => acc + d.pages, 0);
+        totalMins = chartData.reduce((acc, d) => acc + d.mins, 0);
+
+        $('#chart-main-title').textContent = '📊 Günlük Okuma Grafiği (Son 14 Gün)';
+        $('#chart-main-subtitle').textContent = 'Her gün okunan sayfa sayıları';
+      } else if (range === 'weekly') {
+        // Son 8 Hafta
+        daysCount = 56;
+        const weeks = [];
+        for (let i = 7; i >= 0; i--) {
+          const d = new Date(now);
+          d.setDate(d.getDate() - i * 7);
+          const mon = getMonday(d);
+          const monStr = formatDateShort(mon);
+          const endD = new Date(mon);
+          endD.setDate(endD.getDate() + 6);
+          const endStr = formatDateShort(endD);
+          const label = `${mon.getDate()}/${mon.getMonth()+1}`;
+          weeks.push({ monStr, endStr, label, pages: 0, mins: 0 });
+        }
+
+        sessions.forEach(s => {
+          const target = weeks.find(w => s.date >= w.monStr && s.date <= w.endStr);
+          if (target) {
+            target.pages += (s.pagesRead || 0);
+            target.mins += (s.duration || 0);
+          }
+        });
+
+        chartData = weeks;
+        totalPages = chartData.reduce((acc, w) => acc + w.pages, 0);
+        totalMins = chartData.reduce((acc, w) => acc + w.mins, 0);
+
+        $('#chart-main-title').textContent = '📊 Haftalık Okuma Grafiği (Son 8 Hafta)';
+        $('#chart-main-subtitle').textContent = 'Hafta bazında okunan toplam sayfa sayıları';
+      } else if (range === 'monthly') {
+        // Son 6 Ay
+        daysCount = 180;
+        const months = [];
+        for (let i = 5; i >= 0; i--) {
+          const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+          const monthKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+          const label = ['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'][d.getMonth()];
+          months.push({ monthKey, label, pages: 0, mins: 0 });
+        }
+
+        sessions.forEach(s => {
+          if (s.date) {
+            const mKey = s.date.substring(0, 7);
+            const target = months.find(m => m.monthKey === mKey);
+            if (target) {
+              target.pages += (s.pagesRead || 0);
+              target.mins += (s.duration || 0);
+            }
+          }
+        });
+
+        chartData = months;
+        totalPages = chartData.reduce((acc, m) => acc + m.pages, 0);
+        totalMins = chartData.reduce((acc, m) => acc + m.mins, 0);
+
+        $('#chart-main-title').textContent = '📊 Aylık Okuma Grafiği (Son 6 Ay)';
+        $('#chart-main-subtitle').textContent = 'Aylara göre okunan sayfa sayıları';
+      } else {
+        // Tüm Zamanlar / Yıllık
+        daysCount = Math.max(1, new Set(sessions.map(s => s.date)).size);
+        const map = new Map();
+        sessions.forEach(s => {
+          const yr = (s.date || '').substring(0, 4) || '2026';
+          if (!map.has(yr)) map.set(yr, { label: yr, pages: 0, mins: 0 });
+          const cur = map.get(yr);
+          cur.pages += (s.pagesRead || 0);
+          cur.mins += (s.duration || 0);
+        });
+
+        chartData = Array.from(map.values());
+        if (chartData.length === 0) {
+          chartData = [{ label: '2026', pages: 0, mins: 0 }];
+        }
+        totalPages = chartData.reduce((acc, y) => acc + y.pages, 0);
+        totalMins = chartData.reduce((acc, y) => acc + y.mins, 0);
+
+        $('#chart-main-title').textContent = '📊 Genel Okuma Grafiği';
+        $('#chart-main-subtitle').textContent = 'Yıllara göre okuma dağılımı';
+      }
+
+      // Seçili dönem metriklerini güncelle
+      const avgPages = daysCount > 0 ? (totalPages / daysCount).toFixed(1) : 0;
+      const expectedPages = daysCount * (this._goals?.dailyPages || 20);
+      const goalPct = expectedPages > 0 ? Math.min(100, Math.round((totalPages / expectedPages) * 100)) : 0;
+
+      const ppEl = $('#analytics-period-pages');
+      if (ppEl) ppEl.textContent = `${totalPages.toLocaleString('tr-TR')} Sayfa`;
+
+      const ptEl = $('#analytics-period-time');
+      if (ptEl) ptEl.textContent = totalMins >= 60 ? `${(totalMins / 60).toFixed(1)} sa (${totalMins} dk)` : `${totalMins} dk`;
+
+      const paEl = $('#analytics-period-avg-pages');
+      if (paEl) paEl.textContent = `${avgPages} sayfa/gün`;
+
+      const pgEl = $('#analytics-period-goal-pct');
+      if (pgEl) pgEl.textContent = `%${goalPct}`;
+
+      // Çizimler
+      this.drawPagesChart(chartData);
+      this.drawStatusDonut();
+      this.renderHeatmap();
+    },
+
+    drawPagesChart(data) {
+      const canvas = $('#chart-pages-canvas');
+      if (!canvas) return;
+
+      const ctx = canvas.getContext('2d');
+      const w = canvas.width;
+      const h = canvas.height;
+
+      ctx.clearRect(0, 0, w, h);
+
+      if (!data || data.length === 0) return;
+
+      const maxVal = Math.max(...data.map(d => d.pages), 10);
+      const paddingLeft = 45;
+      const paddingBottom = 40;
+      const paddingTop = 25;
+      const paddingRight = 20;
+
+      const chartW = w - paddingLeft - paddingRight;
+      const chartH = h - paddingTop - paddingBottom;
+
+      // Yatay kılavuz çizgileri
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+      ctx.lineWidth = 1;
+      ctx.font = '11px sans-serif';
+      ctx.fillStyle = 'rgba(148, 163, 184, 0.8)';
+      ctx.textAlign = 'right';
+
+      const gridSteps = 4;
+      for (let i = 0; i <= gridSteps; i++) {
+        const yVal = Math.round((maxVal / gridSteps) * i);
+        const yPos = h - paddingBottom - (chartH / gridSteps) * i;
+
+        ctx.beginPath();
+        ctx.moveTo(paddingLeft, yPos);
+        ctx.lineTo(w - paddingRight, yPos);
+        ctx.stroke();
+
+        ctx.fillText(yVal.toString(), paddingLeft - 8, yPos + 4);
+      }
+
+      // Çubuklar
+      const barCount = data.length;
+      const gap = Math.max(6, Math.min(18, chartW / (barCount * 3)));
+      const barWidth = Math.max(12, (chartW - (barCount - 1) * gap) / barCount);
+
+      data.forEach((item, idx) => {
+        const xPos = paddingLeft + idx * (barWidth + gap);
+        const barHeight = maxVal > 0 ? (item.pages / maxVal) * chartH : 0;
+        const yPos = h - paddingBottom - barHeight;
+
+        // Degrade dolgu
+        const grad = ctx.createLinearGradient(0, yPos, 0, h - paddingBottom);
+        grad.addColorStop(0, '#06B6D4');
+        grad.addColorStop(1, '#6366F1');
+
+        ctx.fillStyle = grad;
+
+        // Yuvarlatılmış sütun başı
+        if (barHeight > 4) {
+          ctx.beginPath();
+          const r = Math.min(4, barWidth / 2);
+          ctx.moveTo(xPos + r, yPos);
+          ctx.lineTo(xPos + barWidth - r, yPos);
+          ctx.quadraticCurveTo(xPos + barWidth, yPos, xPos + barWidth, yPos + r);
+          ctx.lineTo(xPos + barWidth, h - paddingBottom);
+          ctx.lineTo(xPos, h - paddingBottom);
+          ctx.lineTo(xPos, yPos + r);
+          ctx.quadraticCurveTo(xPos, yPos, xPos + r, yPos);
+          ctx.closePath();
+          ctx.fill();
+        } else if (barHeight > 0) {
+          ctx.fillRect(xPos, yPos, barWidth, barHeight);
+        }
+
+        // Çubuk üstü değer etiketi
+        if (item.pages > 0) {
+          ctx.fillStyle = '#FFFFFF';
+          ctx.font = '10px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText(item.pages.toString(), xPos + barWidth / 2, yPos - 5);
+        }
+
+        // X ekseni etiketi
+        ctx.fillStyle = 'rgba(148, 163, 184, 0.9)';
+        ctx.font = '10px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(item.label, xPos + barWidth / 2, h - 15);
+      });
+    },
+
+    drawStatusDonut() {
+      const canvas = $('#chart-status-canvas');
+      const legend = $('#chart-status-legend');
+      if (!canvas) return;
+
+      const ctx = canvas.getContext('2d');
+      const w = canvas.width;
+      const h = canvas.height;
+
+      ctx.clearRect(0, 0, w, h);
+
+      const statusMap = {
+        reading: { label: 'Okunuyor', color: '#06B6D4', count: 0 },
+        to_read: { label: 'Okunacak', color: '#F59E0B', count: 0 },
+        completed: { label: 'Tamamlandı', color: '#10B981', count: 0 },
+        on_hold: { label: 'Ara Verildi', color: '#64748B', count: 0 }
+      };
+
+      this._books.forEach(b => {
+        if (statusMap[b.status]) statusMap[b.status].count++;
+      });
+
+      const total = this._books.length;
+      const cx = w / 2;
+      const cy = h / 2;
+      const radius = Math.min(cx, cy) - 25;
+      const innerRadius = radius * 0.58;
+
+      if (total === 0) {
+        // Boş halka
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+        ctx.lineWidth = 24;
+        ctx.beginPath();
+        ctx.arc(cx, cy, radius - 12, 0, Math.PI * 2);
+        ctx.stroke();
+
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+        ctx.font = '13px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('Kitap Yok', cx, cy + 4);
+
+        if (legend) legend.innerHTML = '<span class="text-muted">Henüz kitap eklenmedi</span>';
+        return;
+      }
+
+      let startAngle = -Math.PI / 2;
+      const entries = Object.entries(statusMap);
+
+      entries.forEach(([_, item]) => {
+        if (item.count === 0) return;
+        const sliceAngle = (item.count / total) * Math.PI * 2;
+        const endAngle = startAngle + sliceAngle;
+
+        ctx.beginPath();
+        ctx.arc(cx, cy, radius, startAngle, endAngle);
+        ctx.arc(cx, cy, innerRadius, endAngle, startAngle, true);
+        ctx.closePath();
+        ctx.fillStyle = item.color;
+        ctx.fill();
+
+        startAngle = endAngle;
+      });
+
+      // Ortadaki Metin
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = 'bold 18px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(total.toString(), cx, cy);
+
+      ctx.fillStyle = 'rgba(148, 163, 184, 0.8)';
+      ctx.font = '11px sans-serif';
+      ctx.fillText('Toplam Kitap', cx, cy + 18);
+
+      // Lejant HTML
+      if (legend) {
+        legend.innerHTML = entries.map(([_, item]) => {
+          const pct = Math.round((item.count / total) * 100);
+          return `
+            <div class="donut-legend-item">
+              <span class="legend-color-dot" style="background-color: ${item.color};"></span>
+              <span class="legend-label">${item.label}:</span>
+              <strong>${item.count} (%${pct})</strong>
+            </div>
+          `;
+        }).join('');
+      }
+    },
+
+    renderHeatmap() {
+      const container = $('#reading-heatmap-container');
+      if (!container) return;
+
+      const dateMap = new Map();
+      this._sessions.forEach(s => {
+        if (!s.date) return;
+        if (!dateMap.has(s.date)) dateMap.set(s.date, { pages: 0, mins: 0, count: 0 });
+        const cur = dateMap.get(s.date);
+        cur.pages += (s.pagesRead || 0);
+        cur.mins += (s.duration || 0);
+        cur.count++;
+      });
+
+      // Son 90 gün (bugün dahil geriye doğru)
+      const days = [];
+      const now = new Date();
+      for (let i = 89; i >= 0; i--) {
+        const d = new Date(now);
+        d.setDate(d.getDate() - i);
+        const dateStr = formatDateShort(d);
+        const data = dateMap.get(dateStr) || { pages: 0, mins: 0, count: 0 };
+        days.push({
+          date: d,
+          dateStr,
+          pages: data.pages,
+          mins: data.mins,
+          count: data.count
+        });
+      }
+
+      container.innerHTML = days.map(d => {
+        let level = 0;
+        if (d.pages > 50) level = 4;
+        else if (d.pages > 25) level = 3;
+        else if (d.pages > 10) level = 2;
+        else if (d.pages > 0) level = 1;
+
+        const prettyDate = formatDate(d.date);
+        const tooltip = d.pages > 0
+          ? `${prettyDate}: ${d.pages} sayfa (${d.mins} dk, ${d.count} oturum)`
+          : `${prettyDate}: Okuma yapılmadı`;
+
+        return `
+          <div class="heatmap-cell level-${level}" title="${tooltip}" data-date="${d.dateStr}"></div>
+        `;
+      }).join('');
+    },
+
+    // ─── Okuma Oturumları Geçmişi Listesi ───
+    renderSessions() {
+      const listEl = $('#book-sessions-list');
+      if (!listEl) return;
+
+      const sessions = [...this._sessions].sort((a, b) =>
+        (b.date || '').localeCompare(a.date || '') || (b.timestamp || 0) - (a.timestamp || 0)
+      );
+
+      if (sessions.length === 0) {
+        listEl.innerHTML = `
+          <div class="empty-state" style="padding: 3.5rem 1rem; text-align: center; color: var(--text-muted);">
+            <div style="font-size:3rem; margin-bottom:0.75rem;">⏱️</div>
+            <p style="font-size:1.1rem; font-weight:600; color:var(--text-primary);">Henüz kayıtlı okuma oturumu yok</p>
+            <p style="font-size:0.9rem;">Kitap okudukça sayfa ve süre oturumlarını kaydedebilirsiniz.</p>
+            <button class="btn btn-primary btn-sm" style="margin-top:1rem;" onclick="Books.openSessionModal()">+ İlk Oturumu Ekle</button>
+          </div>
+        `;
+        return;
+      }
+
+      const esc = Dashboard.escapeHtml;
+
+      listEl.innerHTML = sessions.map(s => {
+        let datePretty = s.date;
+        try {
+          const parts = s.date.split('-');
+          datePretty = formatDate(new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10)));
+        } catch (_) {}
+
+        return `
+          <div class="book-session-card glass-card" data-id="${s.id}">
+            <div class="session-card-left">
+              <span class="session-icon">📖</span>
+              <div class="session-main-info">
+                <h4 class="session-book-title">${esc(s.bookTitle || 'Kitap')}</h4>
+                <div class="session-meta-row">
+                  <span class="session-date-tag">📅 ${esc(datePretty)}</span>
+                  <span>•</span>
+                  <span class="session-pages-tag">📄 <strong>${s.pagesRead || 0}</strong> Sayfa (${s.startPage || 0} - ${s.endPage || 0})</span>
+                  <span>•</span>
+                  <span class="session-time-tag">⏱️ <strong>${s.duration || 0}</strong> Dk</span>
+                </div>
+                ${s.notes ? `<p class="session-notes-text">💬 ${esc(s.notes)}</p>` : ''}
+              </div>
+            </div>
+            <div class="session-card-actions">
+              <button type="button" class="btn btn-ghost btn-sm del-session-btn" data-id="${s.id}" title="Oturumu Sil">🗑️</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      $$('.del-session-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const id = btn.dataset.id;
+          confirmAction('Bu okuma oturumunu silmek istediğinize emin misiniz?', async () => {
+            const res = await apiFetch(`/reading/sessions/${id}`, 'DELETE');
+            if (res) {
+              await this.render();
+              showToast('Okuma oturumu silindi', 'success');
+            }
+          });
+        });
+      });
+    },
+
+    // ─── Modallar & CRUD ───
+    openBookModal(editId = null) {
+      const form = $('#book-form');
+      if (!form) return;
+      form.reset();
+
+      const titleEl = $('#book-modal-title');
+      const idInput = $('#book-id');
+      const coverData = $('#book-cover-data');
+      if (coverData) coverData.value = '';
+
+      if (editId) {
+        const book = this._books.find(b => b.id === editId);
+        if (!book) return;
+        if (titleEl) titleEl.textContent = 'Kitabı Düzenle';
+        if (idInput) idInput.value = book.id;
+        $('#book-title').value = book.title || '';
+        $('#book-author').value = book.author || '';
+        $('#book-category').value = book.category || 'Roman / Edebiyat';
+        $('#book-total-pages').value = book.totalPages || 300;
+        $('#book-current-page').value = book.currentPage || 0;
+        $('#book-status').value = book.status || 'reading';
+        $('#book-rating').value = book.rating || 0;
+        $('#book-start-date').value = book.startDate || '';
+        $('#book-finish-date').value = book.finishDate || '';
+        $('#book-notes').value = book.notes || '';
+        if (coverData) coverData.value = book.coverImage || '';
+      } else {
+        if (titleEl) titleEl.textContent = 'Yeni Kitap Ekle';
+        if (idInput) idInput.value = '';
+        $('#book-title').value = '';
+        $('#book-author').value = '';
+        $('#book-category').value = 'Roman / Edebiyat';
+        $('#book-total-pages').value = 300;
+        $('#book-current-page').value = 0;
+        $('#book-status').value = 'to_read';
+        $('#book-rating').value = 0;
+        $('#book-start-date').value = formatDateShort(new Date());
+        $('#book-finish-date').value = '';
+        $('#book-notes').value = '';
+      }
+
+      openModal('book-modal');
+    },
+
+    async saveBook() {
+      const id = $('#book-id').value;
+      const title = $('#book-title').value.trim();
+      const author = $('#book-author').value.trim();
+      const category = $('#book-category').value;
+      const totalPages = parseInt($('#book-total-pages').value, 10) || 100;
+      const currentPage = parseInt($('#book-current-page').value, 10) || 0;
+      const status = $('#book-status').value;
+      const rating = parseInt($('#book-rating').value, 10) || 0;
+      const startDate = $('#book-start-date').value;
+      const finishDate = $('#book-finish-date').value;
+      const notes = $('#book-notes').value.trim();
+      const coverImage = $('#book-cover-data')?.value || '';
+
+      if (!title) {
+        showToast('Lütfen kitap adını girin', 'error');
+        return;
+      }
+
+      const bookData = {
+        title,
+        author: author || 'Bilinmeyen Yazar',
+        category,
+        totalPages,
+        currentPage,
+        status,
+        rating,
+        startDate,
+        finishDate,
+        notes,
+        coverImage,
+        coverColor: ['#0284C7', '#8B5CF6', '#10B981', '#F59E0B', '#EC4899'][Math.floor(Math.random() * 5)]
+      };
+
+      if (id) {
+        await apiFetch(`/books/${id}`, 'PUT', bookData);
+        showToast('Kitap güncellendi ✓', 'success');
+      } else {
+        await apiFetch('/books', 'POST', bookData);
+        showToast('Yeni kitap eklendi 📚', 'success');
+      }
+
+      closeModal('book-modal');
+      await this.render();
+    },
+
+    openSessionModal(preselectedBookId = null) {
+      const form = $('#book-session-form');
+      if (!form) return;
+      form.reset();
+
+      const select = $('#session-book-select');
+      if (select) {
+        if (this._books.length === 0) {
+          select.innerHTML = '<option value="">Önce bir kitap eklemelisiniz</option>';
+        } else {
+          select.innerHTML = this._books.map(b => `
+            <option value="${b.id}" ${b.id === preselectedBookId ? 'selected' : ''}>
+              ${Dashboard.escapeHtml(b.title)} (${b.currentPage || 0}/${b.totalPages || 0} sayfa)
+            </option>
+          `).join('');
+        }
+      }
+
+      $('#session-date').value = formatDateShort(new Date());
+      $('#session-duration').value = 30;
+
+      // Başlangıç ve bitiş sayfalarını seçili kitaptan al
+      const activeBookId = preselectedBookId || (select ? select.value : null);
+      const activeBook = this._books.find(b => b.id === activeBookId);
+      if (activeBook) {
+        const cur = activeBook.currentPage || 0;
+        $('#session-start-page').value = cur;
+        $('#session-end-page').value = Math.min(activeBook.totalPages || cur + 20, cur + 20);
+        $('#session-pages-read').value = Math.max(1, Math.min(activeBook.totalPages || cur + 20, cur + 20) - cur);
+      } else {
+        $('#session-start-page').value = 0;
+        $('#session-end-page').value = 20;
+        $('#session-pages-read').value = 20;
+      }
+
+      openModal('book-session-modal');
+    },
+
+    async saveSession() {
+      const bookId = $('#session-book-select').value;
+      const date = $('#session-date').value || formatDateShort(new Date());
+      const duration = parseInt($('#session-duration').value, 10) || 20;
+      const startPage = parseInt($('#session-start-page').value, 10) || 0;
+      const endPage = parseInt($('#session-end-page').value, 10) || 0;
+      const pagesRead = parseInt($('#session-pages-read').value, 10) || Math.max(1, endPage - startPage);
+      const notes = $('#session-notes').value.trim();
+
+      if (!bookId) {
+        showToast('Lütfen bir kitap seçin', 'error');
+        return;
+      }
+
+      const book = this._books.find(b => b.id === bookId);
+      const bookTitle = book ? book.title : 'Kitap';
+
+      const sessionData = {
+        bookId,
+        bookTitle,
+        date,
+        duration,
+        startPage,
+        endPage,
+        pagesRead,
+        notes
+      };
+
+      await apiFetch('/reading/sessions', 'POST', sessionData);
+      closeModal('book-session-modal');
+      await this.render();
+      showToast(`⏱️ ${pagesRead} sayfa okuma oturumu kaydedildi!`, 'success');
+    },
+
+    openGoalsModal() {
+      const g = this._goals || DEFAULT_READING_GOALS;
+      $('#goal-daily-pages-input').value = g.dailyPages || 20;
+      $('#goal-weekly-pages-input').value = g.weeklyPages || 150;
+      $('#goal-daily-minutes-input').value = g.dailyMinutes || 30;
+      openModal('book-goals-modal');
+    },
+
+    async saveGoals() {
+      const dailyPages = parseInt($('#goal-daily-pages-input').value, 10) || 20;
+      const weeklyPages = parseInt($('#goal-weekly-pages-input').value, 10) || 150;
+      const dailyMinutes = parseInt($('#goal-daily-minutes-input').value, 10) || 30;
+
+      await apiFetch('/reading/goals', 'POST', { dailyPages, weeklyPages, dailyMinutes });
+      closeModal('book-goals-modal');
+      await this.render();
+      showToast('Okuma hedefleri güncellendi 🎯', 'success');
+    },
+
+    openDetailModal(bookId) {
+      const book = this._books.find(b => b.id === bookId);
+      if (!book) return;
+
+      const bodyEl = $('#book-detail-modal-body');
+      if (!bodyEl) return;
+
+      const bookSessions = this._sessions.filter(s => s.bookId === bookId);
+      const totalPagesRead = bookSessions.reduce((acc, s) => acc + (s.pagesRead || 0), 0);
+      const totalTimeMins = bookSessions.reduce((acc, s) => acc + (s.duration || 0), 0);
+      const activeDays = new Set(bookSessions.map(s => s.date)).size;
+
+      // Takvim günleri (başlama ve bitiş veya bugün arası)
+      let calendarDays = '—';
+      if (book.startDate) {
+        const start = new Date(book.startDate);
+        const end = book.finishDate ? new Date(book.finishDate) : new Date();
+        const diffTime = Math.max(0, end - start);
+        calendarDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+      }
+
+      const avgSpeed = activeDays > 0 ? (totalPagesRead / activeDays).toFixed(1) : 0;
+      const cur = book.currentPage || 0;
+      const total = book.totalPages || 100;
+      const pct = total > 0 ? Math.min(100, Math.round((cur / total) * 100)) : 0;
+
+      const esc = Dashboard.escapeHtml;
+
+      bodyEl.innerHTML = `
+        <div class="book-detail-header">
+          <div class="book-detail-cover">
+            ${book.coverImage
+              ? `<div class="detail-cover-img" style="background-image: url('${book.coverImage}');"></div>`
+              : `<div class="detail-cover-ph" style="background: linear-gradient(135deg, ${book.coverColor || '#0284C7'}, #0f172a);">📖</div>`
+            }
+          </div>
+          <div class="book-detail-info">
+            <h3>${esc(book.title)}</h3>
+            <p class="text-muted">✍️ ${esc(book.author)} • 🏷️ ${esc(book.category)}</p>
+            <div style="margin: 0.5rem 0;">
+              ${book.rating > 0 ? `<span style="font-size:1.1rem;">${'⭐'.repeat(book.rating)}</span>` : '<span class="text-muted">Puanlanmadı</span>'}
+            </div>
+            <div class="book-detail-dates">
+              <span>📅 <strong>Başlama:</strong> ${esc(book.startDate || 'Belirtilmedi')}</span>
+              <span>🏁 <strong>Bitiş:</strong> ${esc(book.finishDate || (book.status === 'completed' ? 'Tamamlandı' : 'Devam Ediyor'))}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- İlerleme Özeti -->
+        <div class="detail-metrics-grid">
+          <div class="detail-metric-card">
+            <span class="dm-val text-primary">%${pct}</span>
+            <span class="dm-lbl">Tamamlanma Oranı</span>
+          </div>
+          <div class="detail-metric-card">
+            <span class="dm-val">${cur} / ${total}</span>
+            <span class="dm-lbl">Okunan / Toplam Sayfa</span>
+          </div>
+          <div class="detail-metric-card">
+            <span class="dm-val text-success">${activeDays} Gün</span>
+            <span class="dm-lbl">Aktif Okuma Günü</span>
+          </div>
+          <div class="detail-metric-card">
+            <span class="dm-val text-warning">${calendarDays} Gün</span>
+            <span class="dm-lbl">Takvim Süresi</span>
+          </div>
+          <div class="detail-metric-card">
+            <span class="dm-val">${(totalTimeMins / 60).toFixed(1)} sa</span>
+            <span class="dm-lbl">Toplam Okuma Süresi</span>
+          </div>
+          <div class="detail-metric-card">
+            <span class="dm-val">${avgSpeed}</span>
+            <span class="dm-lbl">Sayfa / Aktif Gün Hızı</span>
+          </div>
+        </div>
+
+        ${book.notes ? `
+          <div class="book-detail-notes-box glass-card">
+            <strong>📝 Notlar ve Değerlendirme:</strong>
+            <p style="margin-top:0.35rem; color:var(--text-secondary);">${esc(book.notes)}</p>
+          </div>
+        ` : ''}
+
+        <!-- Bu Kitaba Ait Oturumlar -->
+        <div class="book-detail-sessions-wrap">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
+            <strong>⏱️ Okuma Oturumları (${bookSessions.length})</strong>
+            <button class="btn btn-sm btn-primary" onclick="closeModal('book-detail-modal'); Books.openSessionModal('${book.id}')">+ Yeni Oturum</button>
+          </div>
+          ${bookSessions.length === 0
+            ? '<p class="text-muted" style="font-size:0.85rem;">Bu kitap için henüz oturum kaydedilmemiş.</p>'
+            : `<div class="detail-sessions-mini-list">
+                ${bookSessions.map(s => `
+                  <div class="mini-session-row">
+                    <span>📅 ${esc(s.date)}</span>
+                    <span>📄 +${s.pagesRead} sayfa (${s.startPage} - ${s.endPage})</span>
+                    <span>⏱️ ${s.duration} dk</span>
+                    ${s.notes ? `<small class="text-muted">"${esc(s.notes)}"</small>` : ''}
+                  </div>
+                `).join('')}
+              </div>`
+          }
+        </div>
+      `;
+
+      openModal('book-detail-modal');
     }
   };
 
@@ -2988,6 +4855,7 @@
     navigateTo(page) { Nav.goTo(page); },
     pomodoro: Pomodoro,
     workout: Workout,
+    books: Books,
   };
 
   // Motivasyon yenile butonu
@@ -3002,6 +4870,7 @@
     Attendance.init();
     Goals.init();
     Notebook.init();
+    Books.init();
     Pomodoro.init();
     QuickNotes.init();
     Settings.init();
@@ -3016,6 +4885,7 @@
       Goals.render(),
       Attendance.render(),
       Workout.render(),
+      Books.render(),
     ]);
     Pomodoro.updateDisplay();
     await Dashboard.refresh();

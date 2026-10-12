@@ -3644,3 +3644,871 @@ input, textarea, select, button {
   .goal-item-actions { opacity: 1; }
   .task-card-actions button { min-height: 38px; padding: 0.4rem 0.75rem; }
 }
+
+/* ═══════════════════════════════════════════════════════
+   SPOR PROGRAMI – DİNLENME SAYACI & SET TAKİBİ
+   ═══════════════════════════════════════════════════════ */
+
+/* Dinlenme Sayacı Kartı (Üst Bildirim / Bar) */
+.workout-rest-card {
+  padding: 1.1rem 1.4rem;
+  margin-bottom: 1.4rem;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(240, 249, 255, 0.95));
+  border: 2px solid var(--accent-turquoise-dark, #0284C7);
+  box-shadow: 0 10px 25px rgba(2, 132, 199, 0.18), 0 0 1px rgba(2, 132, 199, 0.5);
+  border-radius: var(--radius);
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.workout-rest-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.2rem;
+  flex-wrap: wrap;
+}
+
+.workout-rest-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  min-width: 220px;
+}
+
+.workout-rest-icon {
+  font-size: 2rem;
+  display: inline-block;
+}
+
+.workout-rest-icon.pulse {
+  animation: timerPulse 1.5s infinite ease-in-out;
+}
+
+@keyframes timerPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.15); filter: drop-shadow(0 0 8px rgba(2, 132, 199, 0.6)); }
+  100% { transform: scale(1); }
+}
+
+.workout-rest-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.workout-rest-title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.workout-rest-title-row strong {
+  font-size: 1.05rem;
+  color: var(--text-primary);
+}
+
+.workout-rest-sub {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.workout-rest-clock-box {
+  background: #0F172A;
+  color: #38BDF8;
+  padding: 0.4rem 1.2rem;
+  border-radius: var(--radius-xs);
+  font-family: 'Outfit', monospace, sans-serif;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4);
+}
+
+.workout-rest-time {
+  font-size: 2.1rem;
+  font-weight: 800;
+  letter-spacing: 2px;
+  line-height: 1.1;
+}
+
+.workout-rest-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+/* Egzersiz Kartı Set Butonları */
+.workout-card-sets-wrap {
+  margin-top: 0.85rem;
+  padding-top: 0.75rem;
+  border-top: 1px dashed var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.workout-sets-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.workout-sets-pills {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.workout-set-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.65rem;
+  background: var(--bg-box);
+  border: 1.5px solid var(--border);
+  border-radius: 20px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.workout-set-btn:hover {
+  background: #E0F2FE;
+  border-color: #38BDF8;
+  color: #0369A1;
+  transform: translateY(-1px);
+}
+
+.workout-set-btn.is-set-done {
+  background: #ECFDF5;
+  border-color: #10B981;
+  color: #047857;
+}
+
+.workout-set-btn.is-set-done .set-dot {
+  background: #10B981;
+  color: white;
+}
+
+.workout-set-btn.is-last-set {
+  border-style: solid;
+}
+
+.workout-set-btn.active-timer {
+  animation: borderFlash 1s infinite alternate;
+  box-shadow: 0 0 10px rgba(2, 132, 199, 0.4);
+}
+
+@keyframes borderFlash {
+  from { border-color: #0284C7; }
+  to { border-color: #F59E0B; }
+}
+
+.set-dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #CBD5E1;
+  color: #475569;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.65rem;
+  font-weight: 800;
+}
+
+.prev-weight-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.74rem;
+  padding: 0.15rem 0.5rem;
+  background: #FEF3C7;
+  color: #92400E;
+  border-radius: 6px;
+  font-weight: 600;
+}
+
+/* Geçmiş Antrenmanlar Modalı */
+.workout-history-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.workout-history-subbar {
+  font-size: 0.9rem;
+}
+
+.workout-history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  max-height: 60vh;
+  overflow-y: auto;
+  padding-right: 0.3rem;
+}
+
+.history-day-card {
+  padding: 1rem;
+  background: var(--bg-box);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xs);
+}
+
+.history-day-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.4rem;
+}
+
+.history-day-date {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.history-items-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 0.6rem;
+}
+
+.history-item-chip {
+  padding: 0.5rem 0.75rem;
+  background: #FFFFFF;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 0.82rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+/* ═══════════════════════════════════════════════════════
+   KİTAPLIĞIM & OKUMA TAKİBİ
+   ═══════════════════════════════════════════════════════ */
+
+.books-header-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.books-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.books-stats-grid {
+  grid-template-columns: repeat(5, 1fr);
+  margin-bottom: 1.5rem;
+}
+
+@media (max-width: 1024px) {
+  .books-stats-grid { grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 640px) {
+  .books-stats-grid { grid-template-columns: 1fr 1fr; }
+}
+
+/* Okuma Hedefleri Kartı */
+.book-goals-card {
+  padding: 1.3rem 1.6rem;
+  margin-bottom: 1.8rem;
+  background: #FFFFFF;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.book-goals-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.2rem;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+}
+
+.book-goals-title-box {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+.book-goals-icon {
+  font-size: 1.6rem;
+}
+
+.book-goals-sub {
+  display: block;
+  font-size: 0.84rem;
+  color: var(--text-secondary);
+}
+
+.book-goals-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.4rem;
+}
+
+@media (max-width: 768px) {
+  .book-goals-grid { grid-template-columns: 1fr; gap: 0.9rem; }
+}
+
+.book-goal-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.goal-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  color: var(--text-primary);
+}
+
+/* Sekme Butonları */
+.books-nav-tabs {
+  display: flex;
+  gap: 0.6rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 0.6rem;
+  overflow-x: auto;
+}
+
+.book-tab-btn {
+  background: transparent;
+  border: none;
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  padding: 0.55rem 1.1rem;
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.book-tab-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.book-tab-btn.active {
+  background: #0284C7;
+  color: #FFFFFF;
+  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.25);
+}
+
+.book-tab-content {
+  display: none;
+}
+
+.book-tab-content.active {
+  display: block;
+  animation: fadeIn 0.25s ease-out;
+}
+
+/* Arama ve Filtre Çubuğu */
+.books-filter-bar {
+  padding: 1rem 1.4rem;
+  margin-bottom: 1.5rem;
+  background: #FFFFFF;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.books-search-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.books-search-icon {
+  position: absolute;
+  left: 0.9rem;
+  font-size: 1rem;
+  color: var(--text-muted);
+}
+
+.books-search-wrap input {
+  width: 100%;
+  padding: 0.65rem 2.4rem 0.65rem 2.5rem;
+  background: var(--bg-box);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xs);
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.books-search-wrap input:focus {
+  border-color: #0284C7;
+  background: #FFFFFF;
+}
+
+.books-filter-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.books-status-pills {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.book-pill-btn {
+  background: var(--bg-box);
+  border: 1px solid var(--border);
+  padding: 0.35rem 0.8rem;
+  border-radius: 20px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.book-pill-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.book-pill-btn.active {
+  background: #0F172A;
+  color: #FFFFFF;
+  border-color: #0F172A;
+}
+
+/* Kitap Kartları Grid'i */
+.book-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+  gap: 1.4rem;
+}
+
+.book-card {
+  background: #FFFFFF;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s ease, border-color 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.book-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+  border-color: #BAE6FD;
+}
+
+.book-card-top {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 0.9rem;
+}
+
+/* Kapak Alanı */
+.book-cover-box {
+  width: 78px;
+  height: 110px;
+  border-radius: 8px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+  color: white;
+  text-align: center;
+  padding: 0.4rem;
+}
+
+.book-cover-box.default-cover {
+  background: linear-gradient(135deg, #3B82F6, #1E3A8A);
+}
+
+.book-cover-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.book-cover-icon {
+  font-size: 1.8rem;
+  margin-bottom: 0.2rem;
+}
+
+.book-cover-title-preview {
+  font-size: 0.65rem;
+  font-weight: 700;
+  line-height: 1.1;
+  max-height: 2.2em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.book-meta {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 0.25rem;
+}
+
+.book-title-text {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  line-height: 1.25;
+  margin: 0;
+  word-break: break-word;
+}
+
+.book-author-text {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.book-category-tag {
+  display: inline-block;
+  align-self: flex-start;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.15rem 0.5rem;
+  border-radius: 6px;
+  background: #F1F5F9;
+  color: #475569;
+  margin-top: 0.2rem;
+}
+
+.book-rating-stars {
+  font-size: 0.85rem;
+  margin-top: 0.2rem;
+  color: #F59E0B;
+}
+
+.book-progress-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin: 0.75rem 0;
+  padding: 0.65rem 0.8rem;
+  background: var(--bg-box);
+  border-radius: var(--radius-xs);
+}
+
+.book-pages-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.82rem;
+}
+
+.book-days-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.76rem;
+  color: var(--text-muted);
+}
+
+.book-card-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border);
+}
+
+.book-card-btns-left {
+  display: flex;
+  gap: 0.4rem;
+}
+
+/* Durum Rozetleri */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.2rem 0.6rem;
+  border-radius: 12px;
+}
+.status-badge.reading { background: #E0F2FE; color: #0284C7; }
+.status-badge.to_read { background: #FEF3C7; color: #B45309; }
+.status-badge.completed { background: #ECFDF5; color: #059669; }
+.status-badge.on_hold { background: #F1F5F9; color: #64748B; }
+
+/* ─── Analiz & Grafikler Görünümü ─── */
+.analytics-time-bar {
+  padding: 0.85rem 1.3rem;
+  margin-bottom: 1.2rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.analytics-time-pills {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.analytics-pill-btn {
+  background: var(--bg-box);
+  border: 1px solid var(--border);
+  padding: 0.35rem 0.85rem;
+  border-radius: 20px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.analytics-pill-btn.active {
+  background: #0284C7;
+  color: white;
+  border-color: #0284C7;
+}
+
+.analytics-period-summary {
+  padding: 0.9rem 1.4rem;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+  flex-wrap: wrap;
+  font-size: 0.9rem;
+}
+
+.period-stat {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.charts-grid {
+  display: grid;
+  grid-template-columns: 1.6fr 1.2fr;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+@media (max-width: 900px) {
+  .charts-grid { grid-template-columns: 1fr; }
+}
+
+.chart-card {
+  padding: 1.3rem 1.5rem;
+  background: #FFFFFF;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1.1rem;
+}
+
+.chart-canvas-wrap {
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+.chart-canvas-donut-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.donut-legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.8rem;
+  font-size: 0.82rem;
+}
+
+.donut-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.donut-legend-color {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+}
+
+/* Okuma Alışkanlığı Takvimi (Heatmap) */
+.heatmap-card {
+  margin-bottom: 1.5rem;
+}
+
+.reading-heatmap-container {
+  overflow-x: auto;
+  padding: 0.5rem 0;
+}
+
+.heatmap-grid {
+  display: grid;
+  grid-auto-flow: column;
+  grid-template-rows: repeat(7, 16px);
+  gap: 4px;
+  width: max-content;
+}
+
+.heatmap-cell {
+  width: 16px;
+  height: 16px;
+  border-radius: 3px;
+  background: #F1F5F9;
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+
+.heatmap-cell:hover {
+  transform: scale(1.25);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.heatmap-cell.level-0 { background: #F1F5F9; }
+.heatmap-cell.level-1 { background: #BAE6FD; }
+.heatmap-cell.level-2 { background: #38BDF8; }
+.heatmap-cell.level-3 { background: #0284C7; }
+.heatmap-cell.level-4 { background: #0369A1; }
+
+.heatmap-legend {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+/* ─── Okuma Oturumları Listesi ─── */
+.sessions-header-card {
+  padding: 1.1rem 1.4rem;
+  margin-bottom: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+}
+
+.book-sessions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.session-item-card {
+  padding: 0.9rem 1.2rem;
+  background: #FFFFFF;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xs);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.session-item-card:hover {
+  transform: translateX(3px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+}
+
+.session-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.session-item-book {
+  font-weight: 700;
+  color: var(--text-primary);
+  font-size: 0.95rem;
+}
+
+.session-item-stats {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+}
+
+.session-item-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+/* Kitap Detay Modalı */
+.book-detail-grid {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+@media (max-width: 600px) {
+  .book-detail-grid { grid-template-columns: 1fr; }
+}
+
+.book-detail-stats-matrix {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.8rem;
+  margin-top: 1rem;
+}
+
