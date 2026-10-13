@@ -4500,98 +4500,186 @@
   };
 
   // ═══════════════════════════════════════════════════════
-  // NOT DEFTERİ
+  // SADE & FERAH NOT DEFTERİ (MINIMAL ZEN NOTES)
   // ═══════════════════════════════════════════════════════
-
-  const NOTE_TAGS = {
-    exam:      { label: 'Sınavda Çıkabilir', emoji: '🎯' },
-    important: { label: 'Önemli',            emoji: '⭐' },
-    review:    { label: 'Tekrar Çalış',      emoji: '🔄' },
-    general:   { label: 'Genel',             emoji: '💡' },
-  };
 
   const Notebook = {
     activeNoteId: null,
     autoSaveTimer: null,
     _notes: [],
-    selectedCourse: 'all',   // 'all' | courseId
-    quickTag: 'exam',
-    tagFilter: 'all',
+    activeFilter: 'all', // 'all' | 'exam' | 'important' | 'review' | 'general'
     searchText: '',
+    currentTag: 'general',
 
     init() {
-      $('#add-note-btn').addEventListener('click', () => this.createNote());
+      // 1. Yeni Not Butonları
+      $('#zen-new-btn')?.addEventListener('click', () => this.createNewNote());
+      $('#zen-empty-new-btn')?.addEventListener('click', () => this.createNewNote());
 
-      // Hızlı not etiket seçici
-      $$('#qln-tag-picker .qln-tag-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          this.quickTag = btn.dataset.tag;
-          $$('#qln-tag-picker .qln-tag-btn').forEach(b => b.classList.toggle('active', b === btn));
-        });
-      });
-
-      // Hızlı not formu
-      $('#quick-lecture-note-form').addEventListener('submit', (e) => {
-        e.preventDefault();
-        this.addQuickLectureNote();
-      });
-
-      // Ders seçimi (select) -> hap seçimini senkronla
-      $('#qln-course-select').addEventListener('change', (e) => {
-        this.selectCourse(e.target.value, false);
-      });
-
-      // Arama
-      const search = $('#notebook-search-input');
-      const clearBtn = $('#notebook-search-clear');
-      search.addEventListener('input', () => {
-        this.searchText = search.value.trim().toLocaleLowerCase('tr-TR');
-        clearBtn.classList.toggle('hidden', !search.value);
-        this.renderList();
-      });
-      clearBtn.addEventListener('click', () => {
-        search.value = '';
-        this.searchText = '';
-        clearBtn.classList.add('hidden');
-        this.renderList();
-        search.focus();
-      });
-
-      // Etiket filtreleri
-      $$('#notebook-tag-filter-pills .nb-filter-pill').forEach(pill => {
-        pill.addEventListener('click', () => {
-          this.tagFilter = pill.dataset.filter;
-          $$('#notebook-tag-filter-pills .nb-filter-pill').forEach(p => p.classList.toggle('active', p === pill));
+      // 2. Arama ve Temizle
+      const searchIn = $('#zen-search-input');
+      const searchClear = $('#zen-search-clear');
+      if (searchIn) {
+        searchIn.addEventListener('input', () => {
+          this.searchText = searchIn.value.trim().toLocaleLowerCase('tr-TR');
+          searchClear?.classList.toggle('hidden', !searchIn.value);
           this.renderList();
         });
+      }
+      if (searchClear) {
+        searchClear.addEventListener('click', () => {
+          if (searchIn) {
+            searchIn.value = '';
+            searchIn.focus();
+          }
+          this.searchText = '';
+          searchClear.classList.add('hidden');
+          this.renderList();
+        });
+      }
+
+      // 3. Filtre Hapları
+      $('#zen-filter-pills')?.addEventListener('click', (e) => {
+        const pill = e.target.closest('.zen-pill');
+        if (!pill) return;
+        $$('#zen-filter-pills .zen-pill').forEach(p => p.classList.toggle('active', p === pill));
+        this.activeFilter = pill.dataset.filter || 'all';
+        this.renderList();
       });
 
-      // İstatistik rozetleri -> hızlı filtre
-      [['#stat-nb-exam', 'exam'], ['#stat-nb-important', 'important'], ['#stat-nb-review', 'review']].forEach(([sel, tag]) => {
-        const el = $(sel);
-        if (!el) return;
-        el.style.cursor = 'pointer';
-        el.addEventListener('click', () => {
-          const pill = $(`#notebook-tag-filter-pills .nb-filter-pill[data-filter="${tag}"]`);
-          if (pill) pill.click();
+      // 4. Mobil Geri Butonu
+      $('#zen-back-btn')?.addEventListener('click', () => {
+        this.setMobileView('list');
+      });
+
+      // 5. Etiket Seçici (Editör Üstü)
+      $('#zen-tag-selector')?.addEventListener('click', (e) => {
+        const btn = e.target.closest('.zen-tag-btn');
+        if (!btn) return;
+        this.selectTag(btn.dataset.tag);
+        this.triggerAutoSave(200);
+      });
+
+      // 6. Ders Seçici
+      $('#zen-edit-course')?.addEventListener('change', () => {
+        this.triggerAutoSave(200);
+      });
+
+      // 7. Not Alanları (Başlık ve Gövde) + Otomatik Kaydetme
+      const titleInput = $('#zen-note-title');
+      const bodyInput = $('#zen-note-content');
+
+      titleInput?.addEventListener('input', () => {
+        this.markDirty();
+        this.triggerAutoSave();
+      });
+
+      bodyInput?.addEventListener('input', () => {
+        this.markDirty();
+        this.updateWordCount();
+        this.triggerAutoSave();
+      });
+
+      // 8. Manuel Kaydet & Sil & Göreve Aktar
+      $('#zen-save-btn')?.addEventListener('click', async () => {
+        const titleVal = ($('#zen-note-title')?.value || '').trim();
+        const contentVal = ($('#zen-note-content')?.value || '').trim();
+
+        // Eğer not tamamen boşsa kullanıcıyı uyarıp başlığa odaklan
+        if (!titleVal && !contentVal) {
+          showToast('Not zaten boş, yazmaya başlayabilirsiniz ✨', 'info');
+          $('#zen-note-title')?.focus();
+          return;
+        }
+
+        const saved = await this.saveActiveNote();
+        if (saved) {
+          showToast('Not kaydedildi ✓ Yeni nota geçildi ✨', 'success');
+          await this.createNewNote();
+        }
+      });
+
+      $('#zen-del-btn')?.addEventListener('click', () => {
+        if (!this.activeNoteId) return;
+        confirmAction('Bu notu silmek istediğinize emin misiniz?', async () => {
+          await this.deleteNote(this.activeNoteId);
         });
       });
 
-      // Ctrl + S
-      document.addEventListener('keydown', (e) => {
+      $('#zen-to-task-btn')?.addEventListener('click', async () => {
+        await this.saveActiveNote();
+        const note = this._notes.find(n => n.id === this.activeNoteId);
+        if (note) await this.syncNoteToTask(note, true);
+      });
+
+      // Ctrl + S Kısayolu (Kaydet ve Yeni Nota Geç)
+      document.addEventListener('keydown', async (e) => {
         if ((e.ctrlKey || e.metaKey) && e.key === 's') {
-          e.preventDefault();
-          if (this.activeNoteId && Nav.current === 'notebook') {
-            this.saveActiveNote();
-            showToast('Not kaydedildi ✓', 'success');
+          if (Nav.current === 'notebook' && this.activeNoteId) {
+            e.preventDefault();
+            const titleVal = ($('#zen-note-title')?.value || '').trim();
+            const contentVal = ($('#zen-note-content')?.value || '').trim();
+            if (!titleVal && !contentVal) {
+              showToast('Not zaten boş', 'info');
+              $('#zen-note-title')?.focus();
+              return;
+            }
+            const saved = await this.saveActiveNote();
+            if (saved) {
+              showToast('Not kaydedildi ✓ Yeni nota geçildi ✨', 'success');
+              await this.createNewNote();
+            }
           }
         }
       });
     },
 
-    async loadNotes() { this._notes = (await apiFetch('/notes')) || []; },
+    setMobileView(view) {
+      const container = $('#zen-container');
+      if (container) container.dataset.mobileView = view;
+    },
 
-    // ─── Ders listesi (Devamsızlık modülündeki dersler) ───
+    markDirty() {
+      const tag = $('#zen-save-tag');
+      if (tag) {
+        tag.textContent = 'Yazılıyor...';
+        tag.classList.add('dirty');
+      }
+    },
+
+    markSaved() {
+      const tag = $('#zen-save-tag');
+      if (tag) {
+        tag.textContent = 'Kaydedildi ✓';
+        tag.classList.remove('dirty');
+      }
+    },
+
+    triggerAutoSave(delay = 800) {
+      clearTimeout(this.autoSaveTimer);
+      this.autoSaveTimer = setTimeout(() => {
+        this.saveActiveNote();
+      }, delay);
+    },
+
+    updateWordCount() {
+      const content = $('#zen-note-content')?.value || '';
+      const words = content.trim() ? content.trim().split(/\s+/).length : 0;
+      const countEl = $('#zen-word-count');
+      if (countEl) countEl.textContent = `${words} kelime`;
+    },
+
+    selectTag(tag) {
+      this.currentTag = tag || 'general';
+      $$('#zen-tag-selector .zen-tag-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.tag === this.currentTag);
+      });
+    },
+
+    async loadNotes() {
+      this._notes = (await apiFetch('/notes')) || [];
+    },
+
     async getCourses() {
       if (!Attendance.getCourses() || Attendance.getCourses().length === 0) {
         await Attendance.loadData();
@@ -4599,384 +4687,285 @@
       return Attendance.getCourses() || [];
     },
 
-    shortName(c) {
+    shortCourseName(c) {
       if (!c) return 'Genel';
-      return (c.code || '').split('[')[0].trim() || c.name;
+      return (c.code || '').split('[')[0].trim() || c.name || 'Genel';
     },
 
     async render() {
       await Promise.all([this.loadNotes(), this.getCourses()]);
-      this.renderCourseControls();
-      this.renderStats();
+      this.renderCourseSelect();
       this.renderList();
 
-      if (this.activeNoteId) {
-        const note = this._notes.find(n => n.id === this.activeNoteId);
-        if (note) this.showEditor(note);
-        else { this.activeNoteId = null; this.showEmptyEditor(); }
+      // Aktif not seçiliyse editörü doldur, değilse listedeki ilk notu seç veya boş bırak
+      if (this.activeNoteId && this._notes.some(n => n.id === this.activeNoteId)) {
+        const cur = this._notes.find(n => n.id === this.activeNoteId);
+        this.openEditor(cur, false);
+      } else if (this._notes.length > 0 && window.innerWidth > 800) {
+        this.openEditor(this._notes[0], false);
       } else {
-        this.showEmptyEditor();
+        this.closeEditor();
       }
     },
 
-    renderCourseControls() {
+    renderCourseSelect() {
+      const select = $('#zen-edit-course');
+      if (!select) return;
       const courses = Attendance.getCourses() || [];
-      const notes = this._notes;
       const esc = Dashboard.escapeHtml;
 
-      // Haplar
-      const pills = $('#notebook-course-pills');
-      const allCount = notes.length;
-      let html = `<button class="nb-course-pill ${this.selectedCourse === 'all' ? 'active' : ''}" data-course="all">
-          Tümü <span class="pill-count">${allCount}</span></button>`;
-      html += courses.map(c => {
-        const cNotes = notes.filter(n => n.courseId === c.id);
-        const examCount = cNotes.filter(n => n.tag === 'exam').length;
-        return `<button class="nb-course-pill ${examCount ? 'pill-exam-focused' : ''} ${this.selectedCourse === c.id ? 'active' : ''}"
-            data-course="${esc(c.id)}" title="${esc(c.name)}">
-            ${esc(this.shortName(c))} <span class="pill-count">${cNotes.length}${examCount ? ' · 🎯' + examCount : ''}</span>
-          </button>`;
-      }).join('');
-      pills.innerHTML = html;
-      $$('.nb-course-pill', pills).forEach(p => {
-        p.addEventListener('click', () => this.selectCourse(p.dataset.course, true));
-      });
-
-      // Select
-      const select = $('#qln-course-select');
-      select.innerHTML = `<option value="all">Genel (Ders seçilmedi)</option>` +
-        courses.map(c => `<option value="${esc(c.id)}">${esc(this.shortName(c))} — ${esc(c.name)}</option>`).join('');
-      select.value = this.selectedCourse;
-
-      this.updateActiveCourseDisplay();
-    },
-
-    selectCourse(courseId, syncSelect) {
-      this.selectedCourse = courseId || 'all';
-      $$('#notebook-course-pills .nb-course-pill').forEach(p =>
-        p.classList.toggle('active', p.dataset.course === this.selectedCourse));
-      if (syncSelect) $('#qln-course-select').value = this.selectedCourse;
-      this.updateActiveCourseDisplay();
-      this.renderList();
-    },
-
-    updateActiveCourseDisplay() {
-      const course = (Attendance.getCourses() || []).find(c => c.id === this.selectedCourse);
-      $('#qln-active-course-display').innerHTML =
-        `📍 Seçili Ders: <strong>${course ? Dashboard.escapeHtml(this.shortName(course)) : 'Tüm Dersler'}</strong>`;
-    },
-
-    renderStats() {
-      const count = tag => this._notes.filter(n => n.tag === tag).length;
-      $('#nb-count-exam').textContent = count('exam');
-      $('#nb-count-important').textContent = count('important');
-      $('#nb-count-review').textContent = count('review');
+      select.innerHTML = '<option value="">Genel Ders</option>' +
+        courses.map(c => `<option value="${esc(c.id)}">${esc(this.shortCourseName(c))} — ${esc(c.name)}</option>`).join('');
     },
 
     getFilteredNotes() {
       const q = this.searchText;
       return this._notes
-        .filter(n => this.selectedCourse === 'all' || n.courseId === this.selectedCourse)
-        .filter(n => this.tagFilter === 'all' || n.tag === this.tagFilter)
+        .filter(n => {
+          if (this.activeFilter === 'all') return true;
+          return (n.tag || 'general') === this.activeFilter;
+        })
         .filter(n => {
           if (!q) return true;
           const hay = `${n.title || ''} ${n.content || ''} ${n.courseName || ''}`.toLocaleLowerCase('tr-TR');
           return hay.includes(q);
         })
         .sort((a, b) => {
-          // Sınav konuları en üstte, sonra en yeni
-          const ea = a.tag === 'exam' ? 1 : 0, eb = b.tag === 'exam' ? 1 : 0;
+          // Sınav notları her zaman hafifçe öne çıksın
+          const ea = a.tag === 'exam' ? 1 : 0;
+          const eb = b.tag === 'exam' ? 1 : 0;
           if (ea !== eb) return eb - ea;
-          return (b.updated || 0) - (a.updated || 0);
+          return (b.updated || b.created || 0) - (a.updated || a.created || 0);
         });
     },
 
     renderList() {
-      const list = $('#notes-list');
-      const notes = this.getFilteredNotes();
-      const esc = Dashboard.escapeHtml;
-      $('#notes-sidebar-counter').textContent = `${notes.length} not`;
+      const listEl = $('#zen-notes-list');
+      const countEl = $('#zen-notes-count');
+      if (!listEl) return;
 
-      if (notes.length === 0) {
-        list.innerHTML = `<div class="qn-empty">${this._notes.length === 0
-          ? 'Henüz not oluşturulmamış'
-          : 'Bu filtreye uygun not bulunamadı'}</div>`;
+      const filtered = this.getFilteredNotes();
+      if (countEl) countEl.textContent = `${this._notes.length} not`;
+
+      if (filtered.length === 0) {
+        listEl.innerHTML = `
+          <div class="zen-list-empty">
+            <p>Eşleşen not bulunamadı.</p>
+          </div>
+        `;
         return;
       }
 
-      list.innerHTML = notes.map(n => {
-        const tag = NOTE_TAGS[n.tag] ? n.tag : 'general';
-        const snippet = (n.content || '').slice(0, 120);
-        return `
-          <div class="note-item tag-${tag} ${n.id === this.activeNoteId ? 'active' : ''}" data-id="${esc(n.id)}">
-            <div class="note-item-meta">
-              <span class="note-course-tag">📚 ${esc(n.courseName || 'Genel')}</span>
-              <span class="note-importance-tag tag-${tag}">${NOTE_TAGS[tag].emoji} ${NOTE_TAGS[tag].label}</span>
-              ${tag === 'exam' ? '<span class="note-task-synced-badge" title="Görev Panosunda Yapılacaklar listesine aktarıldı">🎯 Görevde</span>' : ''}
-            </div>
-            <div class="note-item-title">${esc(n.title || 'İsimsiz Not')}</div>
-            ${snippet ? `<div class="note-item-snippet">${esc(snippet)}</div>` : ''}
-            <div class="note-item-date">${n.updated ? new Date(n.updated).toLocaleString('tr-TR') : ''}</div>
-          </div>`;
-      }).join('');
-
-      $$('.note-item', list).forEach(item => {
-        item.addEventListener('click', () => this.openNote(item.dataset.id));
-      });
-    },
-
-    showEmptyEditor() {
-      const editor = $('#note-editor');
-      editor.innerHTML = '<div class="note-editor-empty"><p>📝 Soldan bir not seçin veya yukarıdan hızlıca derste not alın</p></div>';
-    },
-
-    showEditor(note) {
-      const editor = $('#note-editor');
       const esc = Dashboard.escapeHtml;
-      const courses = Attendance.getCourses() || [];
-      const tag = NOTE_TAGS[note.tag] ? note.tag : 'general';
-
-      editor.innerHTML = `
-        <div class="note-editor-active">
-          <div class="note-editor-top-bar">
-            <div class="note-editor-course-select">
-              <label for="note-edit-course">Ders:</label>
-              <select id="note-edit-course" class="qln-select">
-                <option value="">Genel</option>
-                ${courses.map(c => `<option value="${esc(c.id)}" ${c.id === note.courseId ? 'selected' : ''}>${esc(this.shortName(c))} — ${esc(c.name)}</option>`).join('')}
-              </select>
-            </div>
-            <div class="note-editor-tag-group" id="note-edit-tags">
-              ${Object.entries(NOTE_TAGS).map(([key, t]) =>
-                `<button type="button" class="note-editor-tag-btn ${key === tag ? 'active' : ''}" data-tag="${key}">${t.emoji} ${t.label}</button>`
-              ).join('')}
-            </div>
-          </div>
-          <input type="text" class="note-title-input" id="note-edit-title" value="${esc(note.title || '')}" placeholder="Not başlığı...">
-          <textarea class="note-content-input" id="note-edit-content" placeholder="Notunuzu yazın...">${esc(note.content || '')}</textarea>
-          <div class="note-editor-footer">
-            <span class="note-date" id="note-edit-date">${note.updated ? 'Son düzenleme: ' + new Date(note.updated).toLocaleString('tr-TR') : ''}</span>
-            <div class="note-actions">
-              <button class="btn btn-sm btn-ghost" id="note-delete-btn">🗑️ Sil</button>
-              <button type="button" class="btn btn-sm ${tag === 'exam' ? 'btn-exam-active' : 'btn-ghost'}" id="note-to-task-btn" title="Görev Panosuna (Yapılacaklar) aktar">${tag === 'exam' ? '🎯 Görev Panosunda' : '🎯 Göreve Dönüştür'}</button>
-              <button class="btn btn-sm btn-primary" id="note-save-btn">💾 Kaydet</button>
-            </div>
-          </div>
-        </div>
-      `;
-
-      const autoSave = (delay = 2000) => {
-        clearTimeout(this.autoSaveTimer);
-        this.autoSaveTimer = setTimeout(() => this.saveActiveNote(), delay);
+      const tagLabels = {
+        exam: { text: '🎯 Sınav', cls: 'badge-tag-exam' },
+        important: { text: '⭐ Önemli', cls: 'badge-tag-important' },
+        review: { text: '🔄 Tekrar', cls: 'badge-tag-review' },
+        general: { text: '📝 Genel', cls: 'badge-tag-general' }
       };
 
-      $('#note-save-btn').addEventListener('click', async () => {
-        clearTimeout(this.autoSaveTimer);
-        await this.saveActiveNote();
-        showToast('Not kaydedildi ✓', 'success');
-      });
+      listEl.innerHTML = filtered.map(n => {
+        const tag = tagLabels[n.tag] || tagLabels.general;
+        const isActive = n.id === this.activeNoteId;
+        const dateStr = n.updated ? new Date(n.updated).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' }) : 'Bugün';
+        const courseName = n.courseName || 'Genel';
+        const snippet = (n.content || '').trim() || 'İçerik yok...';
 
-      const toTaskBtn = $('#note-to-task-btn');
-      if (toTaskBtn) {
-        toTaskBtn.addEventListener('click', async () => {
-          clearTimeout(this.autoSaveTimer);
-          await this.saveActiveNote();
-          const currentNote = this._notes.find(n => n.id === this.activeNoteId);
-          if (currentNote) {
-            await this.syncExamNoteToTask(currentNote, true);
-          }
+        return `
+          <div class="zen-card ${isActive ? 'active' : ''}" data-id="${esc(n.id)}">
+            <div class="zen-card-head">
+              <h4 class="zen-card-title">${esc(n.title || 'Başlıksız Not')}</h4>
+              <span class="zen-card-badge ${tag.cls}">${tag.text}</span>
+            </div>
+            <p class="zen-card-preview">${esc(snippet)}</p>
+            <div class="zen-card-foot">
+              <span class="zen-card-course">📚 ${esc(courseName)}</span>
+              <span class="zen-card-date">${dateStr}</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      $$('.zen-card', listEl).forEach(card => {
+        card.addEventListener('click', () => {
+          const id = card.dataset.id;
+          const note = this._notes.find(n => n.id === id);
+          if (note) this.openEditor(note, true);
         });
+      });
+    },
+
+    openEditor(note, switchMobile = true) {
+      this.activeNoteId = note.id;
+      this.currentTag = note.tag || 'general';
+
+      // UI Geçişi
+      $('#zen-empty')?.classList.add('hidden');
+      $('#zen-active-editor')?.classList.remove('hidden');
+
+      // Form elemanlarını doldur
+      const titleInput = $('#zen-note-title');
+      const bodyInput = $('#zen-note-content');
+      const courseSelect = $('#zen-edit-course');
+      const dateEl = $('#zen-note-date');
+
+      if (titleInput) titleInput.value = note.title || '';
+      if (bodyInput) bodyInput.value = note.content || '';
+      if (courseSelect) courseSelect.value = note.courseId || '';
+
+      const updatedDate = note.updated || note.created;
+      if (dateEl) {
+        dateEl.textContent = updatedDate 
+          ? new Date(updatedDate).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' }) 
+          : 'Bugün';
       }
 
-      $('#note-delete-btn').addEventListener('click', () => {
-        confirmAction('Bu notu silmek istediğinize emin misiniz?', async () => {
-          clearTimeout(this.autoSaveTimer);
-          const noteId = this.activeNoteId;
-          await apiFetch(`/notes/${noteId}`, 'DELETE');
+      this.selectTag(note.tag || 'general');
+      this.updateWordCount();
+      this.markSaved();
 
-          // Bağlı sınav görevi varsa onu da sil
-          try {
-            const tasks = (await apiFetch('/tasks')) || [];
-            const linked = tasks.find(t => t.desc && t.desc.includes(`[NotRef:${noteId}]`));
-            if (linked) {
-              await apiFetch(`/tasks/${linked.id}`, 'DELETE');
-              if (typeof Kanban !== 'undefined' && Kanban.render) await Kanban.render();
-            }
-          } catch (e) {}
+      // Liste kartını aktif yap
+      $$('.zen-card').forEach(c => c.classList.toggle('active', c.dataset.id === note.id));
 
-          this.activeNoteId = null;
-          await this.render();
-          Dashboard.refresh();
-          showToast('Not silindi', 'success');
-        });
-      });
-
-      $$('#note-edit-tags .note-editor-tag-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          $$('#note-edit-tags .note-editor-tag-btn').forEach(b => b.classList.toggle('active', b === btn));
-          const toBtn = $('#note-to-task-btn');
-          if (toBtn) {
-            const isExam = btn.dataset.tag === 'exam';
-            toBtn.classList.toggle('btn-exam-active', isExam);
-            toBtn.classList.toggle('btn-ghost', !isExam);
-            toBtn.textContent = isExam ? '🎯 Görev Panosunda' : '🎯 Göreve Dönüştür';
-          }
-          autoSave(100);
-        });
-      });
-
-      $('#note-edit-course').addEventListener('change', () => autoSave(100));
-      $('#note-edit-title').addEventListener('input', () => autoSave());
-      $('#note-edit-content').addEventListener('input', () => autoSave());
+      if (switchMobile) {
+        this.setMobileView('editor');
+      }
     },
 
-    courseFields(courseId) {
-      const course = (Attendance.getCourses() || []).find(c => c.id === courseId);
-      return course
-        ? { courseId: course.id, courseName: this.shortName(course) }
-        : { courseId: '', courseName: 'Genel' };
+    closeEditor() {
+      this.activeNoteId = null;
+      $('#zen-empty')?.classList.remove('hidden');
+      $('#zen-active-editor')?.classList.add('hidden');
+      this.setMobileView('list');
+      $$('.zen-card').forEach(c => c.classList.remove('active'));
     },
 
-    async createNote() {
-      const tag = this.tagFilter !== 'all' ? this.tagFilter : 'general';
-      const newNote = await apiFetch('/notes', 'POST', {
-        title: 'Yeni Not',
+    async createNewNote() {
+      clearTimeout(this.autoSaveTimer);
+
+      // Eğer halihazırda açık olan not zaten bomboşsa (başlık ve içerik yoksa),
+      // fazladan boş kopya oluşturmak yerine doğrudan mevcut notu odakla
+      if (this.activeNoteId) {
+        const curNote = this._notes.find(n => n.id === this.activeNoteId);
+        if (curNote && !(curNote.title || '').trim() && !(curNote.content || '').trim()) {
+          this.openEditor(curNote, true);
+          setTimeout(() => $('#zen-note-title')?.focus(), 80);
+          return curNote;
+        }
+      }
+
+      const courses = Attendance.getCourses() || [];
+      const defaultCourse = courses.length > 0 ? courses[0] : null;
+
+      const newNote = {
+        title: '',
         content: '',
-        tag,
-        ...this.courseFields(this.selectedCourse),
+        tag: 'general',
+        courseId: defaultCourse ? defaultCourse.id : '',
+        courseName: defaultCourse ? this.shortCourseName(defaultCourse) : 'Genel',
+        created: Date.now(),
+        updated: Date.now(),
+      };
+
+      const saved = await apiFetch('/notes', 'POST', newNote);
+      if (saved) {
+        this._notes.unshift(saved);
+        this.renderList();
+        this.openEditor(saved, true);
+        setTimeout(() => $('#zen-note-title')?.focus(), 80);
+        return saved;
+      }
+      return null;
+    },
+
+    async saveActiveNote() {
+      if (!this.activeNoteId) return null;
+
+      const titleInput = $('#zen-note-title');
+      const bodyInput = $('#zen-note-content');
+      const courseSelect = $('#zen-edit-course');
+      if (!titleInput || !bodyInput) return null;
+
+      const note = this._notes.find(n => n.id === this.activeNoteId);
+      if (!note) return null;
+
+      const courseId = courseSelect ? courseSelect.value : '';
+      const courses = Attendance.getCourses() || [];
+      const courseObj = courses.find(c => c.id === courseId);
+      const courseName = courseObj ? this.shortCourseName(courseObj) : 'Genel';
+
+      const updated = await apiFetch(`/notes/${this.activeNoteId}`, 'PUT', {
+        ...note,
+        title: titleInput.value.trim() || 'Başlıksız Not',
+        content: bodyInput.value,
+        tag: this.currentTag || 'general',
+        courseId,
+        courseName,
+        updated: Date.now()
       });
-      if (!newNote) return;
-      this.activeNoteId = newNote.id;
-      await this.render();
+
+      if (updated) {
+        const idx = this._notes.findIndex(n => n.id === updated.id);
+        if (idx !== -1) this._notes[idx] = updated;
+
+        this.markSaved();
+        this.renderList();
+
+        // Sınav notuysa görev panosuna otomatik eşle
+        if (this.currentTag === 'exam') {
+          await this.syncNoteToTask(updated, false);
+        }
+        return updated;
+      }
+      return null;
+    },
+
+    async deleteNote(id) {
+      if (!id) return;
+      clearTimeout(this.autoSaveTimer);
+      await apiFetch(`/notes/${id}`, 'DELETE');
+      this._notes = this._notes.filter(n => n.id !== id);
+
+      if (this.activeNoteId === id) {
+        if (this._notes.length > 0 && window.innerWidth > 800) {
+          this.openEditor(this._notes[0], false);
+        } else {
+          this.closeEditor();
+        }
+      }
+
+      this.renderList();
+      showToast('Not silindi', 'success');
       Dashboard.refresh();
-      setTimeout(() => { const el = $('#note-edit-title'); if (el) el.select(); }, 100);
     },
 
-    async addQuickLectureNote() {
-      const titleEl = $('#qln-title-input');
-      const contentEl = $('#qln-content-input');
-      const title = titleEl.value.trim();
-      if (!title) { titleEl.focus(); return; }
-
-      const courseId = $('#qln-course-select').value;
-      const created = await apiFetch('/notes', 'POST', {
-        title,
-        content: contentEl.value.trim(),
-        tag: this.quickTag,
-        ...this.courseFields(courseId),
-      });
-      if (!created) return;
-
-      // Sınavda Çıkabilir seçilmişse doğrudan Görev Panosu > Yapılacaklar'a ekle
-      if (this.quickTag === 'exam') {
-        await this.syncExamNoteToTask(created, false);
-      }
-
-      titleEl.value = '';
-      contentEl.value = '';
-      this.activeNoteId = created.id;
-      await this.render();
-      Dashboard.refresh();
-      titleEl.focus();
-      showToast(`${NOTE_TAGS[this.quickTag].emoji} Not alındı: ${created.courseName}`, 'success');
-    },
-
-    async openNote(id) {
-      if (this.activeNoteId && this.activeNoteId !== id) {
-        clearTimeout(this.autoSaveTimer);
-        await this.saveActiveNote();
-      }
-      this.activeNoteId = id;
-      const note = this._notes.find(n => n.id === id);
-      if (note) {
-        this.showEditor(note);
-        $$('.note-item').forEach(item => item.classList.toggle('active', item.dataset.id === id));
-      }
-    },
-
-    async syncExamNoteToTask(note, forceNotify = false) {
+    async syncNoteToTask(note, forceNotify = false) {
       if (!note) return;
       try {
         const tasks = (await apiFetch('/tasks')) || [];
         const coursePrefix = (note.courseName && note.courseName !== 'Genel') ? `[${note.courseName}] ` : '';
-        const taskTitle = `🎯 Sınav: ${coursePrefix}${note.title || 'Konu Tekrarı'}`;
+        const taskTitle = `🎯 Sınav: ${coursePrefix}${note.title || 'Ders Notu'}`;
         const refTag = `[NotRef:${note.id}]`;
 
-        const existing = tasks.find(t =>
-          (t.desc && t.desc.includes(refTag)) ||
-          t.title === taskTitle
-        );
-
-        const noteSnippet = (note.content || '').slice(0, 160);
-        const descContent = `${noteSnippet ? noteSnippet + '\n\n' : ''}📚 ${note.courseName || 'Genel'} dersi sınav hazırlığı için Not Defteri'nden aktarıldı. ${refTag}`;
+        const existing = tasks.find(t => (t.desc && t.desc.includes(refTag)) || t.title === taskTitle);
+        const descContent = `${(note.content || '').slice(0, 160)}\n\n📚 ${note.courseName || 'Genel'} dersi sınav hazırlığı için Not Defteri'nden aktarıldı. ${refTag}`;
 
         if (existing) {
-          if (existing.status === 'todo') {
-            await apiFetch(`/tasks/${existing.id}`, 'PUT', {
-              ...existing,
-              title: taskTitle,
-              desc: descContent,
-              color: '#ef4444'
-            });
-          }
-          if (forceNotify) {
-            showToast(`🎯 Sınav görevi zaten Görev Panosu'nda kayıtlı`, 'info');
-          }
+          if (forceNotify) showToast('🎯 Sınav görevi zaten Görev Panosu\'nda mevcut', 'info');
         } else {
-          const createdTask = await apiFetch('/tasks', 'POST', {
+          await apiFetch('/tasks', 'POST', {
             title: taskTitle,
             desc: descContent,
             color: '#ef4444',
-            status: 'todo'
+            status: 'todo',
           });
-          if (createdTask) {
-            showToast(`🎯 Sınav görevi Yapılacaklar panosuna eklendi: "${taskTitle}"`, 'success');
-            if (typeof Kanban !== 'undefined' && Kanban.render) {
-              await Kanban.render();
-            }
-            Dashboard.refresh();
-          }
+          showToast(`🎯 Sınav görevi panoya eklendi: "${taskTitle}"`, 'success');
+          if (typeof Kanban !== 'undefined' && Kanban.render) await Kanban.render();
+          Dashboard.refresh();
         }
-      } catch (err) {
-        console.error('syncExamNoteToTask error:', err);
+      } catch (e) {
+        console.error('syncNoteToTask error:', e);
       }
-    },
-
-    async saveActiveNote() {
-      if (!this.activeNoteId) return;
-      const titleEl = $('#note-edit-title');
-      const contentEl = $('#note-edit-content');
-      if (!titleEl || !contentEl) return;
-      const note = this._notes.find(n => n.id === this.activeNoteId);
-      if (!note) return;
-
-      const activeTagBtn = $('#note-edit-tags .note-editor-tag-btn.active');
-      const tag = activeTagBtn ? activeTagBtn.dataset.tag : (note.tag || 'general');
-      const courseSel = $('#note-edit-course');
-
-      const updated = await apiFetch(`/notes/${this.activeNoteId}`, 'PUT', {
-        ...note,
-        title: titleEl.value.trim() || 'İsimsiz Not',
-        content: contentEl.value,
-        tag,
-        isExamTopic: tag === 'exam',
-        ...this.courseFields(courseSel ? courseSel.value : note.courseId),
-      });
-      if (!updated) return;
-
-      // Eğer Sınavda Çıkabilir ise otomatik Görev Panosuna aktar
-      if (tag === 'exam' || updated.isExamTopic) {
-        await this.syncExamNoteToTask(updated, false);
-      }
-
-      // Önbelleği güncelle ve listeyi (editörü bozmadan) yenile
-      const idx = this._notes.findIndex(n => n.id === updated.id);
-      if (idx !== -1) this._notes[idx] = updated;
-      const dateEl = $('#note-edit-date');
-      if (dateEl) dateEl.textContent = 'Son düzenleme: ' + new Date(updated.updated).toLocaleString('tr-TR');
-      this.renderStats();
-      this.renderCourseControls();
-      this.renderList();
     }
   };
 

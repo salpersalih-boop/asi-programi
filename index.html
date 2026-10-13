@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="ASİ ✨ — Kişisel Ajanda ve Üretkenlik Uygulaması. Görevler, dersler, hedefler, notlar ve odaklanma sayacı.">
   <title>ASİ ✨ — Kişisel Ajanda</title>
-  <link rel="stylesheet" href="style.css?v=3.1">
+  <link rel="stylesheet" href="style.css?v=3.3">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -424,127 +424,118 @@
         <div id="goals-days" class="goals-days"></div>
       </section>
 
-      <!-- ════════ NOT DEFTERİ (AKILLI DERS & SINAV SİSTEMİ) ════════ -->
+      <!-- ════════ SADE & FERAH NOT DEFTERİ (MINIMAL ZEN NOTES) ════════ -->
       <section id="page-notebook" class="page">
-        <div class="page-header notebook-header-wrap">
-          <div>
-            <h2>📝 Akıllı Ders & Sınav Not Defteri</h2>
-            <p class="section-subtitle">Ders sırasında hızlıca not alın, sınavda çıkabilecek önemli konuları işaretleyin ve eve gelince tek tıkla çalışın.</p>
-          </div>
-          <div class="notebook-header-stats">
-            <div class="nb-stat-badge stat-exam" id="stat-nb-exam" title="Sınavda çıkabilecek işaretlenmiş konular">
-              <span class="nb-stat-icon">🎯</span>
-              <span class="nb-stat-label">Sınavda Çıkabilir:</span>
-              <strong id="nb-count-exam">0</strong>
-            </div>
-            <div class="nb-stat-badge stat-important" id="stat-nb-important" title="Önemli işaretli konular">
-              <span class="nb-stat-icon">⭐</span>
-              <span class="nb-stat-label">Önemli:</span>
-              <strong id="nb-count-important">0</strong>
-            </div>
-            <div class="nb-stat-badge stat-review" id="stat-nb-review" title="Tekrar çalışılması gerekenler">
-              <span class="nb-stat-icon">🔄</span>
-              <span class="nb-stat-label">Tekrar Çalış:</span>
-              <strong id="nb-count-review">0</strong>
-            </div>
-            <button id="add-note-btn" class="btn btn-primary">+ Detaylı Yeni Not</button>
-          </div>
-        </div>
-
-        <!-- 1. DERSLERİN KISA İSİMLERİ (KOLAY SEÇİM HAPLARI) -->
-        <div class="notebook-course-selector-bar glass-card">
-          <div class="course-selector-label">
-            <span>📚 Dersler (Hızlı Seçim):</span>
-          </div>
-          <div id="notebook-course-pills" class="notebook-course-pills">
-            <!-- JavaScript ile dinamik render edilir -->
-          </div>
-        </div>
-
-        <!-- 2. DERS SIRASINDA HIZLI NOT ALMA ALANI (HOCA "SINAVDA ÇIKABİLİR" DEDİĞİNDE ANINDA YAZ!) -->
-        <div class="quick-lecture-note-card glass-card">
-          <div class="qln-header">
-            <div class="qln-title-group">
-              <span class="qln-badge-pulse">⚡ DERSTE HIZLI NOT AL</span>
-              <span class="qln-hint">Hoca “Bu konu sınavda çıkabilir” dediğinde saniyeler içinde not edin!</span>
-            </div>
-            <div class="qln-active-course-tag qln-active-course-display" id="qln-active-course-display">
-              📍 Seçili Ders: <strong>Tüm Dersler</strong>
-            </div>
-          </div>
-
-          <form id="quick-lecture-note-form" class="qln-form">
-            <div class="qln-row-top">
-              <div class="qln-field qln-course-field">
-                <label for="qln-course-select">Ders:</label>
-                <select id="qln-course-select" class="qln-select">
-                  <!-- Dinamik yüklenecek -->
-                </select>
+        <div class="zen-notes-container" id="zen-container" data-mobile-view="list">
+          
+          <!-- SOL PANEL: SADE NOT LİSTESİ -->
+          <aside class="zen-sidebar" id="zen-sidebar">
+            <div class="zen-sidebar-header">
+              <div class="zen-title-group">
+                <span class="zen-app-emoji">📝</span>
+                <h2 class="zen-title">Notlarım</h2>
+                <span class="zen-count" id="zen-notes-count">0 not</span>
               </div>
-
-              <div class="qln-field qln-tag-field">
-                <label>Önem / İşaret:</label>
-                <div class="qln-tag-picker" id="qln-tag-picker">
-                  <button type="button" class="qln-tag-btn active" data-tag="exam">
-                    <span class="tag-emoji">🎯</span> Sınavda Çıkabilir
-                  </button>
-                  <button type="button" class="qln-tag-btn" data-tag="important">
-                    <span class="tag-emoji">⭐</span> Önemli
-                  </button>
-                  <button type="button" class="qln-tag-btn" data-tag="review">
-                    <span class="tag-emoji">🔄</span> Tekrar Çalış
-                  </button>
-                  <button type="button" class="qln-tag-btn" data-tag="general">
-                    <span class="tag-emoji">💡</span> Genel Not
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <div class="qln-row-inputs">
-              <input type="text" id="qln-title-input" class="qln-input-title" 
-                     placeholder="📌 Konu / Başlık: Örneğin 'Vize için Sayfa 45 Karar Ağaçları Budama Formülü'..." required autocomplete="off">
-              <button type="submit" class="btn btn-primary qln-submit-btn" id="qln-submit-btn">
-                <span>⚡ Hemen Not Al</span>
+              <button type="button" class="btn btn-primary btn-sm zen-new-btn" id="zen-new-btn">
+                <span>+ Yeni Not</span>
               </button>
             </div>
 
-            <div class="qln-row-extra">
-              <textarea id="qln-content-input" class="qln-textarea-content" rows="2" 
-                        placeholder="Ek açıklama, hocanın ipucu, sınav sorusu örneği (isteğe bağlı)..."></textarea>
+            <!-- Sade Arama -->
+            <div class="zen-search-wrap">
+              <span class="zen-search-icon">🔍</span>
+              <input type="text" id="zen-search-input" placeholder="Notlarda ara..." autocomplete="off">
+              <button type="button" id="zen-search-clear" class="zen-search-clear hidden" title="Temizle">✕</button>
             </div>
-          </form>
-        </div>
 
-        <!-- 3. ARAMA & FİLTRELEME ÇUBUĞU -->
-        <div class="notebook-filter-bar">
-          <div class="nb-search-wrap">
-            <span class="nb-search-icon">🔍</span>
-            <input type="text" id="notebook-search-input" placeholder="Notlarda, konularda veya derslerde ara (ör: formül, algoritma, soru, vize)...">
-            <button id="notebook-search-clear" class="btn-clear-search hidden" title="Aramayı temizle">✕</button>
-          </div>
-
-          <div class="nb-filter-pills" id="notebook-tag-filter-pills">
-            <button class="nb-filter-pill active" data-filter="all">Tüm Notlar</button>
-            <button class="nb-filter-pill filter-exam" data-filter="exam">🎯 Sınavda Çıkabilir</button>
-            <button class="nb-filter-pill filter-important" data-filter="important">⭐ Önemli</button>
-            <button class="nb-filter-pill filter-review" data-filter="review">🔄 Tekrar Çalış</button>
-          </div>
-        </div>
-
-        <!-- 4. ANA DÜZEN: SOL LİSTE & SAĞ DETAYLI DÜZENLEYİCİ -->
-        <div class="notebook-layout">
-          <div id="notes-sidebar" class="notes-sidebar">
-            <div class="notes-sidebar-header">
-              <span id="notes-sidebar-counter" class="notes-counter-text">0 not</span>
+            <!-- Filtre Hapları (Yatay ve Sade) -->
+            <div class="zen-filter-pills" id="zen-filter-pills">
+              <button type="button" class="zen-pill active" data-filter="all">Tümü</button>
+              <button type="button" class="zen-pill pill-exam" data-filter="exam">🎯 Sınav</button>
+              <button type="button" class="zen-pill pill-important" data-filter="important">⭐ Önemli</button>
+              <button type="button" class="zen-pill pill-review" data-filter="review">🔄 Tekrar</button>
+              <button type="button" class="zen-pill pill-general" data-filter="general">📝 Genel</button>
             </div>
-            <div id="notes-list" class="notes-list"></div>
-          </div>
-          <div id="note-editor" class="note-editor glass-card">
-            <div class="note-editor-empty">
-              <p>📝 Soldan bir not seçin veya yukarıdan hızlıca derste not alın</p>
+
+            <!-- Not Listesi -->
+            <div class="zen-list" id="zen-notes-list">
+              <!-- JS ile render edilir -->
             </div>
-          </div>
+          </aside>
+
+          <!-- SAĞ PANEL: FERAH YAZMA ALANI -->
+          <main class="zen-editor-pane" id="zen-editor-pane">
+            <!-- Boş Karşılama Durumu -->
+            <div class="zen-empty" id="zen-empty">
+              <div class="zen-empty-icon">📝</div>
+              <h3>Bir Not Seçin veya Yazmaya Başlayın</h3>
+              <p>Soldaki listeden bir nota dokunun ya da yeni bir ders notu oluşturun.</p>
+              <button type="button" class="btn btn-primary zen-empty-new-btn" id="zen-empty-new-btn">+ Yeni Not Yaz</button>
+            </div>
+
+            <!-- Aktif Not Düzenleyici -->
+            <div class="zen-active-editor hidden" id="zen-active-editor">
+              <header class="zen-editor-header">
+                <!-- Mobilde Geri Butonu -->
+                <button type="button" class="zen-back-btn" id="zen-back-btn">
+                  <span>← Notlar</span>
+                </button>
+
+                <div class="zen-meta-group">
+                  <div class="zen-select-wrap">
+                    <label for="zen-edit-course" class="zen-course-label">Ders:</label>
+                    <select id="zen-edit-course" class="zen-course-select">
+                      <option value="">Genel Ders</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="zen-header-actions">
+                  <button type="button" class="btn btn-ghost btn-sm" id="zen-to-task-btn" title="Görev panosuna ekle">🎯 Görev</button>
+                  <button type="button" class="zen-del-btn" id="zen-del-btn" title="Notu Sil">🗑️</button>
+                  <button type="button" class="btn btn-primary btn-sm" id="zen-save-btn">💾 Kaydet</button>
+                </div>
+              </header>
+
+              <!-- Not Kağıdı -->
+              <div class="zen-sheet">
+                <!-- Başlık ve Kategori Bloğu -->
+                <div class="zen-title-category-box">
+                  <input type="text" id="zen-note-title" class="zen-input-title" placeholder="Başlıksız Not" autocomplete="off">
+                  
+                  <!-- Başlık Alanı İçindeki Kategori Seçimi -->
+                  <div class="zen-category-bar">
+                    <span class="zen-category-label">Kategori:</span>
+                    <div class="zen-tag-selector" id="zen-tag-selector" role="radiogroup" aria-label="Not Kategorisi">
+                      <button type="button" class="zen-tag-btn" data-tag="exam" title="Sınavda Çıkabilir">
+                        <span class="zen-tag-icon">🎯</span> Sınavda Çıkabilir
+                      </button>
+                      <button type="button" class="zen-tag-btn" data-tag="important" title="Önemli">
+                        <span class="zen-tag-icon">⭐</span> Önemli
+                      </button>
+                      <button type="button" class="zen-tag-btn" data-tag="review" title="Tekrar Çalış">
+                        <span class="zen-tag-icon">🔄</span> Tekrar
+                      </button>
+                      <button type="button" class="zen-tag-btn" data-tag="general" title="Genel">
+                        <span class="zen-tag-icon">📝</span> Genel
+                      </button>
+                    </div>
+                  </div>
+
+                  <div class="zen-info-row">
+                    <span id="zen-note-date">Bugün</span>
+                    <span>·</span>
+                    <span id="zen-word-count">0 kelime</span>
+                    <span>·</span>
+                    <span class="zen-save-tag" id="zen-save-tag">Kaydedildi ✓</span>
+                  </div>
+                </div>
+
+                <textarea id="zen-note-content" class="zen-textarea-body" placeholder="Ders notunuzu, formülleri ve önemli kısımları buraya rahatça yazın..."></textarea>
+              </div>
+            </div>
+          </main>
+
         </div>
       </section>
 
