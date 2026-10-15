@@ -5,10 +5,30 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="ASİ ✨ — Kişisel Ajanda ve Üretkenlik Uygulaması. Görevler, dersler, hedefler, notlar ve odaklanma sayacı.">
   <title>ASİ ✨ — Kişisel Ajanda</title>
-  <link rel="stylesheet" href="style.css?v=3.3">
+  <link rel="stylesheet" href="style.css?v=4.0">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script>
+    (function() {
+      try {
+        var cfg = JSON.parse(localStorage.getItem('asi_theme_config') || '{}');
+        var mode = cfg.mode || 'light';
+        if (mode === 'system') {
+          mode = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        }
+        document.documentElement.setAttribute('data-theme', mode);
+        if (cfg.primaryColor && cfg.secondaryColor) {
+          document.documentElement.style.setProperty('--accent-orange', cfg.primaryColor);
+          document.documentElement.style.setProperty('--accent', cfg.primaryColor);
+          document.documentElement.style.setProperty('--accent-gradient', 'linear-gradient(135deg, ' + cfg.primaryColor + ' 0%, ' + cfg.secondaryColor + ' 100%)');
+          document.documentElement.style.setProperty('--accent-turquoise', cfg.secondaryColor);
+          document.documentElement.style.setProperty('--accent-turquoise-dark', cfg.secondaryColor);
+          document.documentElement.style.setProperty('--turquoise-gradient', 'linear-gradient(135deg, ' + cfg.secondaryColor + ' 0%, ' + cfg.primaryColor + ' 100%)');
+        }
+      } catch (e) {}
+    })();
+  </script>
 </head>
 <body>
 
@@ -45,6 +65,10 @@
             <span id="top-clock" class="top-clock"></span>
           </div>
         </div>
+        <!-- Hızlı Koyu / Açık Mod Butonu -->
+        <button id="theme-toggle-btn" class="theme-toggle-btn" title="Koyu / Açık Mod Değiştir" aria-label="Tema Değiştir">
+          <span id="theme-toggle-icon">🌙</span>
+        </button>
       </div>
     </header>
 
@@ -823,12 +847,131 @@
         </div>
       </section>
 
-      <!-- ════════ AYARLAR ════════ -->
+      <!-- ════════ AYARLAR & TEMA ════════ -->
       <section id="page-settings" class="page">
         <div class="page-header">
-          <h2>⚙️ Ayarlar</h2>
+          <h2>⚙️ Ayarlar & Görünüm</h2>
         </div>
         <div class="settings-grid">
+          <!-- Görünüm & Renk Teması Kartı -->
+          <div class="settings-card glass-card settings-theme-card">
+            <div class="settings-card-head">
+              <h3>🎨 Görünüm & Renk Teması</h3>
+              <span class="settings-badge">Kişiselleştirilebilir</span>
+            </div>
+            <p>Uygulamanın açık/koyu modunu ve renklerini dilediğin gibi özelleştir. Her detayı sen belirle!</p>
+
+            <!-- 1. Tema Modu (Açık, Koyu, Sistem) -->
+            <div class="theme-setting-section">
+              <label class="theme-setting-title">🌓 Tema Modu</label>
+              <div class="theme-mode-pills" id="theme-mode-pills">
+                <button type="button" class="theme-mode-btn" data-mode="light">
+                  <span class="theme-mode-icon">☀️</span>
+                  <span>Açık Mod</span>
+                </button>
+                <button type="button" class="theme-mode-btn" data-mode="dark">
+                  <span class="theme-mode-icon">🌙</span>
+                  <span>Koyu Mod</span>
+                </button>
+                <button type="button" class="theme-mode-btn" data-mode="system">
+                  <span class="theme-mode-icon">💻</span>
+                  <span>Sistem</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- 2. Hazır Renk Paletleri -->
+            <div class="theme-setting-section">
+              <label class="theme-setting-title">✨ Hazır Renk Paletleri</label>
+              <div class="theme-palettes-grid" id="theme-palettes-grid">
+                <button type="button" class="theme-palette-card" data-palette="default">
+                  <div class="palette-swatch">
+                    <span style="background:#F97316"></span>
+                    <span style="background:#06B6D4"></span>
+                  </div>
+                  <span class="palette-name">ASİ Klasik</span>
+                </button>
+                <button type="button" class="theme-palette-card" data-palette="purple">
+                  <div class="palette-swatch">
+                    <span style="background:#8B5CF6"></span>
+                    <span style="background:#EC4899"></span>
+                  </div>
+                  <span class="palette-name">Siber Gece</span>
+                </button>
+                <button type="button" class="theme-palette-card" data-palette="emerald">
+                  <div class="palette-swatch">
+                    <span style="background:#10B981"></span>
+                    <span style="background:#06B6D4"></span>
+                  </div>
+                  <span class="palette-name">Zümrüt Doğa</span>
+                </button>
+                <button type="button" class="theme-palette-card" data-palette="blue">
+                  <div class="palette-swatch">
+                    <span style="background:#3B82F6"></span>
+                    <span style="background:#6366F1"></span>
+                  </div>
+                  <span class="palette-name">Derin Okyanus</span>
+                </button>
+                <button type="button" class="theme-palette-card" data-palette="rose">
+                  <div class="palette-swatch">
+                    <span style="background:#F43F5E"></span>
+                    <span style="background:#F97316"></span>
+                  </div>
+                  <span class="palette-name">Gül & Şafak</span>
+                </button>
+                <button type="button" class="theme-palette-card" data-palette="amber">
+                  <div class="palette-swatch">
+                    <span style="background:#EAB308"></span>
+                    <span style="background:#EA580C"></span>
+                  </div>
+                  <span class="palette-name">Altın Kehribar</span>
+                </button>
+                <button type="button" class="theme-palette-card custom-palette-card" data-palette="custom" id="custom-palette-card" title="Kendi belirlediğin özel renkler">
+                  <div class="palette-swatch">
+                    <span id="custom-palette-swatch-1" style="background:#F97316"></span>
+                    <span id="custom-palette-swatch-2" style="background:#06B6D4"></span>
+                  </div>
+                  <span class="palette-name" id="custom-palette-name-label">Özel Tasarımım ✨</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- 3. Kendi Renklerini Seç -->
+            <div class="theme-setting-section">
+              <label class="theme-setting-title">🖌️ Kendi Renklerini Kendin Belirle (HEX Kodu Yaz veya Seç)</label>
+              <div class="custom-color-controls">
+                <div class="custom-color-item">
+                  <label for="custom-primary-picker">Ana Vurgu Rengi:</label>
+                  <div class="color-picker-input-wrap">
+                    <input type="color" id="custom-primary-picker" value="#F97316" title="Renk paletinden seç">
+                    <input type="text" id="custom-primary-hex" class="color-hex-input" maxlength="7" value="#F97316" placeholder="#F97316" spellcheck="false" title="HEX renk kodunu yazın (örn: #F97316)">
+                  </div>
+                </div>
+                <div class="custom-color-item">
+                  <label for="custom-secondary-picker">İkincil Renk (Link & Detay):</label>
+                  <div class="color-picker-input-wrap">
+                    <input type="color" id="custom-secondary-picker" value="#06B6D4" title="Renk paletinden seç">
+                    <input type="text" id="custom-secondary-hex" class="color-hex-input" maxlength="7" value="#06B6D4" placeholder="#06B6D4" spellcheck="false" title="HEX renk kodunu yazın (örn: #06B6D4)">
+                  </div>
+                </div>
+                <button type="button" id="theme-reset-defaults-btn" class="btn btn-sm btn-ghost">↺ Varsayılana Dön</button>
+              </div>
+            </div>
+
+            <!-- 4. Canlı Önizleme Kutusu -->
+            <div class="theme-preview-box">
+              <span class="theme-preview-label">Canlı Önizleme:</span>
+              <div class="theme-preview-elements">
+                <button type="button" class="btn btn-primary btn-sm">Örnek Buton ✨</button>
+                <button type="button" class="btn btn-secondary btn-sm">İkincil Buton</button>
+                <span class="theme-preview-badge">Aktif Rozet</span>
+                <div class="theme-preview-progress">
+                  <div class="theme-preview-progress-fill"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <div class="settings-card glass-card">
             <h3>💾 Veri Yedekleme</h3>
             <p>Verilerini JSON dosyası olarak dışa aktar veya önceki bir yedeği içe aktar.</p>
@@ -1246,6 +1389,6 @@
   <!-- Toast Bildirimi -->
   <div id="toast-container" class="toast-container"></div>
 
-  <script src="script.js?v=3.2"></script>
+  <script src="script.js?v=4.0"></script>
 </body>
 </html>

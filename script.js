@@ -878,6 +878,7 @@
         readingGoals,
         workoutHistory,
         settings: this.loadSettings(),
+        theme: Storage.get('asi_theme_config', null),
         _exportDate: new Date().toISOString(),
         _app: 'ASİ ✨'
       };
@@ -888,6 +889,9 @@
       if (!data) return false;
       try {
         if (data.settings) this.saveSettings(data.settings);
+        if (data.theme) {
+          Storage.set('asi_theme_config', data.theme);
+        }
         if (Array.isArray(data.tasks)) {
           for (const t of data.tasks) await apiFetch('/tasks', 'POST', t);
         }
@@ -986,11 +990,17 @@
   // ─── Toast Bildirimi ───
   function showToast(msg, type = 'info') {
     const container = $('#toast-container');
+    if (!container) return;
+    while (container.children.length >= 2) {
+      container.removeChild(container.firstChild);
+    }
     const toast = document.createElement('div');
     toast.className = `toast ${type}`;
     toast.textContent = msg;
     container.appendChild(toast);
-    setTimeout(() => toast.remove(), 3000);
+    setTimeout(() => {
+      if (toast.parentElement) toast.remove();
+    }, 2800);
   }
 
   // ─── Modal Yönetimi ───
@@ -2270,7 +2280,7 @@
                 <span>•</span>
                 <span>${it.reps || 10} Tekrar</span>
               </div>
-              <div style="color:#0284C7; font-weight:700; font-size:0.82rem;">
+              <div style="color:var(--accent-turquoise, #0284C7); font-weight:700; font-size:0.82rem;">
                 ⚖️ ${esc(it.weight || 'Vücut Ağırlığı')}
               </div>
             </div>
@@ -5237,6 +5247,343 @@
   };
 
   // ═══════════════════════════════════════════════════════
+  // TEMA & RENK YÖNETİCİSİ (DARK/LIGHT MODE & ÖZEL RENKLER)
+  // ═══════════════════════════════════════════════════════
+
+  const PALETTES = {
+    default: { name: 'ASİ Klasik', primary: '#F97316', secondary: '#06B6D4' },
+    purple:  { name: 'Siber Gece', primary: '#8B5CF6', secondary: '#EC4899' },
+    emerald: { name: 'Zümrüt Doğa', primary: '#10B981', secondary: '#06B6D4' },
+    blue:    { name: 'Derin Okyanus', primary: '#3B82F6', secondary: '#6366F1' },
+    rose:    { name: 'Gül & Şafak', primary: '#F43F5E', secondary: '#F97316' },
+    amber:   { name: 'Altın Kehribar', primary: '#EAB308', secondary: '#EA580C' },
+    custom:  { name: 'Özel Tasarımım ✨', primary: '#F97316', secondary: '#06B6D4' },
+  };
+
+  function normalizeHex(hex) {
+    if (!hex) return null;
+    let clean = hex.trim().replace(/^#/, '');
+    if (clean.length === 3) {
+      clean = clean.split('').map(c => c + c).join('');
+    }
+    if (/^[0-9A-Fa-f]{6}$/.test(clean)) {
+      return '#' + clean.toUpperCase();
+    }
+    return null;
+  }
+
+  const DEFAULT_THEME = {
+    mode: 'light', // 'light' | 'dark' | 'system'
+    palette: 'default', // 'default' | 'purple' | 'emerald' | 'blue' | 'rose' | 'amber' | 'custom'
+    primaryColor: '#F97316',
+    secondaryColor: '#06B6D4'
+  };
+
+  const Theme = {
+    config: { ...DEFAULT_THEME },
+
+    init() {
+      this.load();
+      this.apply();
+      this.bindEvents();
+
+      // Sistem teması değişikliklerini dinle
+      if (window.matchMedia) {
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+          if (this.config.mode === 'system') {
+            this.applyMode();
+          }
+        });
+      }
+    },
+
+    load() {
+      try {
+        const saved = JSON.parse(localStorage.getItem('asi_theme_config') || '{}');
+        this.config = { ...DEFAULT_THEME, ...saved };
+        if (this.config.primaryColor && PALETTES.custom) {
+          PALETTES.custom.primary = this.config.primaryColor;
+        }
+        if (this.config.secondaryColor && PALETTES.custom) {
+          PALETTES.custom.secondary = this.config.secondaryColor;
+        }
+      } catch (e) {
+        this.config = { ...DEFAULT_THEME };
+      }
+    },
+
+    save() {
+      try {
+        localStorage.setItem('asi_theme_config', JSON.stringify(this.config));
+      } catch (e) {
+        console.error('Tema kaydedilemedi:', e);
+      }
+    },
+
+    getResolvedMode() {
+      if (this.config.mode === 'system') {
+        return (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+      }
+      return this.config.mode;
+    },
+
+    apply() {
+      this.applyMode();
+      this.applyColors();
+      this.updateUI();
+    },
+
+    applyMode() {
+      const resolved = this.getResolvedMode();
+      document.documentElement.setAttribute('data-theme', resolved);
+
+      // Üst bardaki tema ikonu
+      const toggleIcon = $('#theme-toggle-icon');
+      if (toggleIcon) {
+        toggleIcon.textContent = resolved === 'dark' ? '☀️' : '🌙';
+      }
+      const toggleBtn = $('#theme-toggle-btn');
+      if (toggleBtn) {
+        toggleBtn.title = resolved === 'dark' ? 'Açık Mod' : 'Koyu Mod';
+      }
+    },
+
+    applyColors() {
+      const root = document.documentElement;
+      const p = this.config.primaryColor;
+      const s = this.config.secondaryColor;
+
+      const hexToRgba = (hex, alpha) => {
+        let c = (hex || '').replace('#', '');
+        if (c.length === 3) c = c.split('').map(x => x + x).join('');
+        if (c.length !== 6) return `rgba(249, 115, 22, ${alpha})`;
+        const num = parseInt(c, 16);
+        return `rgba(${(num >> 16) & 255}, ${(num >> 8) & 255}, ${num & 255}, ${alpha})`;
+      };
+
+      root.style.setProperty('--accent-orange', p);
+      root.style.setProperty('--accent', p);
+      root.style.setProperty('--accent-gradient', `linear-gradient(135deg, ${p} 0%, ${s} 100%)`);
+      root.style.setProperty('--accent-orange-glow', hexToRgba(p, 0.25));
+      root.style.setProperty('--border-orange', hexToRgba(p, 0.35));
+
+      root.style.setProperty('--accent-turquoise', s);
+      root.style.setProperty('--accent-turquoise-dark', s);
+      root.style.setProperty('--turquoise-gradient', `linear-gradient(135deg, ${s} 0%, ${p} 100%)`);
+      root.style.setProperty('--accent-turquoise-glow', hexToRgba(s, 0.25));
+      root.style.setProperty('--border-turquoise', hexToRgba(s, 0.35));
+    },
+
+    updateUI() {
+      // 1. Mod hapları
+      $$('#theme-mode-pills .theme-mode-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.mode === this.config.mode);
+      });
+
+      // 2. Palet kartları
+      $$('#theme-palettes-grid .theme-palette-card').forEach(card => {
+        card.classList.toggle('active', card.dataset.palette === this.config.palette);
+      });
+
+      // 3. Özel renk seçiciler ve HEX inputları
+      const pPicker = $('#custom-primary-picker');
+      const sPicker = $('#custom-secondary-picker');
+      const pHex = $('#custom-primary-hex');
+      const sHex = $('#custom-secondary-hex');
+
+      if (pPicker) pPicker.value = this.config.primaryColor;
+      if (sPicker) sPicker.value = this.config.secondaryColor;
+      if (pHex) pHex.value = (this.config.primaryColor || '').toUpperCase();
+      if (sHex) sHex.value = (this.config.secondaryColor || '').toUpperCase();
+
+      // 4. Özel palet kartı önizleme rozetleri
+      const cSwatch1 = $('#custom-palette-swatch-1');
+      const cSwatch2 = $('#custom-palette-swatch-2');
+      if (cSwatch1) cSwatch1.style.background = this.config.primaryColor;
+      if (cSwatch2) cSwatch2.style.background = this.config.secondaryColor;
+    },
+
+    setMode(mode) {
+      this.config.mode = mode;
+      this.save();
+      this.apply();
+      showToast(mode === 'dark' ? 'Koyu Mod Aktif 🌙' : (mode === 'light' ? 'Açık Mod Aktif ☀️' : 'Sistem Modu Aktif 💻'), 'info');
+    },
+
+    toggleMode() {
+      const currentResolved = this.getResolvedMode();
+      const newMode = currentResolved === 'dark' ? 'light' : 'dark';
+      this.setMode(newMode);
+    },
+
+    setPalette(key) {
+      if (key === 'custom') {
+        this.config.palette = 'custom';
+        this.save();
+        this.apply();
+        showToast('Özel Tasarımım paleti uygulandı ✨', 'success');
+        return;
+      }
+      if (!PALETTES[key]) return;
+      this.config.palette = key;
+      this.config.primaryColor = PALETTES[key].primary;
+      this.config.secondaryColor = PALETTES[key].secondary;
+      if (PALETTES.custom) {
+        PALETTES.custom.primary = PALETTES[key].primary;
+        PALETTES.custom.secondary = PALETTES[key].secondary;
+      }
+      this.save();
+      this.apply();
+      showToast(`${PALETTES[key].name} paleti uygulandı ✨`, 'success');
+    },
+
+    setCustomColors(primary, secondary) {
+      if (primary) {
+        const normP = normalizeHex(primary) || primary;
+        this.config.primaryColor = normP;
+        if (PALETTES.custom) PALETTES.custom.primary = normP;
+      }
+      if (secondary) {
+        const normS = normalizeHex(secondary) || secondary;
+        this.config.secondaryColor = normS;
+        if (PALETTES.custom) PALETTES.custom.secondary = normS;
+      }
+      this.config.palette = 'custom';
+      this.save();
+      this.apply();
+    },
+
+    resetDefaults() {
+      this.config = { ...DEFAULT_THEME };
+      if (PALETTES.custom) {
+        PALETTES.custom.primary = DEFAULT_THEME.primaryColor;
+        PALETTES.custom.secondary = DEFAULT_THEME.secondaryColor;
+      }
+      this.save();
+      this.apply();
+      showToast('Tema varsayılan ayarlara döndürüldü ✓', 'success');
+    },
+
+    bindEvents() {
+      // Üst bardaki hızlı mod butonu
+      const toggleBtn = $('#theme-toggle-btn');
+      if (toggleBtn) {
+        toggleBtn.addEventListener('click', () => this.toggleMode());
+      }
+
+      // Mod hapları (Ayarlar sayfası)
+      $$('#theme-mode-pills .theme-mode-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          this.setMode(btn.dataset.mode);
+        });
+      });
+
+      // Palet kartları (Ayarlar sayfası)
+      $$('#theme-palettes-grid .theme-palette-card').forEach(card => {
+        card.addEventListener('click', () => {
+          this.setPalette(card.dataset.palette);
+        });
+      });
+
+      // Renk seçici inputları (Picker & HEX text inputları)
+      const pPicker = $('#custom-primary-picker');
+      const sPicker = $('#custom-secondary-picker');
+      const pHex = $('#custom-primary-hex');
+      const sHex = $('#custom-secondary-hex');
+
+      // 1. Ana Renk Picker
+      if (pPicker) {
+        pPicker.addEventListener('input', (e) => {
+          const val = e.target.value.toUpperCase();
+          if (pHex) pHex.value = val;
+          this.setCustomColors(val, null);
+        });
+      }
+
+      // 2. Ana Renk HEX Text Input
+      if (pHex) {
+        pHex.addEventListener('input', (e) => {
+          let val = e.target.value.trim();
+          if (val && !val.startsWith('#')) {
+            val = '#' + val;
+            e.target.value = val;
+          }
+          const valid = normalizeHex(val);
+          if (valid) {
+            if (pPicker) pPicker.value = valid;
+            this.setCustomColors(valid, null);
+          }
+        });
+
+        pHex.addEventListener('blur', (e) => {
+          const valid = normalizeHex(e.target.value);
+          if (valid) {
+            e.target.value = valid;
+            this.setCustomColors(valid, null);
+          } else {
+            e.target.value = this.config.primaryColor.toUpperCase();
+          }
+        });
+
+        pHex.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            pHex.blur();
+          }
+        });
+      }
+
+      // 3. İkincil Renk Picker
+      if (sPicker) {
+        sPicker.addEventListener('input', (e) => {
+          const val = e.target.value.toUpperCase();
+          if (sHex) sHex.value = val;
+          this.setCustomColors(null, val);
+        });
+      }
+
+      // 4. İkincil Renk HEX Text Input
+      if (sHex) {
+        sHex.addEventListener('input', (e) => {
+          let val = e.target.value.trim();
+          if (val && !val.startsWith('#')) {
+            val = '#' + val;
+            e.target.value = val;
+          }
+          const valid = normalizeHex(val);
+          if (valid) {
+            if (sPicker) sPicker.value = valid;
+            this.setCustomColors(null, valid);
+          }
+        });
+
+        sHex.addEventListener('blur', (e) => {
+          const valid = normalizeHex(e.target.value);
+          if (valid) {
+            e.target.value = valid;
+            this.setCustomColors(null, valid);
+          } else {
+            e.target.value = this.config.secondaryColor.toUpperCase();
+          }
+        });
+
+        sHex.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            sHex.blur();
+          }
+        });
+      }
+
+      // Varsayılana dön butonu
+      const resetBtn = $('#theme-reset-defaults-btn');
+      if (resetBtn) {
+        resetBtn.addEventListener('click', () => this.resetDefaults());
+      }
+    }
+  };
+
+  // ═══════════════════════════════════════════════════════
   // AYARLAR - Yedekleme & Geri Yükleme
   // ═══════════════════════════════════════════════════════
 
@@ -5339,6 +5686,7 @@
     pomodoro: Pomodoro,
     workout: Workout,
     books: Books,
+    theme: Theme,
     openModal,
     closeModal,
   };
@@ -5348,6 +5696,7 @@
 
   // Başlat
   async function boot() {
+    Theme.init();
     Splash.init();
     Nav.init();
     Kanban.init();
