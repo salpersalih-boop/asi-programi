@@ -54,6 +54,12 @@
         <h1 class="app-logo">ASİ <span class="sparkle">✨</span></h1>
       </div>
       <div class="top-bar-right">
+        <!-- Streak (Gün Serisi) Rozeti -->
+        <div id="top-streak-badge" class="top-streak-badge" title="Aktif Gün Seriniz">
+          <span class="streak-flame">🔥</span>
+          <span id="top-streak-count" class="streak-count">0</span>
+          <span class="streak-lbl">Gün</span>
+        </div>
         <div id="top-datetime" class="top-datetime">
           <div class="datetime-item datetime-date-wrap">
             <span class="datetime-icon">📅</span>
@@ -65,6 +71,11 @@
             <span id="top-clock" class="top-clock"></span>
           </div>
         </div>
+        <!-- Pano Görünürlük Ayarları Butonu -->
+        <button id="module-settings-btn" class="module-settings-btn" title="Pano Ayarları (Modül Görünürlüğü)" aria-label="Pano Ayarları">
+          <span class="module-btn-icon">🎛️</span>
+          <span class="module-btn-text">Pano Ayarları</span>
+        </button>
         <!-- Hızlı Koyu / Açık Mod Butonu -->
         <button id="theme-toggle-btn" class="theme-toggle-btn" title="Koyu / Açık Mod Değiştir" aria-label="Tema Değiştir">
           <span id="theme-toggle-icon">🌙</span>
@@ -78,15 +89,16 @@
         <h2 class="sidebar-logo">ASİ <span class="sparkle">✨</span></h2>
       </div>
       <ul class="nav-list">
-        <li><a href="#" class="nav-link active" data-page="dashboard"><span class="nav-icon">🏠</span> Ana Sayfa</a></li>
-        <li><a href="#" class="nav-link" data-page="kanban"><span class="nav-icon">📋</span> Görev Panosu</a></li>
-        <li><a href="#" class="nav-link" data-page="schedule"><span class="nav-icon">🏋️</span> Spor Programı</a></li>
-        <li><a href="#" class="nav-link" data-page="attendance"><span class="nav-icon">🎓</span> Devamsızlık Takibi</a></li>
-        <li><a href="#" class="nav-link" data-page="goals"><span class="nav-icon">🎯</span> Haftalık Hedefler</a></li>
-        <li><a href="#" class="nav-link" data-page="notebook"><span class="nav-icon">📝</span> Not Defterim</a></li>
-        <li><a href="#" class="nav-link" data-page="books"><span class="nav-icon">📚</span> Kitaplığım</a></li>
-        <li><a href="#" class="nav-link" data-page="pomodoro"><span class="nav-icon">⏱️</span> Pomodoro</a></li>
-        <li><a href="#" class="nav-link" data-page="settings"><span class="nav-icon">⚙️</span> Ayarlar</a></li>
+        <li data-module="dashboard"><a href="#" class="nav-link active" data-page="dashboard"><span class="nav-icon">🏠</span> Ana Sayfa</a></li>
+        <li data-module="kanban"><a href="#" class="nav-link" data-page="kanban"><span class="nav-icon">📋</span> Görev Panosu</a></li>
+        <li data-module="schedule"><a href="#" class="nav-link" data-page="schedule"><span class="nav-icon">🏋️</span> Spor Programı</a></li>
+        <li data-module="attendance"><a href="#" class="nav-link" data-page="attendance"><span class="nav-icon">🎓</span> Devamsızlık Takibi</a></li>
+        <li data-module="goals"><a href="#" class="nav-link" data-page="goals"><span class="nav-icon">🎯</span> Haftalık Hedefler</a></li>
+        <li data-module="notebook"><a href="#" class="nav-link" data-page="notebook"><span class="nav-icon">📝</span> Not Defterim</a></li>
+        <li data-module="books"><a href="#" class="nav-link" data-page="books"><span class="nav-icon">📚</span> Kitaplığım</a></li>
+        <li data-module="pomodoro"><a href="#" class="nav-link" data-page="pomodoro"><span class="nav-icon">⏱️</span> Pomodoro</a></li>
+        <li data-module="prayer"><a href="#" class="nav-link" data-page="prayer"><span class="nav-icon">🕌</span> Namaz & İbadet</a></li>
+        <li data-module="settings"><a href="#" class="nav-link" data-page="settings"><span class="nav-icon">⚙️</span> Ayarlar</a></li>
       </ul>
     </nav>
     <div id="sidebar-overlay" class="sidebar-overlay"></div>
@@ -158,33 +170,298 @@
           </div>
         </div>
 
+        <!-- 🕌 Namaz Vakitleri & İbadet Takibi Widget -->
+        <div id="dash-prayer-widget" class="dash-prayer-widget glass-card" data-module="prayer">
+          <div class="prayer-widget-header">
+            <div class="prayer-title-box">
+              <span class="prayer-header-icon">🕌</span>
+              <div>
+                <h3 class="prayer-widget-title">Namaz Vakitleri & İbadet Takibi</h3>
+                <span id="prayer-hijri-date" class="prayer-sub-date">Bugün</span>
+              </div>
+            </div>
+            <div class="prayer-header-right">
+              <div class="prayer-city-wrap">
+                <span class="city-pin">📍</span>
+                <select id="prayer-city-select" class="prayer-city-select" aria-label="Şehir Seçimi">
+                  <option value="Adana">Adana</option>
+                  <option value="Adiyaman">Adıyaman</option>
+                  <option value="Afyonkarahisar">Afyonkarahisar</option>
+                  <option value="Agri">Ağrı</option>
+                  <option value="Aksaray">Aksaray</option>
+                  <option value="Amasya">Amasya</option>
+                  <option value="Ankara">Ankara</option>
+                  <option value="Antalya">Antalya</option>
+                  <option value="Ardahan">Ardahan</option>
+                  <option value="Artvin">Artvin</option>
+                  <option value="Aydin">Aydın</option>
+                  <option value="Balikesir">Balıkesir</option>
+                  <option value="Bartin">Bartın</option>
+                  <option value="Batman">Batman</option>
+                  <option value="Bayburt">Bayburt</option>
+                  <option value="Bilecik">Bilecik</option>
+                  <option value="Bingol">Bingöl</option>
+                  <option value="Bitlis">Bitlis</option>
+                  <option value="Bolu">Bolu</option>
+                  <option value="Burdur">Burdur</option>
+                  <option value="Bursa">Bursa</option>
+                  <option value="Canakkale">Çanakkale</option>
+                  <option value="Cankiri">Çankırı</option>
+                  <option value="Corum">Çorum</option>
+                  <option value="Denizli">Denizli</option>
+                  <option value="Diyarbakir">Diyarbakır</option>
+                  <option value="Duzce">Düzce</option>
+                  <option value="Edirne">Edirne</option>
+                  <option value="Elazig">Elazığ</option>
+                  <option value="Erzincan">Erzincan</option>
+                  <option value="Erzurum">Erzurum</option>
+                  <option value="Eskisehir">Eskişehir</option>
+                  <option value="Gaziantep">Gaziantep</option>
+                  <option value="Giresun">Giresun</option>
+                  <option value="Gumushane">Gümüşhane</option>
+                  <option value="Hakkari">Hakkari</option>
+                  <option value="Hatay">Hatay</option>
+                  <option value="Igdir">Iğdır</option>
+                  <option value="Isparta">Isparta</option>
+                  <option value="Istanbul" selected>İstanbul</option>
+                  <option value="Izmir">İzmir</option>
+                  <option value="Kahramanmaras">Kahramanmaraş</option>
+                  <option value="Karabuk">Karabük</option>
+                  <option value="Karaman">Karaman</option>
+                  <option value="Kars">Kars</option>
+                  <option value="Kastamonu">Kastamonu</option>
+                  <option value="Kayseri">Kayseri</option>
+                  <option value="Kilis">Kilis</option>
+                  <option value="Kirikkale">Kırıkkale</option>
+                  <option value="Kirklareli">Kırklareli</option>
+                  <option value="Kirsehir">Kırşehir</option>
+                  <option value="Kocaeli">Kocaeli</option>
+                  <option value="Konya">Konya</option>
+                  <option value="Kutahya">Kütahya</option>
+                  <option value="Malatya">Malatya</option>
+                  <option value="Manisa">Manisa</option>
+                  <option value="Mardin">Mardin</option>
+                  <option value="Mersin">Mersin</option>
+                  <option value="Mugla">Muğla</option>
+                  <option value="Mus">Muş</option>
+                  <option value="Nevsehir">Nevşehir</option>
+                  <option value="Nigde">Niğde</option>
+                  <option value="Ordu">Ordu</option>
+                  <option value="Osmaniye">Osmaniye</option>
+                  <option value="Rize">Rize</option>
+                  <option value="Sakarya">Sakarya</option>
+                  <option value="Samsun">Samsun</option>
+                  <option value="Sanliurfa">Şanlıurfa</option>
+                  <option value="Siirt">Siirt</option>
+                  <option value="Sinop">Sinop</option>
+                  <option value="Sirnak">Şırnak</option>
+                  <option value="Sivas">Sivas</option>
+                  <option value="Tekirdag">Tekirdağ</option>
+                  <option value="Tokat">Tokat</option>
+                  <option value="Trabzon">Trabzon</option>
+                  <option value="Tunceli">Tunceli</option>
+                  <option value="Usak">Uşak</option>
+                  <option value="Van">Van</option>
+                  <option value="Yalova">Yalova</option>
+                  <option value="Yozgat">Yozgat</option>
+                  <option value="Zonguldak">Zonguldak</option>
+                </select>
+              </div>
+              <button type="button" id="prayer-refresh-btn" class="btn btn-ghost btn-xs" title="Vakitleri Yenile">↺</button>
+            </div>
+          </div>
+
+          <!-- Sıradaki Vakit Vurgusu -->
+          <div class="prayer-next-banner" id="prayer-next-banner">
+            <div class="prayer-next-info">
+              <span class="prayer-next-badge pulse-dot">● Sıradaki Vakit</span>
+              <strong id="prayer-next-name">İkindi</strong>
+              <span id="prayer-next-countdown" class="prayer-countdown-tag">--:-- kaldı</span>
+            </div>
+            <div class="prayer-progress-summary">
+              <span id="prayer-done-count-text">0/5 Vakit Kılındı</span>
+            </div>
+          </div>
+
+          <!-- Vakit Kartları & Checkbox'lar -->
+          <div class="prayer-times-grid" id="prayer-times-grid">
+            <!-- Sabah -->
+            <div class="prayer-card" data-vakit="fajr">
+              <div class="prayer-card-top">
+                <span class="prayer-icon">🌅</span>
+                <span class="prayer-name">İmsak</span>
+              </div>
+              <div class="prayer-card-time" id="time-fajr">--:--</div>
+              <label class="prayer-check-label" title="İmsak namazını kıldım">
+                <input type="checkbox" class="prayer-checkbox" data-prayer="fajr">
+                <span class="prayer-custom-check">✓</span>
+                <span class="prayer-check-text">Kılındı</span>
+              </label>
+            </div>
+
+            <!-- Güneş (Referans) -->
+            <div class="prayer-card prayer-card-ref" data-vakit="sunrise">
+              <div class="prayer-card-top">
+                <span class="prayer-icon">☀️</span>
+                <span class="prayer-name">Güneş</span>
+              </div>
+              <div class="prayer-card-time" id="time-sunrise">--:--</div>
+              <div class="prayer-ref-badge">Doğuş</div>
+            </div>
+
+            <!-- Öğle -->
+            <div class="prayer-card" data-vakit="dhuhr">
+              <div class="prayer-card-top">
+                <span class="prayer-icon">☀️</span>
+                <span class="prayer-name">Öğle</span>
+              </div>
+              <div class="prayer-card-time" id="time-dhuhr">--:--</div>
+              <label class="prayer-check-label" title="Öğle namazını kıldım">
+                <input type="checkbox" class="prayer-checkbox" data-prayer="dhuhr">
+                <span class="prayer-custom-check">✓</span>
+                <span class="prayer-check-text">Kılındı</span>
+              </label>
+            </div>
+
+            <!-- İkindi -->
+            <div class="prayer-card" data-vakit="asr">
+              <div class="prayer-card-top">
+                <span class="prayer-icon">🌤️</span>
+                <span class="prayer-name">İkindi</span>
+              </div>
+              <div class="prayer-card-time" id="time-asr">--:--</div>
+              <label class="prayer-check-label" title="İkindi namazını kıldım">
+                <input type="checkbox" class="prayer-checkbox" data-prayer="asr">
+                <span class="prayer-custom-check">✓</span>
+                <span class="prayer-check-text">Kılındı</span>
+              </label>
+            </div>
+
+            <!-- Akşam -->
+            <div class="prayer-card" data-vakit="maghrib">
+              <div class="prayer-card-top">
+                <span class="prayer-icon">🌇</span>
+                <span class="prayer-name">Akşam</span>
+              </div>
+              <div class="prayer-card-time" id="time-maghrib">--:--</div>
+              <label class="prayer-check-label" title="Akşam namazını kıldım">
+                <input type="checkbox" class="prayer-checkbox" data-prayer="maghrib">
+                <span class="prayer-custom-check">✓</span>
+                <span class="prayer-check-text">Kılındı</span>
+              </label>
+            </div>
+
+            <!-- Yatsı -->
+            <div class="prayer-card" data-vakit="isha">
+              <div class="prayer-card-top">
+                <span class="prayer-icon">🌙</span>
+                <span class="prayer-name">Yatsı</span>
+              </div>
+              <div class="prayer-card-time" id="time-isha">--:--</div>
+              <label class="prayer-check-label" title="Yatsı namazını kıldım">
+                <input type="checkbox" class="prayer-checkbox" data-prayer="isha">
+                <span class="prayer-custom-check">✓</span>
+                <span class="prayer-check-text">Kılındı</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Günlük İlerleme Çubuğu -->
+          <div class="prayer-progress-track">
+            <div id="prayer-progress-fill" class="prayer-progress-fill" style="width: 0%;"></div>
+          </div>
+        </div>
+
+        <!-- 🏆 Oyunlaştırma & Streak Rozetleri Kartı -->
+        <div id="dash-streak-widget" class="dash-streak-widget glass-card">
+          <div class="streak-widget-header">
+            <div class="streak-title-box">
+              <span class="streak-header-flame">🔥</span>
+              <div>
+                <h3 class="streak-widget-title">Gün Serileri & Başarı Rozetleri</h3>
+                <span class="streak-widget-sub">Düzenli alışkanlıklarını sürdür, özel emoji rozetlerinin kilidini aç!</span>
+              </div>
+            </div>
+            <div class="streak-pill-box">
+              <span class="badge badge-warning" id="streak-top-pill">🔥 0 Gün Seri</span>
+            </div>
+          </div>
+
+          <!-- Aktif Seriler Mini Grid -->
+          <div class="streaks-metrics-grid">
+            <div class="streak-metric-card">
+              <div class="streak-metric-icon">📚</div>
+              <div class="streak-metric-info">
+                <strong id="streak-book-count">0 Gün</strong>
+                <span>Okuma Serisi</span>
+              </div>
+            </div>
+            <div class="streak-metric-card">
+              <div class="streak-metric-icon">🏋️</div>
+              <div class="streak-metric-info">
+                <strong id="streak-workout-count">0 Gün</strong>
+                <span>Spor Serisi</span>
+              </div>
+            </div>
+            <div class="streak-metric-card">
+              <div class="streak-metric-icon">🕌</div>
+              <div class="streak-metric-info">
+                <strong id="streak-prayer-count">0 Gün</strong>
+                <span>İbadet Serisi</span>
+              </div>
+            </div>
+            <div class="streak-metric-card">
+              <div class="streak-metric-icon">⚡</div>
+              <div class="streak-metric-info">
+                <strong id="streak-general-count">0 Gün</strong>
+                <span>Genel Seri</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Emoji Rozetleri Vitrini -->
+          <div class="badges-showcase">
+            <div class="badges-showcase-title">
+              <span>🏅 Kazanılan ve Hedeflenen Rozetler</span>
+              <span class="text-xs text-muted">Detaylar için rozete tıklayın</span>
+            </div>
+            <div class="badges-grid" id="badges-container">
+              <!-- JS ile dinamik doldurulur -->
+            </div>
+          </div>
+        </div>
+
         <!-- Hızlı Erişim -->
         <div class="quick-access">
           <h3>Hızlı Erişim</h3>
           <div class="quick-cards">
-            <button type="button" class="quick-card glass-card" onclick="ASI.navigateTo('kanban')">
+            <button type="button" class="quick-card glass-card" data-module="kanban" onclick="ASI.navigateTo('kanban')">
               <span class="quick-icon">📋</span>
               <span>Görev Panosu</span>
             </button>
-            <button type="button" class="quick-card glass-card" onclick="ASI.navigateTo('schedule')">
+            <button type="button" class="quick-card glass-card" data-module="schedule" onclick="ASI.navigateTo('schedule')">
               <span class="quick-icon">🏋️</span>
               <span>Spor Programı</span>
             </button>
-            <button type="button" class="quick-card glass-card" onclick="ASI.navigateTo('attendance')">
+            <button type="button" class="quick-card glass-card" data-module="attendance" onclick="ASI.navigateTo('attendance')">
               <span class="quick-icon">🎓</span>
               <span>Devamsızlık Takibi</span>
             </button>
-            <button type="button" class="quick-card glass-card" onclick="ASI.navigateTo('goals')">
+            <button type="button" class="quick-card glass-card" data-module="goals" onclick="ASI.navigateTo('goals')">
               <span class="quick-icon">🎯</span>
               <span>Haftalık Hedefler</span>
             </button>
-            <button type="button" class="quick-card glass-card" onclick="ASI.navigateTo('notebook')">
+            <button type="button" class="quick-card glass-card" data-module="notebook" onclick="ASI.navigateTo('notebook')">
               <span class="quick-icon">📝</span>
               <span>Not Defterim</span>
             </button>
-            <button type="button" class="quick-card glass-card" onclick="ASI.navigateTo('books')">
+            <button type="button" class="quick-card glass-card" data-module="books" onclick="ASI.navigateTo('books')">
               <span class="quick-icon">📚</span>
               <span>Kitaplığım</span>
+            </button>
+            <button type="button" class="quick-card glass-card" data-module="prayer" onclick="ASI.navigateTo('prayer')">
+              <span class="quick-icon">🕌</span>
+              <span>Namaz & İbadet</span>
             </button>
           </div>
         </div>
@@ -232,6 +509,97 @@
             <button type="button" id="workout-history-btn" class="btn btn-secondary btn-sm" title="Antrenman geçmişi ve kullanılan ağırlıklar">📜 Geçmiş Antrenmanlar</button>
             <button type="button" id="add-workout-exercise-btn" class="btn btn-primary btn-sm">+ Yeni Hareket Ekle</button>
             <button type="button" id="reset-workout-exercises-btn" class="btn btn-ghost btn-sm" title="Varsayılan 21 hareketi sıfırla/geri yükle">↺ Varsayılanları Yükle</button>
+          </div>
+        </div>
+
+        <!-- 🦍 Spor Rozetleri & Seri Çubuğu -->
+        <div id="workout-badges-bar" class="workout-badges-bar glass-card">
+          <div class="w-badge-left">
+            <span class="w-flame">🔥</span>
+            <div>
+              <strong id="workout-streak-label">0 Gün Spor Serisi</strong>
+              <span class="text-xs text-muted">Düzenli spor yaparak 🔥 (3 gün) ve 🦍 (7 gün) rozetlerini kazanın!</span>
+            </div>
+          </div>
+          <div class="w-badge-pills" id="workout-unlocked-badges">
+            <!-- JS ile dinamik doldurulur -->
+          </div>
+        </div>
+
+        <!-- ⚖️ Vücut Kitle İndeksi (VKİ) ve Gelişim Çubuğu -->
+        <div id="workout-vki-card" class="workout-vki-card glass-card">
+          <div class="vki-header">
+            <div class="vki-title-box">
+              <span class="vki-icon">⚖️</span>
+              <div>
+                <h3 class="vki-title">Vücut Kitle İndeksi (VKİ) & Sağlık Durumu</h3>
+                <span class="vki-sub">Boy ve kilonuzu girin; VKİ oranınız renkli gelişim barı ve ibre ile anında hesaplansın.</span>
+              </div>
+            </div>
+            <div class="vki-badge-box">
+              <span id="vki-category-badge" class="badge badge-success">İdeal Kilo</span>
+            </div>
+          </div>
+
+          <div class="vki-body">
+            <!-- Giriş Alanları -->
+            <div class="vki-inputs-row">
+              <div class="vki-input-group">
+                <label for="vki-height-input">📏 Boyunuz (cm)</label>
+                <div class="vki-input-wrap">
+                  <input type="number" id="vki-height-input" min="100" max="250" step="1" placeholder="175" value="175">
+                  <span class="vki-unit">cm</span>
+                </div>
+              </div>
+              <div class="vki-input-group">
+                <label for="vki-weight-input">⚖️ Kilonuz (kg)</label>
+                <div class="vki-input-wrap">
+                  <input type="number" id="vki-weight-input" min="30" max="300" step="0.1" placeholder="70.0" value="70.0">
+                  <span class="vki-unit">kg</span>
+                </div>
+              </div>
+              <div class="vki-result-display">
+                <span class="vki-result-label">Hesaplanan VKİ</span>
+                <span id="vki-score-num" class="vki-score-num">22.9</span>
+              </div>
+            </div>
+
+            <!-- Renkli Görsel Bar ve İbre (Needle) -->
+            <div class="vki-visual-bar-wrap">
+              <div class="vki-needle-track" id="vki-needle-track">
+                <div class="vki-needle" id="vki-needle" style="left: 39.5%;">
+                  <div class="vki-needle-bubble" id="vki-needle-bubble">22.9</div>
+                  <div class="vki-needle-arrow"></div>
+                </div>
+              </div>
+              <div class="vki-bar">
+                <div class="vki-segment vki-underweight" title="Zayıf (< 18.5)">
+                  <span>Mavi: Zayıf (&lt;18.5)</span>
+                </div>
+                <div class="vki-segment vki-normal" title="İdeal Kilo (18.5 - 24.9)">
+                  <span>Yeşil: İdeal (18.5-24.9)</span>
+                </div>
+                <div class="vki-segment vki-overweight" title="Fazla Kilolu (25.0 - 29.9)">
+                  <span>Sarı: Kilolu (25-29.9)</span>
+                </div>
+                <div class="vki-segment vki-obese" title="Obez (≥ 30.0)">
+                  <span>Kırmızı: Obez (≥30)</span>
+                </div>
+              </div>
+              <div class="vki-bar-scale-labels">
+                <span>15</span>
+                <span>18.5</span>
+                <span>25.0</span>
+                <span>30.0</span>
+                <span>35+</span>
+              </div>
+            </div>
+
+            <!-- İdeal Kilo Aralığı & Bilgi -->
+            <div class="vki-info-footer">
+              <span id="vki-advice-text" class="vki-advice-text">Boyunuza göre ideal kilo aralığı: <strong>56.7 - 76.3 kg</strong></span>
+              <span id="vki-saved-indicator" class="vki-saved-indicator text-success">✓ Hafızaya Kaydedildi</span>
+            </div>
           </div>
         </div>
 
@@ -312,13 +680,16 @@
         <!-- Kas Grubu Filtreleme Butonları -->
         <div class="workout-filter-bar">
           <div class="workout-filter-scroll">
-            <button type="button" class="workout-cat-btn active" data-cat="all">⚡ Tümü (<span id="cat-count-all">21</span>)</button>
-            <button type="button" class="workout-cat-btn" data-cat="gogus">🫁 Göğüs (<span id="cat-count-gogus">4</span>)</button>
-            <button type="button" class="workout-cat-btn" data-cat="sirt">🦇 Sırt (<span id="cat-count-sirt">3</span>)</button>
-            <button type="button" class="workout-cat-btn" data-cat="omuz">🛡️ Omuz (<span id="cat-count-omuz">3</span>)</button>
-            <button type="button" class="workout-cat-btn" data-cat="bacak">🦵 Bacak (<span id="cat-count-bacak">5</span>)</button>
-            <button type="button" class="workout-cat-btn" data-cat="kol">💪 Kol (<span id="cat-count-kol">3</span>)</button>
-            <button type="button" class="workout-cat-btn" data-cat="karin">🍫 Karın (<span id="cat-count-karin">3</span>)</button>
+            <button type="button" class="workout-cat-btn active" data-cat="gogus">🫁 Göğüs (<span id="cat-count-gogus">0</span>)</button>
+            <button type="button" class="workout-cat-btn" data-cat="sirt">🦇 Sırt (<span id="cat-count-sirt">0</span>)</button>
+            <button type="button" class="workout-cat-btn" data-cat="omuz">🛡️ Omuz (<span id="cat-count-omuz">0</span>)</button>
+            <button type="button" class="workout-cat-btn" data-cat="biceps">💪 Biceps (<span id="cat-count-biceps">0</span>)</button>
+            <button type="button" class="workout-cat-btn" data-cat="triceps">🔱 Triceps (<span id="cat-count-triceps">0</span>)</button>
+            <button type="button" class="workout-cat-btn" data-cat="karin">🍫 Karın (<span id="cat-count-karin">0</span>)</button>
+            <button type="button" class="workout-cat-btn" data-cat="bacak">🦵 Bacak (<span id="cat-count-bacak">0</span>)</button>
+            <button type="button" class="workout-cat-btn" data-cat="onkol">🤜 Ön Kol (<span id="cat-count-onkol">0</span>)</button>
+            <button type="button" class="workout-cat-btn" data-cat="kardiyo">🏃 Kardiyo (<span id="cat-count-kardiyo">0</span>)</button>
+            <button type="button" class="workout-cat-btn" data-cat="all">⚡ Tümü (<span id="cat-count-all">0</span>)</button>
           </div>
         </div>
 
@@ -523,22 +894,20 @@
 
               <!-- Not Kağıdı -->
               <div class="zen-sheet">
-                <!-- Başlık ve Kategori Bloğu -->
+                <!-- Kategori Seçimi (Başlık yerine kullanılır) -->
                 <div class="zen-title-category-box">
-                  <input type="text" id="zen-note-title" class="zen-input-title" placeholder="Başlıksız Not" autocomplete="off">
-                  
-                  <!-- Başlık Alanı İçindeki Kategori Seçimi -->
-                  <div class="zen-category-bar">
-                    <span class="zen-category-label">Kategori:</span>
+                  <!-- Kategori Seçim Barı (başlık rolünde) -->
+                  <div class="zen-category-bar zen-category-bar--primary">
+                    <span class="zen-category-label">📂 Kategori Seç:</span>
                     <div class="zen-tag-selector" id="zen-tag-selector" role="radiogroup" aria-label="Not Kategorisi">
                       <button type="button" class="zen-tag-btn" data-tag="exam" title="Sınavda Çıkabilir">
                         <span class="zen-tag-icon">🎯</span> Sınavda Çıkabilir
                       </button>
+                      <button type="button" class="zen-tag-btn" data-tag="review" title="Tekrar Et">
+                        <span class="zen-tag-icon">🔄</span> Tekrar Et
+                      </button>
                       <button type="button" class="zen-tag-btn" data-tag="important" title="Önemli">
                         <span class="zen-tag-icon">⭐</span> Önemli
-                      </button>
-                      <button type="button" class="zen-tag-btn" data-tag="review" title="Tekrar Çalış">
-                        <span class="zen-tag-icon">🔄</span> Tekrar
                       </button>
                       <button type="button" class="zen-tag-btn" data-tag="general" title="Genel">
                         <span class="zen-tag-icon">📝</span> Genel
@@ -571,9 +940,24 @@
             <p class="section-subtitle">Okuduğun kitapları kaydet, günlük okuma oturumlarını takip et ve gelişimini grafiklerle incele.</p>
           </div>
           <div class="books-header-actions">
-            <button type="button" id="add-book-btn" class="btn btn-primary btn-sm">+ Yeni Kitap Ekle</button>
-            <button type="button" id="add-book-session-btn" class="btn btn-secondary btn-sm">⏱️ Okuma Oturumu Ekle</button>
+            <button type="button" id="start-book-focus-btn" class="btn btn-primary btn-sm book-focus-action-btn pulse-glow" title="Dikkat dağıtıcı unsurları gizleyip odaklanarak okuma sayacını başlat">📖 Okumaya Başla</button>
+            <button type="button" id="add-book-btn" class="btn btn-secondary btn-sm">+ Yeni Kitap Ekle</button>
+            <button type="button" id="add-book-session-btn" class="btn btn-ghost btn-sm">⏱️ Manuel Oturum Ekle</button>
             <button type="button" id="set-book-goals-btn" class="btn btn-ghost btn-sm" title="Günlük ve haftalık okuma hedeflerini ayarla">🎯 Hedefler</button>
+          </div>
+        </div>
+
+        <!-- 🐛 Kitap Rozetleri & Okuma Serisi Çubuğu -->
+        <div id="books-badges-bar" class="books-badges-bar glass-card">
+          <div class="b-badge-left">
+            <span class="b-badge-icon">🐛</span>
+            <div>
+              <strong id="books-streak-label">0 Gün Okuma Serisi</strong>
+              <span class="text-xs text-muted">7 gün okuyarak 🐛 Kitap Kurdu, 30 gün okuyarak 🦉 Bilge Baykuş rozetini kazanın!</span>
+            </div>
+          </div>
+          <div class="b-badge-pills" id="books-unlocked-badges">
+            <!-- JS ile dinamik doldurulur: 🐛, 🦉 -->
           </div>
         </div>
 
@@ -847,12 +1231,155 @@
         </div>
       </section>
 
+      <!-- ════════ NAMAZ & İBADET TAKİBİ ════════ -->
+      <section id="page-prayer" class="page">
+        <div class="page-header prayer-page-header">
+          <div>
+            <h2>🕌 Namaz Vakitleri & İbadet Takibi</h2>
+            <p class="section-subtitle">Diyanet İşleri Başkanlığı uyumlu günlük namaz vakitlerini takip edin ve ibadetlerinizi işaretleyin.</p>
+          </div>
+          <div class="prayer-header-actions">
+            <div class="prayer-city-wrap">
+              <span class="city-pin">📍</span>
+              <select id="prayer-page-city-select" class="prayer-city-select" aria-label="Şehir Seçimi">
+                  <option value="Adana">Adana</option>
+                  <option value="Adiyaman">Adıyaman</option>
+                  <option value="Afyonkarahisar">Afyonkarahisar</option>
+                  <option value="Agri">Ağrı</option>
+                  <option value="Aksaray">Aksaray</option>
+                  <option value="Amasya">Amasya</option>
+                  <option value="Ankara">Ankara</option>
+                  <option value="Antalya">Antalya</option>
+                  <option value="Ardahan">Ardahan</option>
+                  <option value="Artvin">Artvin</option>
+                  <option value="Aydin">Aydın</option>
+                  <option value="Balikesir">Balıkesir</option>
+                  <option value="Bartin">Bartın</option>
+                  <option value="Batman">Batman</option>
+                  <option value="Bayburt">Bayburt</option>
+                  <option value="Bilecik">Bilecik</option>
+                  <option value="Bingol">Bingöl</option>
+                  <option value="Bitlis">Bitlis</option>
+                  <option value="Bolu">Bolu</option>
+                  <option value="Burdur">Burdur</option>
+                  <option value="Bursa">Bursa</option>
+                  <option value="Canakkale">Çanakkale</option>
+                  <option value="Cankiri">Çankırı</option>
+                  <option value="Corum">Çorum</option>
+                  <option value="Denizli">Denizli</option>
+                  <option value="Diyarbakir">Diyarbakır</option>
+                  <option value="Duzce">Düzce</option>
+                  <option value="Edirne">Edirne</option>
+                  <option value="Elazig">Elazığ</option>
+                  <option value="Erzincan">Erzincan</option>
+                  <option value="Erzurum">Erzurum</option>
+                  <option value="Eskisehir">Eskişehir</option>
+                  <option value="Gaziantep">Gaziantep</option>
+                  <option value="Giresun">Giresun</option>
+                  <option value="Gumushane">Gümüşhane</option>
+                  <option value="Hakkari">Hakkari</option>
+                  <option value="Hatay">Hatay</option>
+                  <option value="Igdir">Iğdır</option>
+                  <option value="Isparta">Isparta</option>
+                  <option value="Istanbul" selected>İstanbul</option>
+                  <option value="Izmir">İzmir</option>
+                  <option value="Kahramanmaras">Kahramanmaraş</option>
+                  <option value="Karabuk">Karabük</option>
+                  <option value="Karaman">Karaman</option>
+                  <option value="Kars">Kars</option>
+                  <option value="Kastamonu">Kastamonu</option>
+                  <option value="Kayseri">Kayseri</option>
+                  <option value="Kilis">Kilis</option>
+                  <option value="Kirikkale">Kırıkkale</option>
+                  <option value="Kirklareli">Kırklareli</option>
+                  <option value="Kirsehir">Kırşehir</option>
+                  <option value="Kocaeli">Kocaeli</option>
+                  <option value="Konya">Konya</option>
+                  <option value="Kutahya">Kütahya</option>
+                  <option value="Malatya">Malatya</option>
+                  <option value="Manisa">Manisa</option>
+                  <option value="Mardin">Mardin</option>
+                  <option value="Mersin">Mersin</option>
+                  <option value="Mugla">Muğla</option>
+                  <option value="Mus">Muş</option>
+                  <option value="Nevsehir">Nevşehir</option>
+                  <option value="Nigde">Niğde</option>
+                  <option value="Ordu">Ordu</option>
+                  <option value="Osmaniye">Osmaniye</option>
+                  <option value="Rize">Rize</option>
+                  <option value="Sakarya">Sakarya</option>
+                  <option value="Samsun">Samsun</option>
+                  <option value="Sanliurfa">Şanlıurfa</option>
+                  <option value="Siirt">Siirt</option>
+                  <option value="Sinop">Sinop</option>
+                  <option value="Sirnak">Şırnak</option>
+                  <option value="Sivas">Sivas</option>
+                  <option value="Tekirdag">Tekirdağ</option>
+                  <option value="Tokat">Tokat</option>
+                  <option value="Trabzon">Trabzon</option>
+                  <option value="Tunceli">Tunceli</option>
+                  <option value="Usak">Uşak</option>
+                  <option value="Van">Van</option>
+                  <option value="Yalova">Yalova</option>
+                  <option value="Yozgat">Yozgat</option>
+                  <option value="Zonguldak">Zonguldak</option>
+              </select>
+            </div>
+            <button type="button" id="prayer-page-refresh-btn" class="btn btn-secondary btn-sm">↺ Vakitleri Yenile</button>
+          </div>
+        </div>
+
+        <!-- Büyük Tarih ve İmsakiye Kartı -->
+        <div class="prayer-page-card glass-card">
+          <div class="prayer-page-topbar">
+            <div class="prayer-date-badge">
+              <span class="date-icon">📅</span>
+              <span id="prayer-page-gregorian-date">--</span>
+              <span class="date-sep">•</span>
+              <span id="prayer-page-hijri-date">--</span>
+            </div>
+            <div class="prayer-streak-badge-box">
+              <span class="badge badge-warning" id="prayer-page-streak-badge">🕊️ 0 Gün İbadet Serisi</span>
+            </div>
+          </div>
+
+          <div class="prayer-page-times-grid" id="prayer-page-times-grid">
+            <!-- JS ile doldurulur -->
+          </div>
+
+          <div class="prayer-page-progress-box">
+            <div class="prayer-progress-label-row">
+              <span>Bugünkü İbadet Tamamlanma Oranı:</span>
+              <strong id="prayer-page-progress-text">0/5 Vakit (%0)</strong>
+            </div>
+            <div class="prayer-progress-track">
+              <div id="prayer-page-progress-fill" class="prayer-progress-fill" style="width: 0%;"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <!-- ════════ AYARLAR & TEMA ════════ -->
       <section id="page-settings" class="page">
         <div class="page-header">
           <h2>⚙️ Ayarlar & Görünüm</h2>
         </div>
         <div class="settings-grid">
+          <!-- Modüler Pano & Görünürlük Ayarları Kartı -->
+          <div class="settings-card glass-card" id="settings-module-visibility-card">
+            <div class="settings-card-head">
+              <h3>🎛️ Modüler Pano Ayarları (Modül Görünürlüğü)</h3>
+              <span class="settings-badge">Kişiselleştirilebilir</span>
+            </div>
+            <p>İlgilenmediğiniz modülleri (örneğin spora gitmiyorsanız spor modülünü) gizleyerek arayüzü sadeleştirin. Tercihleriniz anında kaydedilir.</p>
+            <div class="module-switches-list" id="settings-module-switches">
+              <!-- JS ile dinamik oluşturulur -->
+            </div>
+            <div class="module-switches-actions">
+              <button type="button" id="btn-show-all-modules" class="btn btn-secondary btn-sm">Tüm Modülleri Göster</button>
+              <button type="button" id="btn-reset-module-visibility" class="btn btn-ghost btn-sm">↺ Varsayılanlara Dön</button>
+            </div>
+          </div>
           <!-- Görünüm & Renk Teması Kartı -->
           <div class="settings-card glass-card settings-theme-card">
             <div class="settings-card-head">
@@ -933,6 +1460,10 @@
                   </div>
                   <span class="palette-name" id="custom-palette-name-label">Özel Tasarımım ✨</span>
                 </button>
+                <button type="button" class="theme-palette-card add-palette-card" id="theme-add-custom-color-btn" title="Yeni Özel Renk Ekle">
+                  <div class="add-plus-icon">＋</div>
+                  <span class="palette-name">Renk Ekle</span>
+                </button>
               </div>
             </div>
 
@@ -955,6 +1486,20 @@
                   </div>
                 </div>
                 <button type="button" id="theme-reset-defaults-btn" class="btn btn-sm btn-ghost">↺ Varsayılana Dön</button>
+              </div>
+            </div>
+
+            <!-- 3b. Kullanıcı Tanımlı Özel Renk Paletleri -->
+            <div class="theme-setting-section">
+              <div class="user-colors-header">
+                <label class="theme-setting-title">🎨 Kişisel Renk Koleksiyonum</label>
+                <button type="button" id="add-user-color-btn" class="btn btn-sm btn-primary user-color-add-btn" title="Yeni özel renk ekle">
+                  <span>＋ Renk Ekle</span>
+                </button>
+              </div>
+              <p class="theme-setting-desc">İstediğin kadar özel renk ekle, isimlendir ve tek tıkla uygula. Renkler kalıcı olarak kaydedilir.</p>
+              <div id="user-colors-grid" class="user-colors-grid">
+                <!-- JS ile dinamik doldurulur -->
               </div>
             </div>
 
@@ -1077,9 +1622,12 @@
             <option value="gogus">🫁 Göğüs</option>
             <option value="sirt">🦇 Sırt</option>
             <option value="omuz">🛡️ Omuz</option>
-            <option value="bacak">🦵 Bacak</option>
-            <option value="kol">💪 Kol</option>
+            <option value="biceps">💪 Biceps</option>
+            <option value="triceps">🔱 Triceps</option>
             <option value="karin">🍫 Karın</option>
+            <option value="bacak">🦵 Bacak</option>
+            <option value="onkol">🤜 Ön Kol</option>
+            <option value="kardiyo">🏃 Kardiyo</option>
           </select>
         </div>
         <div class="form-row">
@@ -1386,9 +1934,224 @@
     </div>
   </div>
 
-  <!-- Toast Bildirimi -->
+  <!-- ════════ PANO GÖRÜNÜRLÜK AYARLARI MODAL ════════ -->
+  <div id="module-settings-modal" class="modal-overlay hidden">
+    <div class="modal glass-card modal-md">
+      <div class="modal-header">
+        <div>
+          <h3>🎛️ Pano Görünürlük Ayarları</h3>
+          <p class="text-xs text-muted">İlgilenmediğiniz modülleri gizleyerek arayüzü sadeleştirin.</p>
+        </div>
+        <button type="button" class="modal-close" data-modal="module-settings-modal">✕</button>
+      </div>
+      <div class="module-modal-body">
+        <p class="module-modal-desc">Kapatılan modüller sol menüden ve ana sayfadan otomatik gizlenir. Tercihleriniz tarayıcınızda saklanır.</p>
+        <div class="module-switches-list" id="modal-module-switches">
+          <!-- JS ile doldurulacak -->
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" id="modal-modules-show-all" class="btn btn-ghost btn-sm">Tümünü Aç</button>
+        <button type="button" class="btn btn-primary" data-modal="module-settings-modal">Tamam</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════ KİTAP ODAK SAYACI (ZEN FOCUS MODE OVERLAY) ════════ -->
+  <div id="book-focus-overlay" class="book-focus-overlay hidden">
+    <div class="book-focus-ambient-bg">
+      <div class="focus-glow-1"></div>
+      <div class="focus-glow-2"></div>
+    </div>
+    
+    <div class="book-focus-container">
+      <!-- Üst Bar -->
+      <div class="book-focus-topbar">
+        <div class="book-focus-brand">
+          <span class="focus-icon">📖</span>
+          <span class="focus-brand-text">Odaklanarak Okuma Modu</span>
+        </div>
+        <button type="button" id="book-focus-exit-btn" class="book-focus-close-btn" title="Odak Modundan Çık">✕ Kapat</button>
+      </div>
+
+      <!-- Kitap Bilgi Kartı -->
+      <div class="book-focus-card glass-card">
+        <div class="book-focus-info-row">
+          <div class="book-focus-badge-icon" id="book-focus-cover-icon">📚</div>
+          <div class="book-focus-meta">
+            <h2 id="book-focus-title" class="book-focus-title">Kitap Başlığı</h2>
+            <p id="book-focus-author" class="book-focus-author">Yazar Adı</p>
+            <div class="book-focus-page-info">
+              <span class="badge badge-info" id="book-focus-current-page-tag">Başlangıç: Sayfa 0</span>
+              <span class="text-xs text-muted" id="book-focus-total-pages-tag">Toplam 300 sayfa</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Süre Önayarları -->
+        <div class="book-focus-presets" id="book-focus-presets">
+          <button type="button" class="focus-preset-btn" data-minutes="15">15 dk</button>
+          <button type="button" class="focus-preset-btn" data-minutes="25">25 dk</button>
+          <button type="button" class="focus-preset-btn active" data-minutes="30">30 dk (Varsayılan)</button>
+          <button type="button" class="focus-preset-btn" data-minutes="45">45 dk</button>
+          <button type="button" class="focus-preset-btn" data-minutes="60">60 dk</button>
+        </div>
+
+        <!-- Geri Sayım Halkası & Göstergesi -->
+        <div class="book-focus-ring-wrap">
+          <svg class="book-focus-svg" viewBox="0 0 240 240">
+            <circle class="book-focus-bg-circle" cx="120" cy="120" r="105" />
+            <circle id="book-focus-circle-progress" class="book-focus-circle-progress" cx="120" cy="120" r="105" />
+          </svg>
+          <div class="book-focus-time-box">
+            <span id="book-focus-timer-display" class="book-focus-timer-display">30:00</span>
+            <span id="book-focus-status-text" class="book-focus-status-text">Odaklanmaya Hazır</span>
+          </div>
+        </div>
+
+        <!-- Kontrol Butonları -->
+        <div class="book-focus-controls">
+          <button type="button" id="book-focus-start-btn" class="btn btn-primary btn-lg">▶ Başlat</button>
+          <button type="button" id="book-focus-pause-btn" class="btn btn-secondary btn-lg hidden">⏸ Duraklat</button>
+          <button type="button" id="book-focus-resume-btn" class="btn btn-primary btn-lg hidden">▶ Devam Et</button>
+          <button type="button" id="book-focus-reset-btn" class="btn btn-ghost btn-lg">↺ Sıfırla</button>
+          <button type="button" id="book-focus-finish-early-btn" class="btn btn-success btn-lg">🏁 Bitir & Sayfayı Kaydet</button>
+        </div>
+
+        <!-- Motivasyon Sözü -->
+        <div class="book-focus-quote">
+          <p>"Okumak, zihni başka dünyalara açan en sessiz yolculuktur." ✨</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════ ODAK BİTİŞ & "ŞU AN KAÇINCI SAYFADASIN?" MODALI ════════ -->
+  <div id="book-focus-finish-modal" class="modal-overlay hidden">
+    <div class="modal glass-card modal-md">
+      <div class="modal-header">
+        <div>
+          <h3>🎉 Harika Bir Okuma Oturumu!</h3>
+          <p class="text-xs text-muted">Okuma ilerlemenizi ve hızınızı hesaplayalım.</p>
+        </div>
+        <button type="button" class="modal-close" data-modal="book-focus-finish-modal">✕</button>
+      </div>
+
+      <form id="book-focus-finish-form" class="modal-form">
+        <div class="focus-summary-box">
+          <div class="focus-summary-item">
+            <span>⏱️ Geçen Süre:</span>
+            <strong id="focus-finish-duration-text">30 dakika</strong>
+          </div>
+          <div class="focus-summary-item">
+            <span>📖 Başlangıç Sayfası:</span>
+            <strong id="focus-finish-start-page-text">Sayfa 0</strong>
+          </div>
+        </div>
+
+        <div class="form-group focus-page-input-group">
+          <label for="focus-current-page-input" class="focus-page-question">
+            <strong>Şu an kaçıncı sayfadasın? 📖</strong>
+          </label>
+          <div class="focus-input-stepper">
+            <button type="button" class="stepper-btn" id="focus-step-minus-5">-5</button>
+            <button type="button" class="stepper-btn" id="focus-step-minus-1">-1</button>
+            <input type="number" id="focus-current-page-input" class="focus-page-number-input" min="0" max="10000" required>
+            <button type="button" class="stepper-btn" id="focus-step-plus-1">+1</button>
+            <button type="button" class="stepper-btn" id="focus-step-plus-5">+5</button>
+          </div>
+          <small class="text-muted" id="focus-total-pages-hint">Kitabın toplam sayfa sayısı: 300</small>
+        </div>
+
+        <!-- Canlı Hesaplanan İstatistikler Kartı -->
+        <div class="focus-live-stats-box" id="focus-live-stats-box">
+          <div class="focus-stat-pill">
+            <span class="focus-stat-lbl">Okunan Sayfa:</span>
+            <strong id="focus-calc-pages-read" class="text-primary">+0 sayfa</strong>
+          </div>
+          <div class="focus-stat-pill">
+            <span class="focus-stat-lbl">Okuma Hızı:</span>
+            <strong id="focus-calc-speed" class="text-success">0 sayfa/dk</strong>
+          </div>
+          <div class="focus-stat-pill">
+            <span class="focus-stat-lbl">Tahmini Bitiş:</span>
+            <strong id="focus-calc-est-date" class="text-warning">--</strong>
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn btn-ghost" data-modal="book-focus-finish-modal">Vazgeç</button>
+          <button type="submit" class="btn btn-primary">💾 Oturumu Kaydet ve İlerlemeyi Güncelle</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ════════ ROZET DETAY MODALI ════════ -->
+  <div id="badge-detail-modal" class="modal-overlay hidden">
+    <div class="modal glass-card modal-sm">
+      <div class="modal-header">
+        <h3 id="badge-modal-title">Başarı Rozeti</h3>
+        <button type="button" class="modal-close" data-modal="badge-detail-modal">✕</button>
+      </div>
+      <div class="badge-modal-body" id="badge-modal-body">
+        <div class="badge-modal-big-icon" id="badge-modal-icon">🏆</div>
+        <h4 id="badge-modal-name" class="badge-modal-name">Rozet Adı</h4>
+        <p id="badge-modal-desc" class="badge-modal-desc">Rozet kazanma şartı açıklaması</p>
+        <div class="badge-modal-progress-wrap">
+          <div class="badge-modal-progress-track">
+            <div id="badge-modal-progress-fill" class="badge-modal-progress-fill" style="width: 0%;"></div>
+          </div>
+          <span id="badge-modal-progress-text" class="badge-modal-progress-text">0 / 7 Gün</span>
+        </div>
+        <div id="badge-modal-status-badge" class="badge-modal-status-tag">Kilitli 🔒</div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-primary" data-modal="badge-detail-modal">Harika!</button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- ════════ YENİ ÖZEL RENK EKLEME MODALI ════════ -->
+  <div id="custom-color-modal" class="modal-overlay hidden">
+    <div class="modal glass-card modal-sm">
+      <div class="modal-header">
+        <div>
+          <h3>🎨 Yeni Özel Renk Ekle</h3>
+          <p class="text-xs text-muted">Kişisel renk paletinizi oluşturun ve temanıza uygulayın.</p>
+        </div>
+        <button type="button" class="modal-close" data-modal="custom-color-modal">✕</button>
+      </div>
+      <form id="custom-color-form" class="modal-form">
+        <div class="form-group">
+          <label for="new-color-name">Renk / Tema Adı (İsteğe Bağlı)</label>
+          <input type="text" id="new-color-name" placeholder="Örn: Gece Mavisi, Neon Yeşil...">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="new-color-primary">Ana Vurgu Rengi</label>
+            <div class="color-picker-input-wrap">
+              <input type="color" id="new-color-primary" value="#F97316">
+              <input type="text" id="new-color-primary-hex" class="color-hex-input" maxlength="7" value="#F97316" placeholder="#F97316">
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="new-color-secondary">İkincil Vurgu Rengi</label>
+            <div class="color-picker-input-wrap">
+              <input type="color" id="new-color-secondary" value="#06B6D4">
+              <input type="text" id="new-color-secondary-hex" class="color-hex-input" maxlength="7" value="#06B6D4" placeholder="#06B6D4">
+            </div>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-ghost" data-modal="custom-color-modal">İptal</button>
+          <button type="submit" class="btn btn-primary">💾 Kaydet ve Uygula</button>
+        </div>
+      </form>
+    </div>
+  </div>
   <div id="toast-container" class="toast-container"></div>
 
-  <script src="script.js?v=4.0"></script>
+  <script src="script.js?v=4.3"></script>
 </body>
 </html>

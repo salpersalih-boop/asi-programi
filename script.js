@@ -24,35 +24,56 @@
     // Göğüs
     { id: 'ex-ch-1', name: 'Bench Press', category: 'gogus', sets: 4, reps: 10, weight: '50 kg', sortOrder: 1 },
     { id: 'ex-ch-2', name: 'Incline Dumbbell Press', category: 'gogus', sets: 3, reps: 12, weight: '18 kg', sortOrder: 2 },
-    { id: 'ex-ch-3', name: 'Chest Fly', category: 'gogus', sets: 3, reps: 12, weight: '14 kg', sortOrder: 3 },
-    { id: 'ex-ch-4', name: 'Push-up', category: 'gogus', sets: 3, reps: 15, weight: 'Vücut Ağırlığı', sortOrder: 4 },
+    { id: 'ex-ch-3', name: 'Dumbbell Chest Fly', category: 'gogus', sets: 3, reps: 12, weight: '14 kg', sortOrder: 3 },
+    { id: 'ex-ch-4', name: 'Şınav (Push-up)', category: 'gogus', sets: 3, reps: 15, weight: 'Vücut Ağırlığı', sortOrder: 4 },
 
     // Sırt
     { id: 'ex-ba-1', name: 'Lat Pulldown', category: 'sirt', sets: 4, reps: 10, weight: '45 kg', sortOrder: 5 },
-    { id: 'ex-ba-2', name: 'Seated Row', category: 'sirt', sets: 3, reps: 12, weight: '40 kg', sortOrder: 6 },
-    { id: 'ex-ba-3', name: 'Dumbbell Row', category: 'sirt', sets: 3, reps: 10, weight: '20 kg', sortOrder: 7 },
+    { id: 'ex-ba-2', name: 'Seated Cable Row', category: 'sirt', sets: 3, reps: 12, weight: '40 kg', sortOrder: 6 },
+    { id: 'ex-ba-3', name: 'One-Arm Dumbbell Row', category: 'sirt', sets: 3, reps: 10, weight: '20 kg', sortOrder: 7 },
+    { id: 'ex-ba-4', name: 'Barfiks (Pull-up)', category: 'sirt', sets: 3, reps: 8, weight: 'Vücut Ağırlığı', sortOrder: 8 },
 
     // Omuz
-    { id: 'ex-sh-1', name: 'Shoulder Press', category: 'omuz', sets: 4, reps: 10, weight: '16 kg', sortOrder: 8 },
-    { id: 'ex-sh-2', name: 'Lateral Raise', category: 'omuz', sets: 4, reps: 12, weight: '8 kg', sortOrder: 9 },
-    { id: 'ex-sh-3', name: 'Rear Delt Fly', category: 'omuz', sets: 3, reps: 15, weight: '7 kg', sortOrder: 10 },
+    { id: 'ex-sh-1', name: 'Overhead Dumbbell Press', category: 'omuz', sets: 4, reps: 10, weight: '16 kg', sortOrder: 9 },
+    { id: 'ex-sh-2', name: 'Lateral Raise', category: 'omuz', sets: 4, reps: 12, weight: '8 kg', sortOrder: 10 },
+    { id: 'ex-sh-3', name: 'Rear Delt Fly (Face Pull)', category: 'omuz', sets: 3, reps: 15, weight: '25 kg', sortOrder: 11 },
+    { id: 'ex-sh-4', name: 'Dumbbell Front Raise', category: 'omuz', sets: 3, reps: 12, weight: '8 kg', sortOrder: 12 },
 
-    // Bacak
-    { id: 'ex-le-1', name: 'Squat', category: 'bacak', sets: 4, reps: 10, weight: '60 kg', sortOrder: 11 },
-    { id: 'ex-le-2', name: 'Leg Press', category: 'bacak', sets: 4, reps: 12, weight: '100 kg', sortOrder: 12 },
-    { id: 'ex-le-3', name: 'Leg Extension', category: 'bacak', sets: 3, reps: 12, weight: '35 kg', sortOrder: 13 },
-    { id: 'ex-le-4', name: 'Leg Curl', category: 'bacak', sets: 3, reps: 12, weight: '30 kg', sortOrder: 14 },
-    { id: 'ex-le-5', name: 'Calf Raise', category: 'bacak', sets: 4, reps: 15, weight: '40 kg', sortOrder: 15 },
+    // Biceps
+    { id: 'ex-bi-1', name: 'Barbell Biceps Curl', category: 'biceps', sets: 3, reps: 12, weight: '20 kg', sortOrder: 13 },
+    { id: 'ex-bi-2', name: 'Dumbbell Hammer Curl', category: 'biceps', sets: 3, reps: 12, weight: '12 kg', sortOrder: 14 },
+    { id: 'ex-bi-3', name: 'Incline Dumbbell Curl', category: 'biceps', sets: 3, reps: 10, weight: '10 kg', sortOrder: 15 },
+    { id: 'ex-bi-4', name: 'Preacher Curl', category: 'biceps', sets: 3, reps: 12, weight: '18 kg', sortOrder: 16 },
 
-    // Kol
-    { id: 'ex-ar-1', name: 'Biceps Curl', category: 'kol', sets: 3, reps: 12, weight: '12 kg', sortOrder: 16 },
-    { id: 'ex-ar-2', name: 'Hammer Curl', category: 'kol', sets: 3, reps: 12, weight: '12 kg', sortOrder: 17 },
-    { id: 'ex-ar-3', name: 'Triceps Pushdown', category: 'kol', sets: 3, reps: 12, weight: '25 kg', sortOrder: 18 },
+    // Triceps
+    { id: 'ex-tr-1', name: 'Triceps Cable Pushdown', category: 'triceps', sets: 3, reps: 12, weight: '25 kg', sortOrder: 17 },
+    { id: 'ex-tr-2', name: 'Skull Crusher', category: 'triceps', sets: 3, reps: 10, weight: '20 kg', sortOrder: 18 },
+    { id: 'ex-tr-3', name: 'Bench Dips', category: 'triceps', sets: 3, reps: 15, weight: 'Vücut Ağırlığı', sortOrder: 19 },
+    { id: 'ex-tr-4', name: 'Overhead Triceps Extension', category: 'triceps', sets: 3, reps: 12, weight: '14 kg', sortOrder: 20 },
 
     // Karın
-    { id: 'ex-ab-1', name: 'Crunch', category: 'karin', sets: 3, reps: 20, weight: 'Vücut Ağırlığı', sortOrder: 19 },
-    { id: 'ex-ab-2', name: 'Plank', category: 'karin', sets: 3, reps: 60, weight: '60 sn', sortOrder: 20 },
-    { id: 'ex-ab-3', name: 'Leg Raise', category: 'karin', sets: 3, reps: 15, weight: 'Vücut Ağırlığı', sortOrder: 21 },
+    { id: 'ex-ab-1', name: 'Crunch (Mekik)', category: 'karin', sets: 3, reps: 20, weight: 'Vücut Ağırlığı', sortOrder: 21 },
+    { id: 'ex-ab-2', name: 'Plank', category: 'karin', sets: 3, reps: 60, weight: '60 sn', sortOrder: 22 },
+    { id: 'ex-ab-3', name: 'Hanging Leg Raise', category: 'karin', sets: 3, reps: 15, weight: 'Vücut Ağırlığı', sortOrder: 23 },
+    { id: 'ex-ab-4', name: 'Russian Twist', category: 'karin', sets: 3, reps: 20, weight: '8 kg', sortOrder: 24 },
+
+    // Bacak
+    { id: 'ex-le-1', name: 'Barbell Squat', category: 'bacak', sets: 4, reps: 10, weight: '60 kg', sortOrder: 25 },
+    { id: 'ex-le-2', name: 'Leg Press', category: 'bacak', sets: 4, reps: 12, weight: '100 kg', sortOrder: 26 },
+    { id: 'ex-le-3', name: 'Leg Extension', category: 'bacak', sets: 3, reps: 12, weight: '35 kg', sortOrder: 27 },
+    { id: 'ex-le-4', name: 'Leg Curl', category: 'bacak', sets: 3, reps: 12, weight: '30 kg', sortOrder: 28 },
+    { id: 'ex-le-5', name: 'Standing Calf Raise', category: 'bacak', sets: 4, reps: 15, weight: '45 kg', sortOrder: 29 },
+
+    // Ön Kol
+    { id: 'ex-fa-1', name: 'Barbell Wrist Curl', category: 'onkol', sets: 3, reps: 15, weight: '15 kg', sortOrder: 30 },
+    { id: 'ex-fa-2', name: 'Reverse Wrist Curl', category: 'onkol', sets: 3, reps: 15, weight: '12 kg', sortOrder: 31 },
+    { id: 'ex-fa-3', name: "Farmer's Walk", category: 'onkol', sets: 3, reps: 45, weight: '2x20 kg (45 sn)', sortOrder: 32 },
+
+    // Kardiyo
+    { id: 'ex-ca-1', name: 'Koşu Bandı (Tempolu)', category: 'kardiyo', sets: 1, reps: 20, weight: '20 dk • Eğim 2', sortOrder: 33 },
+    { id: 'ex-ca-2', name: 'Kondisyon Bisikleti', category: 'kardiyo', sets: 1, reps: 15, weight: '15 dk • Seviye 6', sortOrder: 34 },
+    { id: 'ex-ca-3', name: 'İp Atlama', category: 'kardiyo', sets: 3, reps: 3, weight: '3x3 dk', sortOrder: 35 },
+    { id: 'ex-ca-4', name: 'Burpee', category: 'kardiyo', sets: 3, reps: 15, weight: 'Vücut Ağırlığı', sortOrder: 36 },
   ];
 
   const DEFAULT_ATT_COURSES = [
@@ -264,6 +285,33 @@
         if (!exercises || exercises.length === 0) {
           exercises = JSON.parse(JSON.stringify(DEFAULT_EXERCISES));
           Storage.set('asi_exercises', exercises);
+        } else {
+          let modified = false;
+          // Eski 'kol' kategorisini Biceps/Triceps olarak güncelle
+          exercises.forEach(e => {
+            if (e.category === 'kol') {
+              modified = true;
+              if (/triceps|pushdown|dip|skull/i.test(e.name)) e.category = 'triceps';
+              else e.category = 'biceps';
+            }
+          });
+
+          // Eksik kas grupları (onkol, kardiyo, biceps, triceps) varsa varsayılanlardan otomatik ekle
+          const existingIds = new Set(exercises.map(e => e.id));
+          DEFAULT_EXERCISES.forEach(defEx => {
+            if (!existingIds.has(defEx.id)) {
+              const hasCat = exercises.some(e => e.category === defEx.category);
+              if (!hasCat || ['biceps', 'triceps', 'onkol', 'kardiyo'].includes(defEx.category)) {
+                exercises.push({ ...defEx });
+                existingIds.add(defEx.id);
+                modified = true;
+              }
+            }
+          });
+
+          if (modified) {
+            Storage.set('asi_exercises', exercises);
+          }
         }
 
         if (method === 'GET') {
@@ -1158,6 +1206,11 @@
     },
 
     goTo(page) {
+      if (typeof ModuleManager !== 'undefined' && !ModuleManager.isModuleVisible(page) && page !== 'dashboard' && page !== 'settings') {
+        this.goTo('dashboard');
+        return;
+      }
+
       this.current = page;
       $$('.page').forEach(p => p.classList.remove('active'));
       $$('.nav-link').forEach(l => l.classList.remove('active'));
@@ -1170,15 +1223,37 @@
 
       // Sayfa özel yenileme
       switch (page) {
-        case 'dashboard': Dashboard.refresh(); break;
-        case 'kanban': Kanban.render(); break;
+        case 'dashboard': 
+          Dashboard.refresh(); 
+          break;
+        case 'kanban': 
+          Kanban.render(); 
+          break;
         case 'schedule':
-        case 'workout': Workout.render(); break;
-        case 'attendance': Attendance.render(); break;
-        case 'goals': Goals.render(); break;
-        case 'notebook': Notebook.render(); break;
-        case 'books': Books.render(); break;
-        case 'pomodoro': Pomodoro.updateDisplay(); break;
+        case 'workout': 
+          Workout.render(); 
+          if (typeof VkiManager !== 'undefined') VkiManager.calculateAndRender();
+          if (typeof StreakManager !== 'undefined') StreakManager.updateStreaksAndBadges();
+          break;
+        case 'attendance': 
+          Attendance.render(); 
+          break;
+        case 'goals': 
+          Goals.render(); 
+          break;
+        case 'notebook': 
+          Notebook.render(); 
+          break;
+        case 'books': 
+          Books.render(); 
+          if (typeof StreakManager !== 'undefined') StreakManager.updateStreaksAndBadges();
+          break;
+        case 'pomodoro': 
+          Pomodoro.updateDisplay(); 
+          break;
+        case 'prayer': 
+          if (typeof PrayerManager !== 'undefined') PrayerManager.renderPage(); 
+          break;
       }
     }
   };
@@ -1212,6 +1287,14 @@
 
       // Bugünkü görevler
       this.renderTodayTasks(safeT);
+
+      // Streak & Rozetler ve Namaz Widget Güncellemesi
+      if (typeof StreakManager !== 'undefined') {
+        StreakManager.updateStreaksAndBadges();
+      }
+      if (typeof PrayerManager !== 'undefined') {
+        PrayerManager.renderWidget();
+      }
     },
 
     showQuote() {
@@ -1480,7 +1563,7 @@
 
   const Workout = {
     selectedDate: formatDateShort(new Date()),
-    selectedCategory: 'all',
+    selectedCategory: 'gogus',
     _exercises: [],
     _logs: [],
     _history: [],
@@ -1513,7 +1596,7 @@
       const resetBtn = $('#reset-workout-exercises-btn');
       if (resetBtn) {
         resetBtn.addEventListener('click', () => {
-          confirmAction('Varsayılan 21 temel spor hareketi yeniden yüklensin mi?', async () => {
+          confirmAction('Varsayılan 36 temel spor hareketi (tüm kas grupları) yeniden yüklensin mi?', async () => {
             const res = await apiFetch('/exercises/reset', 'POST');
             if (res) {
               await this.loadExercises();
@@ -1905,7 +1988,7 @@
     },
 
     updateCategoryCounts() {
-      const cats = ['all', 'gogus', 'sirt', 'omuz', 'bacak', 'kol', 'karin'];
+      const cats = ['all', 'gogus', 'sirt', 'omuz', 'biceps', 'triceps', 'karin', 'bacak', 'onkol', 'kardiyo'];
       cats.forEach(c => {
         const countEl = $(`#cat-count-${c}`);
         if (countEl) {
@@ -1940,9 +2023,12 @@
         gogus: 'Göğüs',
         sirt: 'Sırt',
         omuz: 'Omuz',
+        biceps: 'Biceps',
+        triceps: 'Triceps',
+        karin: 'Karın',
         bacak: 'Bacak',
-        kol: 'Kol',
-        karin: 'Karın'
+        onkol: 'Ön Kol',
+        kardiyo: 'Kardiyo'
       };
 
       const esc = Dashboard.escapeHtml;
@@ -3218,10 +3304,16 @@
             <div class="book-card-footer">
               <div class="book-card-actions-left">
                 <button type="button" 
-                        class="btn btn-sm btn-primary btn-start-reading ${b.status === 'reading' ? 'is-reading' : ''}" 
+                        class="btn btn-sm btn-primary btn-focus-reading" 
+                        data-id="${b.id}"
+                        title="30 dk Odaklanma Sayacı ile okumaya başla">
+                  ⏱️ Odaklanarak Oku
+                </button>
+                <button type="button" 
+                        class="btn btn-sm btn-ghost btn-start-reading ${b.status === 'reading' ? 'is-reading' : ''}" 
                         data-id="${b.id}"
                         title="${b.status === 'reading' ? 'Okumaya devam et' : 'Bu kitabı okumaya başla'}">
-                  ${b.status === 'reading' ? '📖 Okumaya Devam Et' : (b.status === 'completed' ? '🔄 Yeniden Oku' : '📖 Okumaya Başla')}
+                  ${b.status === 'reading' ? '📖 Okunuyor' : (b.status === 'completed' ? '🔄 Tekrar Oku' : '📖 Başla')}
                 </button>
                 <button type="button" class="btn btn-sm btn-ghost btn-detail-quick" data-id="${b.id}" title="Detay & İstatistik">
                   ℹ️ Detay
@@ -3240,6 +3332,16 @@
     },
 
     bindGridEvents() {
+      // Odaklanarak Oku (Pomodoro Zen Modu)
+      $$('.btn-focus-reading').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          if (typeof BookFocusManager !== 'undefined') {
+            BookFocusManager.startFocusFlow(btn.dataset.id);
+          }
+        });
+      });
+
       // Okumaya Başla / Devam Et
       $$('.btn-start-reading').forEach(btn => {
         btn.addEventListener('click', (e) => {
@@ -4513,11 +4615,18 @@
   // SADE & FERAH NOT DEFTERİ (MINIMAL ZEN NOTES)
   // ═══════════════════════════════════════════════════════
 
+  const NOTEBOOK_CATEGORIES = {
+    exam: { title: 'Sınavda Çıkabilir', icon: '🎯', badgeCls: 'badge-tag-exam' },
+    review: { title: 'Tekrar Et', icon: '🔄', badgeCls: 'badge-tag-review' },
+    important: { title: 'Önemli', icon: '⭐', badgeCls: 'badge-tag-important' },
+    general: { title: 'Genel', icon: '📝', badgeCls: 'badge-tag-general' }
+  };
+
   const Notebook = {
     activeNoteId: null,
     autoSaveTimer: null,
     _notes: [],
-    activeFilter: 'all', // 'all' | 'exam' | 'important' | 'review' | 'general'
+    activeFilter: 'all', // 'all' | 'exam' | 'review' | 'important' | 'general'
     searchText: '',
     currentTag: 'general',
 
@@ -4562,43 +4671,41 @@
         this.setMobileView('list');
       });
 
-      // 5. Etiket Seçici (Editör Üstü)
-      $('#zen-tag-selector')?.addEventListener('click', (e) => {
+      // 5. Etiket / Kategori Seçici (4 Sabit Buton)
+      $('#zen-tag-selector')?.addEventListener('click', async (e) => {
         const btn = e.target.closest('.zen-tag-btn');
         if (!btn) return;
-        this.selectTag(btn.dataset.tag);
-        this.triggerAutoSave(200);
+        const tag = btn.dataset.tag;
+        if (NOTEBOOK_CATEGORIES[tag]) {
+          this.selectTag(tag);
+          this.markDirty();
+          await this.saveActiveNote();
+          showToast(`Kategori: "${NOTEBOOK_CATEGORIES[tag].title}" olarak seçildi ✨`, 'info');
+        }
       });
 
       // 6. Ders Seçici
       $('#zen-edit-course')?.addEventListener('change', () => {
+        this.markDirty();
         this.triggerAutoSave(200);
       });
 
-      // 7. Not Alanları (Başlık ve Gövde) + Otomatik Kaydetme
-      const titleInput = $('#zen-note-title');
+      // 7. Not Gövdesi (Metin Alanı) + Otomatik Kaydetme
       const bodyInput = $('#zen-note-content');
-
-      titleInput?.addEventListener('input', () => {
-        this.markDirty();
-        this.triggerAutoSave();
-      });
-
       bodyInput?.addEventListener('input', () => {
         this.markDirty();
         this.updateWordCount();
-        this.triggerAutoSave();
+        this.triggerAutoSave(600);
       });
 
-      // 8. Manuel Kaydet & Sil & Göreve Aktar
+      // 8. Manuel Kaydet Butonu
       $('#zen-save-btn')?.addEventListener('click', async () => {
-        const titleVal = ($('#zen-note-title')?.value || '').trim();
-        const contentVal = ($('#zen-note-content')?.value || '').trim();
+        const bodyInput = $('#zen-note-content');
+        const contentVal = (bodyInput?.value || '').trim();
 
-        // Eğer not tamamen boşsa kullanıcıyı uyarıp başlığa odaklan
-        if (!titleVal && !contentVal) {
-          showToast('Not zaten boş, yazmaya başlayabilirsiniz ✨', 'info');
-          $('#zen-note-title')?.focus();
+        if (!contentVal && !this.activeNoteId) {
+          showToast('Not içeriği boş, yazmaya başlayabilirsiniz ✨', 'info');
+          bodyInput?.focus();
           return;
         }
 
@@ -4609,31 +4716,26 @@
         }
       });
 
+      // 9. Silme Butonu
       $('#zen-del-btn')?.addEventListener('click', () => {
         if (!this.activeNoteId) return;
-        confirmAction('Bu notu silmek istediğinize emin misiniz?', async () => {
+        confirmAction('Bu ders notunu silmek istediğinize emin misiniz?', async () => {
           await this.deleteNote(this.activeNoteId);
         });
       });
 
+      // 10. Göreve Aktar
       $('#zen-to-task-btn')?.addEventListener('click', async () => {
         await this.saveActiveNote();
         const note = this._notes.find(n => n.id === this.activeNoteId);
         if (note) await this.syncNoteToTask(note, true);
       });
 
-      // Ctrl + S Kısayolu (Kaydet ve Yeni Nota Geç)
+      // 11. Ctrl + S Kısayolu (Kaydet ve Yeni Nota Geç)
       document.addEventListener('keydown', async (e) => {
-        if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
           if (Nav.current === 'notebook' && this.activeNoteId) {
             e.preventDefault();
-            const titleVal = ($('#zen-note-title')?.value || '').trim();
-            const contentVal = ($('#zen-note-content')?.value || '').trim();
-            if (!titleVal && !contentVal) {
-              showToast('Not zaten boş', 'info');
-              $('#zen-note-title')?.focus();
-              return;
-            }
             const saved = await this.saveActiveNote();
             if (saved) {
               showToast('Not kaydedildi ✓ Yeni nota geçildi ✨', 'success');
@@ -4680,14 +4782,23 @@
     },
 
     selectTag(tag) {
-      this.currentTag = tag || 'general';
+      this.currentTag = NOTEBOOK_CATEGORIES[tag] ? tag : 'general';
       $$('#zen-tag-selector .zen-tag-btn').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.tag === this.currentTag);
       });
     },
 
     async loadNotes() {
-      this._notes = (await apiFetch('/notes')) || [];
+      const raw = (await apiFetch('/notes')) || [];
+      // Geriye dönük uyumluluk: eski notların kategorisini doğrula
+      this._notes = raw.map(n => {
+        let tag = n.tag;
+        if (!NOTEBOOK_CATEGORIES[tag]) {
+          tag = n.isExamTopic ? 'exam' : 'general';
+        }
+        const title = NOTEBOOK_CATEGORIES[tag].title;
+        return { ...n, tag, title: n.title || title };
+      });
     },
 
     async getCourses() {
@@ -4707,7 +4818,6 @@
       this.renderCourseSelect();
       this.renderList();
 
-      // Aktif not seçiliyse editörü doldur, değilse listedeki ilk notu seç veya boş bırak
       if (this.activeNoteId && this._notes.some(n => n.id === this.activeNoteId)) {
         const cur = this._notes.find(n => n.id === this.activeNoteId);
         this.openEditor(cur, false);
@@ -4741,7 +4851,6 @@
           return hay.includes(q);
         })
         .sort((a, b) => {
-          // Sınav notları her zaman hafifçe öne çıksın
           const ea = a.tag === 'exam' ? 1 : 0;
           const eb = b.tag === 'exam' ? 1 : 0;
           if (ea !== eb) return eb - ea;
@@ -4767,15 +4876,9 @@
       }
 
       const esc = Dashboard.escapeHtml;
-      const tagLabels = {
-        exam: { text: '🎯 Sınav', cls: 'badge-tag-exam' },
-        important: { text: '⭐ Önemli', cls: 'badge-tag-important' },
-        review: { text: '🔄 Tekrar', cls: 'badge-tag-review' },
-        general: { text: '📝 Genel', cls: 'badge-tag-general' }
-      };
 
       listEl.innerHTML = filtered.map(n => {
-        const tag = tagLabels[n.tag] || tagLabels.general;
+        const catInfo = NOTEBOOK_CATEGORIES[n.tag] || NOTEBOOK_CATEGORIES.general;
         const isActive = n.id === this.activeNoteId;
         const dateStr = n.updated ? new Date(n.updated).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' }) : 'Bugün';
         const courseName = n.courseName || 'Genel';
@@ -4784,8 +4887,8 @@
         return `
           <div class="zen-card ${isActive ? 'active' : ''}" data-id="${esc(n.id)}">
             <div class="zen-card-head">
-              <h4 class="zen-card-title">${esc(n.title || 'Başlıksız Not')}</h4>
-              <span class="zen-card-badge ${tag.cls}">${tag.text}</span>
+              <h4 class="zen-card-title">${catInfo.icon} ${esc(catInfo.title)}</h4>
+              <span class="zen-card-badge ${catInfo.badgeCls}">${catInfo.icon} ${catInfo.title}</span>
             </div>
             <p class="zen-card-preview">${esc(snippet)}</p>
             <div class="zen-card-foot">
@@ -4807,19 +4910,15 @@
 
     openEditor(note, switchMobile = true) {
       this.activeNoteId = note.id;
-      this.currentTag = note.tag || 'general';
+      this.currentTag = NOTEBOOK_CATEGORIES[note.tag] ? note.tag : 'general';
 
-      // UI Geçişi
       $('#zen-empty')?.classList.add('hidden');
       $('#zen-active-editor')?.classList.remove('hidden');
 
-      // Form elemanlarını doldur
-      const titleInput = $('#zen-note-title');
       const bodyInput = $('#zen-note-content');
       const courseSelect = $('#zen-edit-course');
       const dateEl = $('#zen-note-date');
 
-      if (titleInput) titleInput.value = note.title || '';
       if (bodyInput) bodyInput.value = note.content || '';
       if (courseSelect) courseSelect.value = note.courseId || '';
 
@@ -4830,11 +4929,10 @@
           : 'Bugün';
       }
 
-      this.selectTag(note.tag || 'general');
+      this.selectTag(this.currentTag);
       this.updateWordCount();
       this.markSaved();
 
-      // Liste kartını aktif yap
       $$('.zen-card').forEach(c => c.classList.toggle('active', c.dataset.id === note.id));
 
       if (switchMobile) {
@@ -4853,13 +4951,11 @@
     async createNewNote() {
       clearTimeout(this.autoSaveTimer);
 
-      // Eğer halihazırda açık olan not zaten bomboşsa (başlık ve içerik yoksa),
-      // fazladan boş kopya oluşturmak yerine doğrudan mevcut notu odakla
       if (this.activeNoteId) {
         const curNote = this._notes.find(n => n.id === this.activeNoteId);
-        if (curNote && !(curNote.title || '').trim() && !(curNote.content || '').trim()) {
+        if (curNote && !(curNote.content || '').trim()) {
           this.openEditor(curNote, true);
-          setTimeout(() => $('#zen-note-title')?.focus(), 80);
+          setTimeout(() => $('#zen-note-content')?.focus(), 80);
           return curNote;
         }
       }
@@ -4868,7 +4964,7 @@
       const defaultCourse = courses.length > 0 ? courses[0] : null;
 
       const newNote = {
-        title: '',
+        title: NOTEBOOK_CATEGORIES.general.title,
         content: '',
         tag: 'general',
         courseId: defaultCourse ? defaultCourse.id : '',
@@ -4882,7 +4978,7 @@
         this._notes.unshift(saved);
         this.renderList();
         this.openEditor(saved, true);
-        setTimeout(() => $('#zen-note-title')?.focus(), 80);
+        setTimeout(() => $('#zen-note-content')?.focus(), 80);
         return saved;
       }
       return null;
@@ -4891,13 +4987,15 @@
     async saveActiveNote() {
       if (!this.activeNoteId) return null;
 
-      const titleInput = $('#zen-note-title');
       const bodyInput = $('#zen-note-content');
       const courseSelect = $('#zen-edit-course');
-      if (!titleInput || !bodyInput) return null;
+      if (!bodyInput) return null;
 
       const note = this._notes.find(n => n.id === this.activeNoteId);
       if (!note) return null;
+
+      const currentCat = NOTEBOOK_CATEGORIES[this.currentTag] ? this.currentTag : 'general';
+      const catTitle = NOTEBOOK_CATEGORIES[currentCat].title;
 
       const courseId = courseSelect ? courseSelect.value : '';
       const courses = Attendance.getCourses() || [];
@@ -4906,9 +5004,9 @@
 
       const updated = await apiFetch(`/notes/${this.activeNoteId}`, 'PUT', {
         ...note,
-        title: titleInput.value.trim() || 'Başlıksız Not',
+        title: catTitle,
         content: bodyInput.value,
-        tag: this.currentTag || 'general',
+        tag: currentCat,
         courseId,
         courseName,
         updated: Date.now()
@@ -4921,7 +5019,6 @@
         this.markSaved();
         this.renderList();
 
-        // Sınav notuysa görev panosuna otomatik eşle
         if (this.currentTag === 'exam') {
           await this.syncNoteToTask(updated, false);
         }
@@ -4953,12 +5050,13 @@
       if (!note) return;
       try {
         const tasks = (await apiFetch('/tasks')) || [];
+        const catTitle = NOTEBOOK_CATEGORIES[note.tag]?.title || 'Ders Notu';
         const coursePrefix = (note.courseName && note.courseName !== 'Genel') ? `[${note.courseName}] ` : '';
-        const taskTitle = `🎯 Sınav: ${coursePrefix}${note.title || 'Ders Notu'}`;
+        const taskTitle = `🎯 ${coursePrefix}${catTitle}`;
         const refTag = `[NotRef:${note.id}]`;
 
         const existing = tasks.find(t => (t.desc && t.desc.includes(refTag)) || t.title === taskTitle);
-        const descContent = `${(note.content || '').slice(0, 160)}\n\n📚 ${note.courseName || 'Genel'} dersi sınav hazırlığı için Not Defteri'nden aktarıldı. ${refTag}`;
+        const descContent = `${(note.content || '').slice(0, 160)}\n\n📚 ${note.courseName || 'Genel'} dersi için Not Defteri'nden aktarıldı. ${refTag}`;
 
         if (existing) {
           if (forceNotify) showToast('🎯 Sınav görevi zaten Görev Panosu\'nda mevcut', 'info');
@@ -5281,10 +5379,13 @@
 
   const Theme = {
     config: { ...DEFAULT_THEME },
+    userColors: [],
 
     init() {
       this.load();
+      this.loadUserColors();
       this.apply();
+      this.renderUserColors();
       this.bindEvents();
 
       // Sistem teması değişikliklerini dinle
@@ -5294,6 +5395,23 @@
             this.applyMode();
           }
         });
+      }
+    },
+
+    loadUserColors() {
+      try {
+        const raw = JSON.parse(localStorage.getItem('asi_user_colors') || '[]');
+        this.userColors = Array.isArray(raw) ? raw : [];
+      } catch (_) {
+        this.userColors = [];
+      }
+    },
+
+    saveUserColors() {
+      try {
+        localStorage.setItem('asi_user_colors', JSON.stringify(this.userColors));
+      } catch (e) {
+        console.error('Kişisel renkler kaydedilemedi:', e);
       }
     },
 
@@ -5337,7 +5455,6 @@
       const resolved = this.getResolvedMode();
       document.documentElement.setAttribute('data-theme', resolved);
 
-      // Üst bardaki tema ikonu
       const toggleIcon = $('#theme-toggle-icon');
       if (toggleIcon) {
         toggleIcon.textContent = resolved === 'dark' ? '☀️' : '🌙';
@@ -5421,6 +5538,7 @@
         this.config.palette = 'custom';
         this.save();
         this.apply();
+        this.updateUI();
         showToast('Özel Tasarımım paleti uygulandı ✨', 'success');
         return;
       }
@@ -5434,6 +5552,7 @@
       }
       this.save();
       this.apply();
+      this.updateUI();
       showToast(`${PALETTES[key].name} paleti uygulandı ✨`, 'success');
     },
 
@@ -5451,6 +5570,7 @@
       this.config.palette = 'custom';
       this.save();
       this.apply();
+      this.updateUI();
     },
 
     resetDefaults() {
@@ -5461,7 +5581,146 @@
       }
       this.save();
       this.apply();
+      this.updateUI();
       showToast('Tema varsayılan ayarlara döndürüldü ✓', 'success');
+    },
+
+    addUserColor(name, primary, secondary) {
+      const normP = normalizeHex(primary) || '#F97316';
+      const normS = normalizeHex(secondary) || '#06B6D4';
+      const count = this.userColors.length + 1;
+      const cleanName = (name || '').trim() || `Özel Renk #${count}`;
+
+      const newColor = {
+        id: 'user_color_' + Date.now(),
+        name: cleanName,
+        primary: normP,
+        secondary: normS
+      };
+
+      this.userColors.push(newColor);
+      this.saveUserColors();
+      this.renderUserColors();
+      this.applyUserColor(newColor.id);
+      showToast(`🎨 "${newColor.name}" rengi başarıyla eklendi ve uygulandı ✨`, 'success');
+      return newColor;
+    },
+
+    applyUserColor(id) {
+      const color = this.userColors.find(c => c.id === id);
+      if (!color) return;
+
+      this.config.palette = id;
+      this.config.primaryColor = color.primary;
+      this.config.secondaryColor = color.secondary;
+      if (PALETTES.custom) {
+        PALETTES.custom.primary = color.primary;
+        PALETTES.custom.secondary = color.secondary;
+      }
+
+      this.save();
+      this.apply();
+      this.updateUI();
+      this.renderUserColors();
+      showToast(`🎨 "${color.name}" rengi uygulandı ✨`, 'success');
+    },
+
+    deleteUserColor(id, e) {
+      if (e) e.stopPropagation();
+      const color = this.userColors.find(c => c.id === id);
+      if (!color) return;
+
+      confirmAction(`"${color.name}" özel rengini silmek istediğinize emin misiniz?`, () => {
+        this.userColors = this.userColors.filter(c => c.id !== id);
+        this.saveUserColors();
+
+        if (this.config.palette === id) {
+          this.setPalette('default');
+        } else {
+          this.renderUserColors();
+        }
+        showToast(`"${color.name}" rengi silindi.`, 'info');
+      });
+    },
+
+    renderUserColors() {
+      // 1. Palet ızgarasındaki kullanıcı renk kartlarını güncelle
+      const grid = $('#theme-palettes-grid');
+      const addBtn = $('#theme-add-custom-color-btn');
+
+      if (grid && addBtn) {
+        // Önceden eklenmiş olan kullanıcı kartlarını temizle
+        $$('.theme-palette-card.user-palette-card', grid).forEach(el => el.remove());
+
+        const esc = Dashboard.escapeHtml;
+
+        // Kullanıcının eklediği renk kartlarını ekle (Artı butonunun hemen önüne)
+        this.userColors.forEach(c => {
+          const card = document.createElement('button');
+          card.type = 'button';
+          card.className = `theme-palette-card user-palette-card ${this.config.palette === c.id ? 'active' : ''}`;
+          card.dataset.palette = c.id;
+          card.title = `${c.name} (Özel Renk)`;
+
+          card.innerHTML = `
+            <div class="palette-swatch">
+              <span style="background:${esc(c.primary)}"></span>
+              <span style="background:${esc(c.secondary)}"></span>
+            </div>
+            <span class="palette-name">${esc(c.name)}</span>
+            <button type="button" class="user-color-card-del-btn" title="Bu Rengi Sil" aria-label="Rengi Sil">✕</button>
+          `;
+
+          card.addEventListener('click', (e) => {
+            if (e.target.closest('.user-color-card-del-btn')) {
+              e.stopPropagation();
+              this.deleteUserColor(c.id, e);
+              return;
+            }
+            this.applyUserColor(c.id);
+          });
+
+          const delBtn = card.querySelector('.user-color-card-del-btn');
+          if (delBtn) {
+            delBtn.addEventListener('click', (e) => {
+              e.stopPropagation();
+              this.deleteUserColor(c.id, e);
+            });
+          }
+
+          grid.insertBefore(card, addBtn);
+        });
+      }
+
+      // 2. Varsa Kişisel Renk Koleksiyonu listesini de doldur
+      const userGrid = $('#user-colors-grid');
+      if (userGrid) {
+        const esc = Dashboard.escapeHtml;
+        if (this.userColors.length === 0) {
+          userGrid.innerHTML = `
+            <div class="user-colors-empty">
+              <span>🎨 Henüz özel renk eklemediniz. "+ Renk Ekle" butonuna basarak dilediğiniz rengi kaydedebilirsiniz.</span>
+            </div>
+          `;
+        } else {
+          userGrid.innerHTML = this.userColors.map(c => `
+            <div class="user-color-item-card ${this.config.palette === c.id ? 'active' : ''}">
+              <div class="user-color-swatches" onclick="ASI.theme.applyUserColor('${esc(c.id)}')">
+                <span class="user-swatch" style="background:${esc(c.primary)}"></span>
+                <span class="user-swatch" style="background:${esc(c.secondary)}"></span>
+              </div>
+              <div class="user-color-info" onclick="ASI.theme.applyUserColor('${esc(c.id)}')">
+                <strong>${esc(c.name)}</strong>
+                <span class="text-xs text-muted">${esc(c.primary)} • ${esc(c.secondary)}</span>
+              </div>
+              <div class="user-color-actions">
+                <button type="button" class="btn btn-ghost btn-xs" onclick="ASI.theme.applyUserColor('${esc(c.id)}')">Uygula</button>
+                <button type="button" class="btn btn-ghost btn-xs text-danger" onclick="ASI.theme.deleteUserColor('${esc(c.id)}')">🗑️</button>
+              </div>
+            </div>
+          `).join('');
+        }
+      }
     },
 
     bindEvents() {
@@ -5478,12 +5737,64 @@
         });
       });
 
-      // Palet kartları (Ayarlar sayfası)
-      $$('#theme-palettes-grid .theme-palette-card').forEach(card => {
-        card.addEventListener('click', () => {
+      // Palet kartları (Hazır olanlar)
+      $('#theme-palettes-grid')?.addEventListener('click', (e) => {
+        const card = e.target.closest('.theme-palette-card:not(.add-palette-card):not(.user-palette-card)');
+        if (card && card.dataset.palette) {
           this.setPalette(card.dataset.palette);
-        });
+        }
       });
+
+      // + Yeni Renk Ekle Butonları
+      $('#theme-add-custom-color-btn')?.addEventListener('click', () => {
+        openModal('custom-color-modal');
+        setTimeout(() => $('#new-color-name')?.focus(), 80);
+      });
+
+      $('#add-user-color-btn')?.addEventListener('click', () => {
+        openModal('custom-color-modal');
+        setTimeout(() => $('#new-color-name')?.focus(), 80);
+      });
+
+      // Yeni Renk Modal Formu
+      const newColorForm = $('#custom-color-form');
+      if (newColorForm) {
+        newColorForm.addEventListener('submit', (e) => {
+          e.preventDefault();
+          const name = ($('#new-color-name')?.value || '').trim();
+          const primary = $('#new-color-primary')?.value || '#F97316';
+          const secondary = $('#new-color-secondary')?.value || '#06B6D4';
+
+          this.addUserColor(name, primary, secondary);
+          closeModal('custom-color-modal');
+          newColorForm.reset();
+        });
+      }
+
+      // Modal içindeki Renk Seçici senkronizasyonu
+      const nPrimary = $('#new-color-primary');
+      const nPrimaryHex = $('#new-color-primary-hex');
+      if (nPrimary && nPrimaryHex) {
+        nPrimary.addEventListener('input', (e) => { nPrimaryHex.value = e.target.value.toUpperCase(); });
+        nPrimaryHex.addEventListener('input', (e) => {
+          let val = e.target.value.trim();
+          if (val && !val.startsWith('#')) val = '#' + val;
+          const valid = normalizeHex(val);
+          if (valid) nPrimary.value = valid;
+        });
+      }
+
+      const nSecondary = $('#new-color-secondary');
+      const nSecondaryHex = $('#new-color-secondary-hex');
+      if (nSecondary && nSecondaryHex) {
+        nSecondary.addEventListener('input', (e) => { nSecondaryHex.value = e.target.value.toUpperCase(); });
+        nSecondaryHex.addEventListener('input', (e) => {
+          let val = e.target.value.trim();
+          if (val && !val.startsWith('#')) val = '#' + val;
+          const valid = normalizeHex(val);
+          if (valid) nSecondary.value = valid;
+        });
+      }
 
       // Renk seçici inputları (Picker & HEX text inputları)
       const pPicker = $('#custom-primary-picker');
@@ -5524,13 +5835,6 @@
             e.target.value = this.config.primaryColor.toUpperCase();
           }
         });
-
-        pHex.addEventListener('keydown', (e) => {
-          if (e.key === 'Enter') {
-            e.preventDefault();
-            pHex.blur();
-          }
-        });
       }
 
       // 3. İkincil Renk Picker
@@ -5564,13 +5868,6 @@
             this.setCustomColors(null, valid);
           } else {
             e.target.value = this.config.secondaryColor.toUpperCase();
-          }
-        });
-
-        sHex.addEventListener('keydown', (e) => {
-          if (e.key === 'Enter') {
-            e.preventDefault();
-            sHex.blur();
           }
         });
       }
@@ -5677,6 +5974,1265 @@
   });
 
   // ═══════════════════════════════════════════════════════
+  // MODÜLER PANO YÖNETİCİSİ (GÖRÜNÜRLÜK AYARLARI)
+  // ═══════════════════════════════════════════════════════
+
+  const ModuleManager = {
+    MODULES: [
+      { id: 'kanban', name: 'Görev Panosu', icon: '📋', desc: 'Yapılacaklar, yapılanlar ve görev akışı' },
+      { id: 'schedule', name: 'Spor Programı', icon: '🏋️', desc: 'Antrenman takibi, dinlenme sayacı ve VKİ hesaplayıcı' },
+      { id: 'attendance', name: 'Devamsızlık Takibi', icon: '🎓', desc: 'Dönemlik dersler ve 14 haftalık devamsızlık matrisi' },
+      { id: 'goals', name: 'Haftalık Hedefler', icon: '🎯', desc: 'Haftalık hedefler ve gelişim göstergeleri' },
+      { id: 'notebook', name: 'Not Defterim', icon: '📝', desc: 'Ders notları, zengin metin düzenleyici ve arama' },
+      { id: 'books', name: 'Kitaplığım & Okuma', icon: '📚', desc: 'Kitap okuma takibi, odak sayacı ve okuma grafikleri' },
+      { id: 'pomodoro', name: 'Pomodoro Sayacı', icon: '⏱️', desc: 'Tam ekran odaklanma sayacı ve mola süreleri' },
+      { id: 'prayer', name: 'Namaz & İbadet', icon: '🕌', desc: 'Diyanet namaz vakitleri ve günlük ibadet takibi' }
+    ],
+
+    _visibility: {},
+
+    init() {
+      this.load();
+      this.applyVisibility();
+
+      // Pano ayarları modal butonları
+      $('#module-settings-btn')?.addEventListener('click', () => this.openModal());
+      $('#btn-show-all-modules')?.addEventListener('click', () => this.setAll(true));
+      $('#modal-modules-show-all')?.addEventListener('click', () => this.setAll(true));
+      $('#btn-reset-module-visibility')?.addEventListener('click', () => this.resetDefaults());
+
+      this.renderSettingsList();
+    },
+
+    load() {
+      const saved = Storage.get('asi_modules_visibility', null);
+      const defaults = {
+        kanban: true,
+        schedule: true,
+        attendance: true,
+        goals: true,
+        notebook: true,
+        books: true,
+        pomodoro: true,
+        prayer: true
+      };
+      this._visibility = { ...defaults, ...(saved || {}) };
+    },
+
+    save() {
+      Storage.set('asi_modules_visibility', this._visibility);
+      this.applyVisibility();
+      this.renderSettingsList();
+    },
+
+    isModuleVisible(id) {
+      if (id === 'dashboard' || id === 'settings') return true;
+      return this._visibility[id] !== false;
+    },
+
+    toggle(id, visible) {
+      this._visibility[id] = !!visible;
+      this.save();
+
+      // Eğer şu an aktif sayfa gizlenen modül ise dashboard'a yönlendir
+      if (!visible && Nav.current === id) {
+        Nav.goTo('dashboard');
+        showToast(`"${this.getModuleName(id)}" modülü gizlendi. Ana sayfaya yönlendirildiniz.`, 'info');
+      } else {
+        showToast(visible ? `"${this.getModuleName(id)}" modülü aktif edildi ✓` : `"${this.getModuleName(id)}" modülü gizlendi`, 'info');
+      }
+    },
+
+    getModuleName(id) {
+      const m = this.MODULES.find(x => x.id === id);
+      return m ? m.name : id;
+    },
+
+    setAll(visible) {
+      this.MODULES.forEach(m => { this._visibility[m.id] = visible; });
+      this.save();
+      showToast(visible ? 'Tüm modüller aktif edildi ✓' : 'Tüm modüller gizlendi', 'success');
+    },
+
+    resetDefaults() {
+      this.setAll(true);
+    },
+
+    applyVisibility() {
+      this.MODULES.forEach(m => {
+        const isVis = this.isModuleVisible(m.id);
+
+        // Sidebar linki
+        const navLi = $(`#sidebar .nav-list li[data-module="${m.id}"]`);
+        if (navLi) {
+          navLi.style.display = isVis ? '' : 'none';
+        }
+
+        // Hızlı erişim kartı
+        const quickBtn = $(`.quick-card[data-module="${m.id}"]`);
+        if (quickBtn) {
+          quickBtn.style.display = isVis ? '' : 'none';
+        }
+
+        // Dashboard modül kartları (örn: Namaz widget)
+        const dashWidget = $(`#dash-prayer-widget[data-module="${m.id}"]`);
+        if (dashWidget) {
+          dashWidget.style.display = isVis ? '' : 'none';
+        }
+
+        // Sayfa elementini işaretle
+        const pageEl = document.getElementById('page-' + m.id);
+        if (pageEl) {
+          if (!isVis) {
+            pageEl.setAttribute('data-module-hidden', 'true');
+          } else {
+            pageEl.removeAttribute('data-module-hidden');
+          }
+        }
+      });
+    },
+
+    openModal() {
+      this.renderSettingsList();
+      openModal('module-settings-modal');
+    },
+
+    renderSettingsList() {
+      const renderItems = (containerId) => {
+        const container = $(containerId);
+        if (!container) return;
+
+        container.innerHTML = this.MODULES.map(m => {
+          const isChecked = this.isModuleVisible(m.id);
+          return `
+            <div class="module-switch-item ${!isChecked ? 'is-disabled' : ''}">
+              <div class="module-switch-info">
+                <span class="module-switch-icon">${m.icon}</span>
+                <div class="module-switch-titles">
+                  <strong>${m.name}</strong>
+                  <span>${m.desc}</span>
+                </div>
+              </div>
+              <div class="module-switch-actions">
+                <span class="module-status-badge ${isChecked ? 'active' : ''}">${isChecked ? 'Aktif' : 'Gizli'}</span>
+                <label class="switch" title="${isChecked ? 'Modülü Gizle' : 'Modülü Göster'}">
+                  <input type="checkbox" data-module-id="${m.id}" ${isChecked ? 'checked' : ''}>
+                  <span class="slider"></span>
+                </label>
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        container.querySelectorAll('input[type="checkbox"]').forEach(input => {
+          input.addEventListener('change', (e) => {
+            const modId = e.target.dataset.moduleId;
+            this.toggle(modId, e.target.checked);
+          });
+        });
+      };
+
+      renderItems('#settings-module-switches');
+      renderItems('#modal-module-switches');
+    }
+  };
+
+  // ═══════════════════════════════════════════════════════
+  // NAMAZ VAKİTLERİ VE İBADET TAKİBİ
+  // ═══════════════════════════════════════════════════════
+
+  const PrayerManager = {
+    city: 'Istanbul',
+    timings: null,
+    dateData: null,
+    cachedDate: '',
+
+    cityNames: {
+      Istanbul: 'İstanbul',
+      Ankara: 'Ankara',
+      Izmir: 'İzmir',
+      Bursa: 'Bursa',
+      Antalya: 'Antalya',
+      Konya: 'Konya',
+      Adana: 'Adana',
+      Gaziantep: 'Gaziantep',
+      Trabzon: 'Trabzon',
+      Samsun: 'Samsun',
+      Diyarbakir: 'Diyarbakır',
+      Eskisehir: 'Eskişehir',
+      Kayseri: 'Kayseri',
+      Mersin: 'Mersin',
+      Kocaeli: 'Kocaeli',
+      Hatay: 'Hatay',
+      Manisa: 'Manisa',
+      Sakarya: 'Sakarya',
+      Denizli: 'Denizli',
+      Kahramanmaras: 'Kahramanmaraş',
+      Urfa: 'Şanlıurfa',
+      Malatya: 'Malatya',
+      Erzurum: 'Erzurum',
+      Van: 'Van',
+      Batman: 'Batman',
+      Elazig: 'Elazığ',
+      Erzincan: 'Erzincan',
+      Tekirdag: 'Tekirdağ',
+      Balikesir: 'Balıkesir',
+      Mugla: 'Muğla',
+      Aydin: 'Aydın',
+      Usak: 'Uşak',
+      Afyonkarahisar: 'Afyonkarahisar',
+      Kutahya: 'Kütahya',
+      Canakkale: 'Çanakkale',
+      Edirne: 'Edirne',
+      Kirklareli: 'Kırklareli',
+      Kirikkale: 'Kırıkkale',
+      Bolu: 'Bolu',
+      Zonguldak: 'Zonguldak',
+      Karabuk: 'Karabük',
+      Bartin: 'Bartın',
+      Kastamonu: 'Kastamonu',
+      Sinop: 'Sinop',
+      Amasya: 'Amasya',
+      Tokat: 'Tokat',
+      Corum: 'Çorum',
+      Ordu: 'Ordu',
+      Giresun: 'Giresun',
+      Rize: 'Rize',
+      Artvin: 'Artvin',
+      Agri: 'Ağrı',
+      Kars: 'Kars',
+      Igdir: 'Iğdır',
+      Ardahan: 'Ardahan',
+      Tunceli: 'Tunceli',
+      Bingol: 'Bingöl',
+      Bitlis: 'Bitlis',
+      Mus: 'Muş',
+      Hakkari: 'Hakkari',
+      Sirnak: 'Şırnak',
+      Siirt: 'Siirt',
+      Mardin: 'Mardin',
+      Adiyaman: 'Adıyaman',
+      Sanliurfa: 'Şanlıurfa',
+      Kilis: 'Kilis',
+      Osmaniye: 'Osmaniye',
+      Cankiri: 'Çankırı',
+      Yozgat: 'Yozgat',
+      Sivas: 'Sivas',
+      Nevsehir: 'Nevşehir',
+      Aksaray: 'Aksaray',
+      Nigde: 'Niğde',
+      Karaman: 'Karaman',
+      Isparta: 'Isparta',
+      Burdur: 'Burdur',
+      Bilecik: 'Bilecik',
+    },
+
+    PRAYER_KEYS: [
+      { id: 'fajr', name: 'Sabah', icon: '🌅', aladhanKey: 'Fajr', isWorship: true },
+      { id: 'sunrise', name: 'Güneş', icon: '☀️', aladhanKey: 'Sunrise', isWorship: false },
+      { id: 'dhuhr', name: 'Öğle', icon: '☀️', aladhanKey: 'Dhuhr', isWorship: true },
+      { id: 'asr', name: 'İkindi', icon: '🌤️', aladhanKey: 'Asr', isWorship: true },
+      { id: 'maghrib', name: 'Akşam', icon: '🌇', aladhanKey: 'Maghrib', isWorship: true },
+      { id: 'isha', name: 'Yatsı', icon: '🌙', aladhanKey: 'Isha', isWorship: true }
+    ],
+
+    init() {
+      this.city = Storage.get('asi_prayer_city', 'Istanbul');
+
+      // Şehir seçiciler
+      const citySelect = $('#prayer-city-select');
+      if (citySelect) {
+        citySelect.value = this.city;
+        citySelect.addEventListener('change', (e) => this.setCity(e.target.value));
+      }
+
+      const pageCitySelect = $('#prayer-page-city-select');
+      if (pageCitySelect) {
+        pageCitySelect.value = this.city;
+        pageCitySelect.addEventListener('change', (e) => this.setCity(e.target.value));
+      }
+
+      // Yenileme butonları
+      $('#prayer-refresh-btn')?.addEventListener('click', () => this.fetchTimings(true));
+      $('#prayer-page-refresh-btn')?.addEventListener('click', () => this.fetchTimings(true));
+
+      // İlk veri çekme
+      this.fetchTimings();
+
+      // Dakikada bir sonraki vakit geri sayımını güncelle
+      setInterval(() => this.updateNextPrayerDisplay(), 60000);
+    },
+
+    async setCity(newCity) {
+      this.city = newCity;
+      Storage.set('asi_prayer_city', newCity);
+      const s1 = $('#prayer-city-select');
+      if (s1) s1.value = newCity;
+      const s2 = $('#prayer-page-city-select');
+      if (s2) s2.value = newCity;
+      await this.fetchTimings(true);
+      showToast(`Namaz vakitleri ${this.cityNames[newCity] || newCity} için güncellendi ✓`, 'success');
+    },
+
+    async fetchTimings(force = false) {
+      const today = formatDateShort(new Date());
+      const cacheKey = `asi_prayer_cache_${this.city}_${today}`;
+
+      if (!force) {
+        const cached = Storage.get(cacheKey, null);
+        if (cached && cached.timings) {
+          this.timings = cached.timings;
+          this.dateData = cached.date;
+          this.cachedDate = today;
+          this.renderWidget();
+          this.renderPage();
+          return;
+        }
+      }
+
+      try {
+        // Diyanet İşleri Başkanlığı Metodu (method=13)
+        const url = `https://api.aladhan.com/v1/timingsByCity?city=${encodeURIComponent(this.city)}&country=Turkey&method=13`;
+        const res = await fetch(url);
+        if (res.ok) {
+          const json = await res.json();
+          if (json.code === 200 && json.data) {
+            this.timings = json.data.timings;
+            this.dateData = json.data.date;
+            this.cachedDate = today;
+            Storage.set(cacheKey, { timings: this.timings, date: this.dateData });
+            this.renderWidget();
+            this.renderPage();
+            return;
+          }
+        }
+      } catch (err) {
+        console.warn('Aladhan API bağlantı hatası, yerel hesaplama/yedek kullanılıyor:', err);
+      }
+
+      // API ulaşılamazsa veya offline ise akıllı varsayılan vakitler
+      this.timings = {
+        Fajr: '05:45',
+        Sunrise: '07:10',
+        Dhuhr: '12:55',
+        Asr: '16:00',
+        Maghrib: '18:30',
+        Isha: '19:50'
+      };
+      this.cachedDate = today;
+      this.renderWidget();
+      this.renderPage();
+    },
+
+    getTodayChecks() {
+      const today = formatDateShort(new Date());
+      return Storage.get(`asi_prayer_checks_${today}`, {
+        fajr: false,
+        dhuhr: false,
+        asr: false,
+        maghrib: false,
+        isha: false
+      });
+    },
+
+    saveCheck(prayerId, isChecked) {
+      const today = formatDateShort(new Date());
+      const checks = this.getTodayChecks();
+      checks[prayerId] = !!isChecked;
+      Storage.set(`asi_prayer_checks_${today}`, checks);
+
+      this.renderWidget();
+      this.renderPage();
+
+      // Streak güncelle
+      StreakManager.updateStreaksAndBadges();
+
+      const pMeta = this.PRAYER_KEYS.find(p => p.id === prayerId);
+      if (isChecked) {
+        showToast(`✨ ${pMeta ? pMeta.name : ''} namazı tamamlandı olarak kaydedildi.`, 'success');
+      }
+    },
+
+    cleanTime(rawTime) {
+      if (!rawTime) return '--:--';
+      return rawTime.split(' ')[0].substring(0, 5);
+    },
+
+    getNextPrayer() {
+      if (!this.timings) return null;
+      const now = new Date();
+      const currentMins = now.getHours() * 60 + now.getMinutes();
+
+      const order = ['fajr', 'sunrise', 'dhuhr', 'asr', 'maghrib', 'isha'];
+      for (const key of order) {
+        const p = this.PRAYER_KEYS.find(x => x.id === key);
+        const timeStr = this.cleanTime(this.timings[p.aladhanKey]);
+        const [h, m] = timeStr.split(':').map(Number);
+        const prayerMins = h * 60 + m;
+
+        if (prayerMins > currentMins) {
+          const diff = prayerMins - currentMins;
+          const diffH = Math.floor(diff / 60);
+          const diffM = diff % 60;
+          return {
+            ...p,
+            time: timeStr,
+            remainingText: diffH > 0 ? `${diffH} sa ${diffM} dk` : `${diffM} dk`
+          };
+        }
+      }
+
+      // Yatsıdan sonra ise ertesi gün sabah namazı
+      const fajr = this.PRAYER_KEYS.find(x => x.id === 'fajr');
+      const [h, m] = this.cleanTime(this.timings.Fajr).split(':').map(Number);
+      const fajrTomorrowMins = (24 * 60 - currentMins) + (h * 60 + m);
+      const diffH = Math.floor(fajrTomorrowMins / 60);
+      const diffM = fajrTomorrowMins % 60;
+      return {
+        ...fajr,
+        time: this.cleanTime(this.timings.Fajr),
+        remainingText: `${diffH} sa ${diffM} dk (Yarın)`
+      };
+    },
+
+    updateNextPrayerDisplay() {
+      const next = this.getNextPrayer();
+      if (!next) return;
+
+      const nextNameEl = $('#prayer-next-name');
+      if (nextNameEl) nextNameEl.textContent = `${next.name} (${next.time})`;
+
+      const nextCountEl = $('#prayer-next-countdown');
+      if (nextCountEl) nextCountEl.textContent = `${next.remainingText} kaldı`;
+    },
+
+    renderWidget() {
+      if (!this.timings) return;
+      const checks = this.getTodayChecks();
+      const next = this.getNextPrayer();
+
+      // Hicri Tarih
+      const hijriEl = $('#prayer-hijri-date');
+      if (hijriEl && this.dateData?.hijri) {
+        const h = this.dateData.hijri;
+        hijriEl.textContent = `${h.day} ${h.month?.en || ''} ${h.year} H. • ${this.cityNames[this.city] || this.city}`;
+      }
+
+      // Sıradaki Vakit
+      this.updateNextPrayerDisplay();
+
+      // Vakit Saatleri ve Checkbox'lar
+      let doneCount = 0;
+      this.PRAYER_KEYS.forEach(p => {
+        const timeVal = this.cleanTime(this.timings[p.aladhanKey]);
+        const timeEl = $(`#time-${p.id}`);
+        if (timeEl) timeEl.textContent = timeVal;
+
+        const cardEl = $(`.prayer-card[data-vakit="${p.id}"]`);
+        if (cardEl) {
+          if (next && next.id === p.id) {
+            cardEl.classList.add('is-current-prayer');
+          } else {
+            cardEl.classList.remove('is-current-prayer');
+          }
+
+          if (p.isWorship) {
+            const isDone = !!checks[p.id];
+            if (isDone) {
+              doneCount++;
+              cardEl.classList.add('is-checked');
+            } else {
+              cardEl.classList.remove('is-checked');
+            }
+
+            const cb = cardEl.querySelector('.prayer-checkbox');
+            if (cb) {
+              cb.checked = isDone;
+              cb.onchange = (e) => this.saveCheck(p.id, e.target.checked);
+            }
+          }
+        }
+      });
+
+      // İlerleme Özeti
+      const doneText = $('#prayer-done-count-text');
+      if (doneText) doneText.textContent = `${doneCount}/5 Vakit Kılındı (%${doneCount * 20})`;
+
+      const barFill = $('#prayer-progress-fill');
+      if (barFill) barFill.style.width = `${doneCount * 20}%`;
+    },
+
+    renderPage() {
+      const pageGrid = $('#prayer-page-times-grid');
+      if (!pageGrid || !this.timings) return;
+
+      const checks = this.getTodayChecks();
+      const next = this.getNextPrayer();
+      const now = new Date();
+
+      const gregEl = $('#prayer-page-gregorian-date');
+      if (gregEl) gregEl.textContent = formatDate(now);
+
+      const hijriEl = $('#prayer-page-hijri-date');
+      if (hijriEl && this.dateData?.hijri) {
+        const h = this.dateData.hijri;
+        hijriEl.textContent = `${h.day} ${h.month?.en || ''} ${h.year} Hicri`;
+      }
+
+      let doneCount = 0;
+      pageGrid.innerHTML = this.PRAYER_KEYS.map(p => {
+        const timeVal = this.cleanTime(this.timings[p.aladhanKey]);
+        const isNext = next && next.id === p.id;
+        const isChecked = p.isWorship && !!checks[p.id];
+        if (isChecked) doneCount++;
+
+        return `
+          <div class="prayer-card ${isNext ? 'is-current-prayer' : ''} ${isChecked ? 'is-checked' : ''}" data-vakit="${p.id}">
+            <div class="prayer-card-top">
+              <span class="prayer-icon">${p.icon}</span>
+              <span class="prayer-name">${p.name}</span>
+            </div>
+            <div class="prayer-card-time">${timeVal}</div>
+            ${p.isWorship ? `
+              <label class="prayer-check-label">
+                <input type="checkbox" class="prayer-checkbox" data-prayer="${p.id}" ${isChecked ? 'checked' : ''}>
+                <span class="prayer-custom-check">✓</span>
+                <span class="prayer-check-text">${isChecked ? 'Tamamlandı' : 'Kılındı'}</span>
+              </label>
+            ` : `
+              <div class="prayer-ref-badge">Güneş Doğuşu</div>
+            `}
+          </div>
+        `;
+      }).join('');
+
+      pageGrid.querySelectorAll('.prayer-checkbox').forEach(cb => {
+        cb.addEventListener('change', (e) => {
+          this.saveCheck(e.target.dataset.prayer, e.target.checked);
+        });
+      });
+
+      const progText = $('#prayer-page-progress-text');
+      if (progText) progText.textContent = `${doneCount}/5 Vakit (%${doneCount * 20})`;
+
+      const progFill = $('#prayer-page-progress-fill');
+      if (progFill) progFill.style.width = `${doneCount * 20}%`;
+    }
+  };
+
+  // ═══════════════════════════════════════════════════════
+  // OYUNLAŞTIRMA (STREAK) VE EMOJİ SİSTEMİ
+  // ═══════════════════════════════════════════════════════
+
+  const StreakManager = {
+    BADGES: [
+      {
+        id: 'book-worm',
+        title: 'Kitap Kurdu',
+        emoji: '🐛',
+        category: 'reading',
+        targetDays: 7,
+        desc: '7 gün üst üste kitap okuyarak düzenli okuma serisini yakala.'
+      },
+      {
+        id: 'wise-owl',
+        title: 'Bilge Baykuş',
+        emoji: '🦉',
+        category: 'reading',
+        targetDays: 30,
+        desc: '1 ay (30 gün) boyunca aralıksız kitap oku ve bilge baykuş rozetini kazan.'
+      },
+      {
+        id: 'sport-fire',
+        title: 'Ateşli Sporcu',
+        emoji: '🔥',
+        category: 'workout',
+        targetDays: 3,
+        desc: '3 gün üst üste spor yaparak antrenman ateşini yak.'
+      },
+      {
+        id: 'iron-gorilla',
+        title: 'Demir Goril',
+        emoji: '🦍',
+        category: 'workout',
+        targetDays: 7,
+        desc: '7 gün boyunca düzenli spor yaparak muazzam bir güç kazan.'
+      },
+      {
+        id: 'peace-pilgrim',
+        title: 'Huzur Yolcusu',
+        emoji: '🕊️',
+        category: 'prayer',
+        targetDays: 7,
+        desc: '7 gün boyunca günlük namazlarını aksatmadan takip et.'
+      },
+      {
+        id: 'productivity-beast',
+        title: 'Üretkenlik Canavarı',
+        emoji: '🚀',
+        category: 'general',
+        targetDays: 7,
+        desc: '7 gün boyunca ASİ ajandanı aktif kullanarak hedeflerine ulaş.'
+      }
+    ],
+
+    init() {
+      this.updateStreaksAndBadges();
+    },
+
+    // Ardışık günleri (streak) sayan dinamik algoritma
+    calculateStreak(dateSet) {
+      if (!dateSet || dateSet.size === 0) return 0;
+
+      const todayStr = formatDateShort(new Date());
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      const yesterdayStr = formatDateShort(yesterday);
+
+      let checkDate = new Date();
+      if (!dateSet.has(todayStr)) {
+        if (dateSet.has(yesterdayStr)) {
+          checkDate = yesterday;
+        } else {
+          return 0;
+        }
+      }
+
+      let streak = 0;
+      while (true) {
+        const dStr = formatDateShort(checkDate);
+        if (dateSet.has(dStr)) {
+          streak++;
+          checkDate.setDate(checkDate.getDate() - 1);
+        } else {
+          break;
+        }
+      }
+      return streak;
+    },
+
+    getReadingStreak() {
+      const sessions = Storage.get('asi_reading_sessions', []);
+      const dates = new Set();
+      sessions.forEach(s => {
+        if (s.date && (s.pagesRead > 0 || s.duration > 0)) {
+          dates.add(s.date);
+        }
+      });
+      return this.calculateStreak(dates);
+    },
+
+    getWorkoutStreak() {
+      const logs = Storage.get('asi_workouts', []);
+      const history = Storage.get('asi_workout_history', []);
+      const dates = new Set();
+
+      logs.forEach(l => {
+        if (l.date && (l.completed || (Array.isArray(l.completedSets) && l.completedSets.length > 0))) {
+          dates.add(l.date);
+        }
+      });
+      history.forEach(h => {
+        if (h.date && (h.completed || (Array.isArray(h.completedSets) && h.completedSets.length > 0))) {
+          dates.add(h.date);
+        }
+      });
+      return this.calculateStreak(dates);
+    },
+
+    getPrayerStreak() {
+      const dates = new Set();
+      const d = new Date();
+      for (let i = 0; i < 90; i++) {
+        const dStr = formatDateShort(d);
+        const chk = Storage.get(`asi_prayer_checks_${dStr}`, null);
+        if (chk && Object.values(chk).some(v => v === true)) {
+          dates.add(dStr);
+        }
+        d.setDate(d.getDate() - 1);
+      }
+      return this.calculateStreak(dates);
+    },
+
+    getGeneralStreak() {
+      const r = this.getReadingStreak();
+      const w = this.getWorkoutStreak();
+      const p = this.getPrayerStreak();
+      return Math.max(r, w, p, 1);
+    },
+
+    updateStreaksAndBadges() {
+      const readingStreak = this.getReadingStreak();
+      const workoutStreak = this.getWorkoutStreak();
+      const prayerStreak = this.getPrayerStreak();
+      const generalStreak = this.getGeneralStreak();
+
+      // Top Bar
+      const topCount = $('#top-streak-count');
+      if (topCount) topCount.textContent = generalStreak;
+
+      const topPill = $('#streak-top-pill');
+      if (topPill) topPill.textContent = `🔥 ${generalStreak} Gün Seri`;
+
+      // Dashboard Metrikleri
+      const rEl = $('#streak-book-count');
+      if (rEl) rEl.textContent = `${readingStreak} Gün`;
+
+      const wEl = $('#streak-workout-count');
+      if (wEl) wEl.textContent = `${workoutStreak} Gün`;
+
+      const pEl = $('#streak-prayer-count');
+      if (pEl) pEl.textContent = `${prayerStreak} Gün`;
+
+      const gEl = $('#streak-general-count');
+      if (gEl) gEl.textContent = `${generalStreak} Gün`;
+
+      // Modül İçi Barlar
+      const wStreakLbl = $('#workout-streak-label');
+      if (wStreakLbl) wStreakLbl.textContent = `${workoutStreak} Gün Spor Serisi`;
+
+      const bStreakLbl = $('#books-streak-label');
+      if (bStreakLbl) bStreakLbl.textContent = `${readingStreak} Gün Okuma Serisi`;
+
+      const pStreakBadge = $('#prayer-page-streak-badge');
+      if (pStreakBadge) pStreakBadge.textContent = `🕊️ ${prayerStreak} Gün İbadet Serisi`;
+
+      // Rozet Vitrinini Render Et
+      this.renderBadges({
+        reading: readingStreak,
+        workout: workoutStreak,
+        prayer: prayerStreak,
+        general: generalStreak
+      });
+    },
+
+    renderBadges(streaks) {
+      const container = $('#badges-container');
+      const workoutContainer = $('#workout-unlocked-badges');
+      const booksContainer = $('#books-unlocked-badges');
+
+      if (container) {
+        container.innerHTML = this.BADGES.map(b => {
+          const currentStreak = streaks[b.category] || 0;
+          const isUnlocked = currentStreak >= b.targetDays;
+          const progressPct = Math.min(100, Math.round((currentStreak / b.targetDays) * 100));
+
+          return `
+            <div class="badge-card ${isUnlocked ? 'unlocked' : 'locked'}" data-badge-id="${b.id}">
+              <div class="badge-emoji-box">${b.emoji}</div>
+              <div class="badge-title">${b.title}</div>
+              <div class="badge-desc">${b.desc}</div>
+              <div class="badge-pill-status">
+                ${isUnlocked ? '✓ Kazanıldı' : `${currentStreak}/${b.targetDays} Gün (%${progressPct})`}
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        container.querySelectorAll('.badge-card').forEach(card => {
+          card.addEventListener('click', () => {
+            this.openBadgeDetail(card.dataset.badgeId, streaks);
+          });
+        });
+      }
+
+      // Spor Modülü İçi Rozetler (🔥 ve 🦍)
+      if (workoutContainer) {
+        const sportBadges = this.BADGES.filter(b => b.category === 'workout');
+        workoutContainer.innerHTML = sportBadges.map(b => {
+          const isUnlocked = (streaks.workout || 0) >= b.targetDays;
+          return `
+            <span class="module-badge-chip ${isUnlocked ? 'unlocked' : 'locked'}" title="${b.title}: ${b.desc}">
+              ${b.emoji} ${b.title} ${isUnlocked ? '✓' : `(${streaks.workout || 0}/${b.targetDays}G)`}
+            </span>
+          `;
+        }).join('');
+      }
+
+      // Kitap Modülü İçi Rozetler (🐛 ve 🦉)
+      if (booksContainer) {
+        const bookBadges = this.BADGES.filter(b => b.category === 'reading');
+        booksContainer.innerHTML = bookBadges.map(b => {
+          const isUnlocked = (streaks.reading || 0) >= b.targetDays;
+          return `
+            <span class="module-badge-chip ${isUnlocked ? 'unlocked' : 'locked'}" title="${b.title}: ${b.desc}">
+              ${b.emoji} ${b.title} ${isUnlocked ? '✓' : `(${streaks.reading || 0}/${b.targetDays}G)`}
+            </span>
+          `;
+        }).join('');
+      }
+    },
+
+    openBadgeDetail(badgeId, streaks) {
+      const b = this.BADGES.find(x => x.id === badgeId);
+      if (!b) return;
+
+      const current = (streaks && streaks[b.category]) || 0;
+      const isUnlocked = current >= b.targetDays;
+      const progressPct = Math.min(100, Math.round((current / b.targetDays) * 100));
+
+      $('#badge-modal-title').textContent = `${b.emoji} ${b.title}`;
+      $('#badge-modal-icon').textContent = b.emoji;
+      $('#badge-modal-name').textContent = b.title;
+      $('#badge-modal-desc').textContent = b.desc;
+
+      const fill = $('#badge-modal-progress-fill');
+      if (fill) fill.style.width = `${progressPct}%`;
+
+      const progText = $('#badge-modal-progress-text');
+      if (progText) progText.textContent = `${current} / ${b.targetDays} Gün (${progressPct}%)`;
+
+      const statusTag = $('#badge-modal-status-badge');
+      if (statusTag) {
+        if (isUnlocked) {
+          statusTag.textContent = '🎉 Rozet Açıldı ve Kazanıldı!';
+          statusTag.className = 'badge-modal-status-tag unlocked';
+        } else {
+          const daysLeft = b.targetDays - current;
+          statusTag.textContent = `🔒 Kilitli - Hedefe ${daysLeft} gün kaldı`;
+          statusTag.className = 'badge-modal-status-tag';
+        }
+      }
+
+      openModal('badge-detail-modal');
+    }
+  };
+
+  // ═══════════════════════════════════════════════════════
+  // VÜCUT KİTLE İNDEKSİ (VKİ) VE GELİŞİM ÇUBUĞU
+  // ═══════════════════════════════════════════════════════
+
+  const VkiManager = {
+    height: 175,
+    weight: 70,
+
+    init() {
+      this.load();
+      const hInput = $('#vki-height-input');
+      const wInput = $('#vki-weight-input');
+
+      if (hInput) {
+        hInput.value = this.height;
+        hInput.addEventListener('input', () => this.onInputChange());
+      }
+      if (wInput) {
+        wInput.value = this.weight;
+        wInput.addEventListener('input', () => this.onInputChange());
+      }
+
+      this.calculateAndRender();
+    },
+
+    load() {
+      const saved = Storage.get('asi_user_vki_data', null);
+      if (saved) {
+        if (saved.height) this.height = parseFloat(saved.height);
+        if (saved.weight) this.weight = parseFloat(saved.weight);
+      }
+    },
+
+    save() {
+      Storage.set('asi_user_vki_data', {
+        height: this.height,
+        weight: this.weight,
+        updatedAt: Date.now()
+      });
+    },
+
+    onInputChange() {
+      const h = parseFloat($('#vki-height-input')?.value);
+      const w = parseFloat($('#vki-weight-input')?.value);
+
+      if (h && h > 50 && h < 300) this.height = h;
+      if (w && w > 10 && w < 500) this.weight = w;
+
+      this.save();
+      this.calculateAndRender();
+    },
+
+    calculateAndRender() {
+      const hM = this.height / 100;
+      const bmi = this.weight / (hM * hM);
+      const scoreFormatted = bmi.toFixed(1);
+
+      const scoreNumEl = $('#vki-score-num');
+      if (scoreNumEl) scoreNumEl.textContent = scoreFormatted;
+
+      // Renk ve Kategori Belirleme
+      // Mavi: Zayıf (< 18.5)
+      // Yeşil: İdeal Kilo (18.5 - 24.9)
+      // Sarı: Fazla Kilolu (25.0 - 29.9)
+      // Kırmızı: Obez (>= 30.0)
+      let categoryText = '';
+      let badgeClass = '';
+
+      if (bmi < 18.5) {
+        badgeClass = 'badge-info';
+        categoryText = 'Mavi: Zayıf (< 18.5)';
+      } else if (bmi <= 24.9) {
+        badgeClass = 'badge-success';
+        categoryText = 'Yeşil: İdeal Kilo (18.5 - 24.9)';
+      } else if (bmi <= 29.9) {
+        badgeClass = 'badge-warning';
+        categoryText = 'Sarı: Fazla Kilolu (25 - 29.9)';
+      } else {
+        badgeClass = 'badge-danger';
+        categoryText = 'Kırmızı: Obez (≥ 30)';
+      }
+
+      const catBadge = $('#vki-category-badge');
+      if (catBadge) {
+        catBadge.textContent = categoryText;
+        catBadge.className = `badge ${badgeClass}`;
+      }
+
+      // Renkli Görsel Bar Üzerindeki İbre (Needle) Konumu
+      // Ölçek: BMI 15 = %0, BMI 35 = %100
+      const minScale = 15;
+      const maxScale = 35;
+      const clampedBmi = Math.max(minScale, Math.min(maxScale, bmi));
+      const percentage = ((clampedBmi - minScale) / (maxScale - minScale)) * 100;
+
+      const needle = $('#vki-needle');
+      if (needle) {
+        needle.style.left = `${percentage.toFixed(1)}%`;
+      }
+
+      const bubble = $('#vki-needle-bubble');
+      if (bubble) {
+        bubble.textContent = `${scoreFormatted}`;
+      }
+
+      // İdeal Kilo Aralığı
+      const minIdealKg = (18.5 * hM * hM).toFixed(1);
+      const maxIdealKg = (24.9 * hM * hM).toFixed(1);
+
+      const adviceEl = $('#vki-advice-text');
+      if (adviceEl) {
+        let diffNote = '';
+        if (this.weight < minIdealKg) {
+          const diff = (minIdealKg - this.weight).toFixed(1);
+          diffNote = ` • İdeal kiloya ulaşmak için ~${diff} kg almanız önerilir.`;
+        } else if (this.weight > maxIdealKg) {
+          const diff = (this.weight - maxIdealKg).toFixed(1);
+          diffNote = ` • İdeal kiloya ulaşmak için ~${diff} kg vermeniz önerilir.`;
+        } else {
+          diffNote = ' • Harika, sağlıklı ve dengeli bir formdasınız! ✨';
+        }
+        adviceEl.innerHTML = `Boyunuza (${this.height} cm) göre ideal kilo aralığınız: <strong>${minIdealKg} - ${maxIdealKg} kg</strong>${diffNote}`;
+      }
+    }
+  };
+
+  // ═══════════════════════════════════════════════════════
+  // KİTAP OKUMA ODAK SAYACI (POMODORO ENTEGRASYONU)
+  // ═══════════════════════════════════════════════════════
+
+  const BookFocusManager = {
+    active: false,
+    bookId: null,
+    book: null,
+    startPage: 0,
+    durationMinutes: 30,
+    totalSeconds: 30 * 60,
+    remainingSeconds: 30 * 60,
+    timerId: null,
+    paused: false,
+    elapsedSeconds: 0,
+
+    init() {
+      // "Okumaya Başla" butonu
+      $('#start-book-focus-btn')?.addEventListener('click', () => this.startFocusFlow());
+
+      // Kapatma butonu
+      $('#book-focus-exit-btn')?.addEventListener('click', () => this.exitFocusMode());
+
+      // Süre preset butonları
+      $$('.focus-preset-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          if (this.active && !this.paused && this.elapsedSeconds > 0) {
+            if (!confirm('Süreyi değiştirmek sayacı sıfırlayacaktır. Devam edilsin mi?')) return;
+          }
+          $$('.focus-preset-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          const mins = parseInt(btn.dataset.minutes, 10) || 30;
+          this.setDuration(mins);
+        });
+      });
+
+      // Kontroller
+      $('#book-focus-start-btn')?.addEventListener('click', () => this.startTimer());
+      $('#book-focus-pause-btn')?.addEventListener('click', () => this.pauseTimer());
+      $('#book-focus-resume-btn')?.addEventListener('click', () => this.resumeTimer());
+      $('#book-focus-reset-btn')?.addEventListener('click', () => this.resetTimer());
+      $('#book-focus-finish-early-btn')?.addEventListener('click', () => this.triggerFinishModal());
+
+      // "Şu an kaçıncı sayfadasın?" form submit
+      $('#book-focus-finish-form')?.addEventListener('submit', (e) => {
+        e.preventDefault();
+        this.saveFinishedSession();
+      });
+
+      // Stepper butonları
+      $('#focus-step-minus-5')?.addEventListener('click', () => this.stepPage(-5));
+      $('#focus-step-minus-1')?.addEventListener('click', () => this.stepPage(-1));
+      $('#focus-step-plus-1')?.addEventListener('click', () => this.stepPage(1));
+      $('#focus-step-plus-5')?.addEventListener('click', () => this.stepPage(5));
+
+      $('#focus-current-page-input')?.addEventListener('input', () => this.updateLiveCalculation());
+    },
+
+    async startFocusFlow(bookId = null) {
+      const books = Storage.get('asi_books', DEFAULT_BOOKS);
+      if (!books || books.length === 0) {
+        showToast('Kitaplığınızda henüz kitap bulunmuyor. Lütfen önce bir kitap ekleyin.', 'warning');
+        Books.openBookModal();
+        return;
+      }
+
+      let targetBook = null;
+      if (bookId) {
+        targetBook = books.find(b => b.id === bookId);
+      }
+      if (!targetBook) {
+        targetBook = books.find(b => b.status === 'reading') || books[0];
+      }
+
+      this.openFocusMode(targetBook);
+    },
+
+    openFocusMode(book) {
+      this.book = book;
+      this.bookId = book.id;
+      this.startPage = book.currentPage || 0;
+      this.durationMinutes = 30;
+      this.totalSeconds = 30 * 60;
+      this.remainingSeconds = this.totalSeconds;
+      this.elapsedSeconds = 0;
+      this.active = true;
+      this.paused = false;
+
+      // UI Doldur
+      $('#book-focus-title').textContent = book.title;
+      $('#book-focus-author').textContent = book.author || 'Belirtilmemiş Yazar';
+      $('#book-focus-current-page-tag').textContent = `Başlangıç: Sayfa ${this.startPage}`;
+      $('#book-focus-total-pages-tag').textContent = `Toplam ${book.totalPages} sayfa`;
+
+      // Süre presetini 30 dk yap
+      $$('.focus-preset-btn').forEach(b => {
+        if (b.dataset.minutes === '30') b.classList.add('active');
+        else b.classList.remove('active');
+      });
+
+      this.updateDisplay();
+
+      // Odak Modu Ekranını Aç
+      const overlay = $('#book-focus-overlay');
+      if (overlay) overlay.classList.remove('hidden');
+
+      $('#book-focus-start-btn')?.classList.remove('hidden');
+      $('#book-focus-pause-btn')?.classList.add('hidden');
+      $('#book-focus-resume-btn')?.classList.add('hidden');
+      $('#book-focus-status-text').textContent = 'Odaklanmaya Hazır';
+
+      showToast(`📖 "${book.title}" için 30 dk Okuma Odak Sayacı başlatıldı!`, 'success');
+    },
+
+    setDuration(minutes) {
+      this.durationMinutes = minutes;
+      this.totalSeconds = minutes * 60;
+      this.remainingSeconds = this.totalSeconds;
+      this.elapsedSeconds = 0;
+      if (this.timerId) {
+        clearInterval(this.timerId);
+        this.timerId = null;
+      }
+      this.paused = false;
+      $('#book-focus-start-btn')?.classList.remove('hidden');
+      $('#book-focus-pause-btn')?.classList.add('hidden');
+      $('#book-focus-resume-btn')?.classList.add('hidden');
+      $('#book-focus-status-text').textContent = 'Odaklanmaya Hazır';
+      this.updateDisplay();
+    },
+
+    startTimer() {
+      if (this.timerId) clearInterval(this.timerId);
+      this.paused = false;
+
+      $('#book-focus-start-btn')?.classList.add('hidden');
+      $('#book-focus-pause-btn')?.classList.remove('hidden');
+      $('#book-focus-resume-btn')?.classList.add('hidden');
+      $('#book-focus-status-text').textContent = '⏱️ Okuma Devam Ediyor...';
+
+      this.timerId = setInterval(() => {
+        if (this.remainingSeconds > 0) {
+          this.remainingSeconds--;
+          this.elapsedSeconds++;
+          this.updateDisplay();
+        } else {
+          this.completeTimer();
+        }
+      }, 1000);
+    },
+
+    pauseTimer() {
+      if (!this.timerId) return;
+      clearInterval(this.timerId);
+      this.timerId = null;
+      this.paused = true;
+      $('#book-focus-pause-btn')?.classList.add('hidden');
+      $('#book-focus-resume-btn')?.classList.remove('hidden');
+      $('#book-focus-status-text').textContent = '⏸️ Sayaç Duraklatıldı';
+      showToast('Odaklanma sayacı duraklatıldı', 'info');
+    },
+
+    resumeTimer() {
+      this.startTimer();
+      showToast('Odaklanma sayacı devam ediyor', 'info');
+    },
+
+    resetTimer() {
+      if (this.timerId) clearInterval(this.timerId);
+      this.timerId = null;
+      this.remainingSeconds = this.totalSeconds;
+      this.elapsedSeconds = 0;
+      this.paused = false;
+      $('#book-focus-start-btn')?.classList.remove('hidden');
+      $('#book-focus-pause-btn')?.classList.add('hidden');
+      $('#book-focus-resume-btn')?.classList.add('hidden');
+      $('#book-focus-status-text').textContent = 'Odaklanmaya Hazır';
+      this.updateDisplay();
+    },
+
+    completeTimer() {
+      if (this.timerId) clearInterval(this.timerId);
+      this.timerId = null;
+      Workout.playChime();
+      showToast('🎉 Tebrikler! Okuma süreniz tamamlandı!', 'success');
+      this.triggerFinishModal();
+    },
+
+    updateDisplay() {
+      const m = Math.floor(this.remainingSeconds / 60);
+      const s = this.remainingSeconds % 60;
+      const str = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+
+      const disp = $('#book-focus-timer-display');
+      if (disp) disp.textContent = str;
+
+      const circle = $('#book-focus-circle-progress');
+      if (circle) {
+        const circumference = 660;
+        const progress = (this.totalSeconds - this.remainingSeconds) / this.totalSeconds;
+        const offset = circumference * (1 - progress);
+        circle.style.strokeDashoffset = offset;
+      }
+    },
+
+    triggerFinishModal() {
+      if (this.timerId) {
+        clearInterval(this.timerId);
+        this.timerId = null;
+      }
+
+      const elapsedMins = Math.max(1, Math.round(this.elapsedSeconds / 60));
+      $('#focus-finish-duration-text').textContent = `${elapsedMins} dakika`;
+      $('#focus-finish-start-page-text').textContent = `Sayfa ${this.startPage}`;
+
+      const input = $('#focus-current-page-input');
+      if (input) {
+        input.min = this.startPage;
+        input.max = this.book?.totalPages || 10000;
+        input.value = Math.min(this.book?.totalPages || 1000, this.startPage + 10);
+      }
+
+      const hint = $('#focus-total-pages-hint');
+      if (hint && this.book) {
+        hint.textContent = `"${this.book.title}" toplam sayfa sayısı: ${this.book.totalPages}`;
+      }
+
+      this.updateLiveCalculation();
+      openModal('book-focus-finish-modal');
+    },
+
+    stepPage(delta) {
+      const input = $('#focus-current-page-input');
+      if (!input) return;
+      let val = (parseInt(input.value, 10) || this.startPage) + delta;
+      val = Math.max(this.startPage, Math.min(this.book?.totalPages || 10000, val));
+      input.value = val;
+      this.updateLiveCalculation();
+    },
+
+    updateLiveCalculation() {
+      const input = $('#focus-current-page-input');
+      const curr = parseInt(input?.value, 10) || this.startPage;
+      const pagesRead = Math.max(0, curr - this.startPage);
+      const elapsedMins = Math.max(1, Math.round(this.elapsedSeconds / 60));
+
+      // Okuma Hızı (Sayfa / Dakika ve Sayfa / Saat)
+      const speedPerMin = (pagesRead / elapsedMins).toFixed(2);
+      const speedPerHour = Math.round((pagesRead / elapsedMins) * 60);
+
+      // Kalan sayfa ve tahmini bitiş günü
+      const totalPages = this.book?.totalPages || 300;
+      const remainingPages = Math.max(0, totalPages - curr);
+
+      let estDays = 1;
+      if (pagesRead > 0) {
+        estDays = Math.ceil(remainingPages / Math.max(1, pagesRead));
+      } else {
+        estDays = Math.ceil(remainingPages / 20);
+      }
+
+      const estFinishDate = new Date();
+      estFinishDate.setDate(estFinishDate.getDate() + estDays);
+      const estDateFormatted = `${formatDate(estFinishDate)} (~${estDays} gün)`;
+
+      $('#focus-calc-pages-read').textContent = `+${pagesRead} sayfa`;
+      $('#focus-calc-speed').textContent = `${speedPerMin} sf/dk (~${speedPerHour} sf/sa)`;
+      $('#focus-calc-est-date').textContent = remainingPages === 0 ? '🎉 Kitap Bitti!' : estDateFormatted;
+    },
+
+    async saveFinishedSession() {
+      const input = $('#focus-current-page-input');
+      const curr = parseInt(input?.value, 10) || this.startPage;
+      const pagesRead = Math.max(0, curr - this.startPage);
+      const elapsedMins = Math.max(1, Math.round(this.elapsedSeconds / 60));
+
+      await apiFetch('/reading/sessions', 'POST', {
+        bookId: this.bookId,
+        bookTitle: this.book?.title,
+        startPage: this.startPage,
+        endPage: curr,
+        pagesRead,
+        duration: elapsedMins,
+        date: formatDateShort(new Date()),
+        notes: 'Odak Sayacı (Pomodoro) ile tamamlandı'
+      });
+
+      closeModal('book-focus-finish-modal');
+      this.exitFocusMode();
+
+      await Books.render();
+      await Dashboard.refresh();
+      StreakManager.updateStreaksAndBadges();
+
+      showToast(`🏆 Tebrikler! ${pagesRead} sayfa okundu, oturum başarıyla kaydedildi!`, 'success');
+    },
+
+    exitFocusMode() {
+      if (this.timerId) {
+        clearInterval(this.timerId);
+        this.timerId = null;
+      }
+      this.active = false;
+      const overlay = $('#book-focus-overlay');
+      if (overlay) overlay.classList.add('hidden');
+    }
+  };
+
+  // ═══════════════════════════════════════════════════════
   // BAŞLATMA
   // ═══════════════════════════════════════════════════════
 
@@ -5687,6 +7243,11 @@
     workout: Workout,
     books: Books,
     theme: Theme,
+    modules: ModuleManager,
+    prayer: PrayerManager,
+    streak: StreakManager,
+    vki: VkiManager,
+    bookFocus: BookFocusManager,
     openModal,
     closeModal,
   };
@@ -5698,6 +7259,7 @@
   async function boot() {
     Theme.init();
     Splash.init();
+    ModuleManager.init();
     Nav.init();
     Kanban.init();
     Workout.init();
@@ -5708,6 +7270,10 @@
     Pomodoro.init();
     QuickNotes.init();
     Settings.init();
+    PrayerManager.init();
+    StreakManager.init();
+    VkiManager.init();
+    BookFocusManager.init();
 
     // Saat
     updateClock();
