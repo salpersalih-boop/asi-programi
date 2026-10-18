@@ -813,7 +813,7 @@ input, textarea, select, button {
 
 .kanban-board {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 1.2rem;
   min-height: 440px;
 }
@@ -826,6 +826,94 @@ input, textarea, select, button {
   padding: 1.1rem;
   display: flex;
   flex-direction: column;
+}
+
+/* Not Defteri Kolonu ve Kartı */
+.kanban-notes-column {
+  background: var(--bg-box);
+}
+
+.kanban-note-card {
+  background: #FFFFFF;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 1rem;
+  cursor: grab;
+  transition: all var(--transition-fast);
+  position: relative;
+  border-left: 4px solid var(--accent-turquoise);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.kanban-note-card:hover {
+  border-color: var(--border-hover);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow);
+}
+
+.kanban-note-card.dragging {
+  opacity: 0.55;
+  transform: rotate(2deg);
+}
+
+.kanban-note-badge-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.kanban-note-course {
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  background: var(--bg-box);
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+}
+
+.kanban-note-full-text {
+  font-size: 0.83rem;
+  color: var(--text-secondary);
+  line-height: 1.45;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 180px;
+  overflow-y: auto;
+  padding-right: 0.25rem;
+}
+
+.kanban-note-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+  margin-top: 0.35rem;
+  padding-top: 0.5rem;
+  border-top: 1px dashed var(--border);
+  flex-wrap: wrap;
+}
+
+.kanban-note-date {
+  font-size: 0.74rem;
+  color: var(--text-muted);
+}
+
+.kanban-note-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.kanban-note-actions .btn {
+  padding: 0.28rem 0.55rem;
+  font-size: 0.75rem;
+  font-weight: 600;
 }
 
 .column-header {
@@ -3533,11 +3621,14 @@ input, textarea, select, button {
    MOBİL UYUMLULUK
    ═══════════════════════════════════════════════════════ */
 
-@media (max-width: 900px) {
+@media (max-width: 1100px) {
   .kanban-board {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
   }
+}
 
+@media (max-width: 900px) {
   .notebook-layout {
     grid-template-columns: 1fr;
   }
@@ -3554,7 +3645,13 @@ input, textarea, select, button {
 @media (max-width: 768px) {
   :root {
     --sidebar-width: 280px;
-    --topbar-height: 64px;
+    --topbar-height: 60px;
+  }
+
+  html, body {
+    overflow-x: hidden;
+    width: 100%;
+    max-width: 100vw;
   }
 
   .menu-toggle {
@@ -3581,30 +3678,39 @@ input, textarea, select, button {
 
   .main-content {
     margin-left: 0 !important;
-    padding: 1rem 0.85rem 4rem !important;
+    padding: 0.85rem 0.75rem 4rem !important;
     width: 100% !important;
     max-width: 100vw !important;
     box-sizing: border-box !important;
+    overflow-x: hidden !important;
   }
 
-  .page-header {
-    flex-direction: column;
-    align-items: flex-start;
+  /* Üst Çubuk (Top Bar) */
+  .top-bar {
+    padding: 0 0.75rem;
+    height: 60px;
   }
 
-  .page-header h2 { font-size: 1.4rem; }
-
-  .stats-grid {
-    grid-template-columns: 1fr 1fr;
+  .top-bar-right {
+    gap: 0.45rem;
   }
 
-  .quick-cards {
-    grid-template-columns: 1fr 1fr;
+  .module-settings-btn {
+    padding: 0.42rem 0.65rem;
+  }
+
+  .module-settings-btn .module-btn-text {
+    display: none;
+  }
+
+  .top-streak-badge {
+    padding: 0.32rem 0.6rem;
+    font-size: 0.82rem;
   }
 
   .top-datetime {
-    padding: 0.35rem 0.65rem;
-    gap: 0.45rem;
+    padding: 0.32rem 0.6rem;
+    gap: 0.4rem;
   }
 
   .datetime-item {
@@ -3612,40 +3718,264 @@ input, textarea, select, button {
   }
 
   .top-clock {
-    font-size: 0.84rem;
-    min-width: 58px;
+    font-size: 0.82rem;
+    min-width: 50px;
   }
 
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+    width: 100%;
+  }
+
+  .page-header h2 {
+    font-size: 1.35rem;
+    word-break: break-word;
+  }
+
+  .page-header .btn {
+    align-self: flex-start;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+  }
+
+  .quick-cards {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+  }
+
+  /* 🎯 Haftalık Hedefler Mobil */
+  .goals-week-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    gap: 0.4rem;
+    flex-wrap: nowrap;
+  }
+
+  .week-label {
+    font-size: 0.86rem;
+    text-align: center;
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .goals-overview {
+    padding: 1rem;
+  }
+
+  .goal-day-card {
+    padding: 0.95rem;
+  }
+
+  .goal-day-header {
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+
+  .goal-day-name {
+    font-size: 0.95rem;
+  }
+
+  .goal-add-area {
+    display: flex;
+    gap: 0.4rem;
+    width: 100%;
+  }
+
+  .goal-add-area input {
+    flex: 1;
+    min-width: 0;
+    font-size: 0.85rem;
+  }
+
+  .goal-item {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0.45rem 0.55rem;
+  }
+
+  .goal-item-text {
+    flex: 1;
+    min-width: 0;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+    font-size: 0.85rem;
+  }
+
+  /* 📋 Görev Panosu Mobil */
+  .kanban-board {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    min-height: auto;
+  }
+
+  .kanban-column {
+    padding: 0.95rem;
+  }
+
+  .task-card, .kanban-note-card {
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .task-card-title {
+    word-break: break-word;
+    overflow-wrap: anywhere;
+  }
+
+  .task-card-desc, .kanban-note-full-text {
+    word-break: break-word;
+    overflow-wrap: anywhere;
+  }
+
+  .task-card-actions {
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+
+  .kanban-note-footer {
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+
+  /* 🏋️ Spor Programı Mobil */
+  .workout-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .workout-header-btns {
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+  }
+
+  .workout-date-card {
+    padding: 0.85rem;
+  }
+
+  .workout-date-nav {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  .workout-exercise-grid {
+    grid-template-columns: 1fr;
+    gap: 0.85rem;
+  }
+
+  .workout-card {
+    padding: 0.95rem;
+  }
+
+  .workout-sets-pills {
+    flex-wrap: wrap;
+    gap: 0.35rem;
+  }
+
+  .workout-vki-card {
+    padding: 1rem;
+  }
+
+  /* 🎓 Devamsızlık Takibi Mobil */
+  .att-table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* 📚 Kitaplığım Mobil */
+  .books-header-wrap {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .books-header-actions {
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+  }
+
+  .books-filter-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.6rem;
+  }
+
+  .book-grid {
+    grid-template-columns: 1fr;
+    gap: 0.85rem;
+  }
+
+  .book-card {
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* 🕌 Namaz Vakitleri Mobil */
+  .dash-prayer-widget {
+    padding: 1rem;
+  }
+
+  .prayer-widget-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.65rem;
+  }
+
+  .prayer-header-right {
+    width: 100%;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  /* Hızlı Not ve Modallar */
   .quick-note-panel {
     right: 0.6rem;
     left: 0.6rem;
     bottom: 5.2rem;
     width: auto;
+    max-width: calc(100vw - 1.2rem);
   }
 
   .qn-toggle {
-    bottom: 1.1rem;
-    right: 1.1rem;
-    width: 52px;
-    height: 52px;
-    font-size: 1.3rem;
+    bottom: 1rem;
+    right: 1rem;
+    width: 48px;
+    height: 48px;
+    font-size: 1.2rem;
   }
 
-  .modal {
-    margin: 0;
+  .modal-content {
+    max-width: calc(100vw - 1.5rem) !important;
+    width: 100% !important;
+    padding: 1.25rem 1rem !important;
+    box-sizing: border-box !important;
+    margin: auto !important;
   }
 
   .form-row {
     grid-template-columns: 1fr;
   }
 
-  .goals-week-nav {
-    flex-wrap: wrap;
-    justify-content: center;
-  }
-
   .pomo-card {
-    padding: 1.6rem;
+    padding: 1.4rem 1rem;
   }
 
   .pomo-ring {
@@ -3654,12 +3984,13 @@ input, textarea, select, button {
   }
 
   #pomo-time {
-    font-size: 2.5rem;
+    font-size: 2.4rem;
   }
 
   .motivation-card {
     flex-direction: column;
     text-align: center;
+    padding: 1.1rem;
   }
 }
 
@@ -3673,14 +4004,19 @@ input, textarea, select, button {
   }
 
   .top-bar {
-    padding: 0 0.85rem;
+    padding: 0 0.65rem;
+    height: 56px;
   }
 
-  .datetime-date-wrap {
+  .app-logo {
+    font-size: 1.2rem;
+  }
+
+  .top-datetime {
     display: none;
   }
 
-  .datetime-sep {
+  .top-streak-badge .streak-lbl {
     display: none;
   }
 
@@ -3690,15 +4026,76 @@ input, textarea, select, button {
 
   .pomo-preset {
     padding: 0.4rem 0.75rem;
-    font-size: 0.82rem;
+    font-size: 0.8rem;
+  }
+
+  .prayer-times-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.45rem;
+  }
+
+  .prayer-card {
+    padding: 0.65rem 0.35rem;
+  }
+
+  .prayer-card-name {
+    font-size: 0.76rem;
+  }
+
+  .prayer-card-time {
+    font-size: 0.86rem;
+  }
+
+  .workout-card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .workout-card-body {
+    width: 100%;
+  }
+
+  .workout-check-btn {
+    align-self: flex-start;
+  }
+
+  .zen-editor-header {
+    padding: 0.65rem;
+  }
+
+  .zen-header-actions {
+    gap: 0.3rem;
+  }
+
+  .zen-tag-btn {
+    font-size: 0.78rem;
+    padding: 0.35rem 0.55rem;
+  }
+
+  .kanban-note-footer {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .kanban-note-actions {
+    width: 100%;
+    justify-content: flex-end;
   }
 
   .splash-title {
-    font-size: 1.9rem;
+    font-size: 1.75rem;
   }
 
   .splash-subtitle {
-    font-size: 0.88rem;
+    font-size: 0.85rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .prayer-times-grid {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 

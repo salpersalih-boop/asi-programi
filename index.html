@@ -474,6 +474,14 @@
           <button type="button" id="add-task-btn" class="btn btn-primary">+ Yeni Görev</button>
         </div>
         <div class="kanban-board">
+          <!-- ─── Not Defteri Kolonu (Tüm notlar bu başlık altında ayrı olarak listelenir) ─── -->
+          <div class="kanban-column kanban-notes-column" data-status="notes">
+            <div class="column-header">
+              <h3>📒 Not Defteri</h3>
+              <span id="count-notes" class="task-count">0</span>
+            </div>
+            <div class="kanban-list" id="kanban-notes" data-status="notes"></div>
+          </div>
           <div class="kanban-column" data-status="todo">
             <div class="column-header">
               <h3>📝 Yapılacaklar</h3>

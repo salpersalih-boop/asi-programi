@@ -549,20 +549,23 @@
         }
 
         if (method === 'POST') {
-          const { title, period, periodKey, dayKey, done } = body || {};
-          let target = goals.find(g => g.periodKey === periodKey && g.dayKey === dayKey);
+          const { id, title, period, periodKey, dayKey, done } = body || {};
+          let target = id ? goals.find(g => g.id === id) : null;
           if (target) {
             if (typeof done === 'boolean') target.done = done;
             if (title !== undefined) target.title = title;
+            if (period !== undefined) target.period = period;
+            if (periodKey !== undefined) target.periodKey = periodKey;
+            if (dayKey !== undefined) target.dayKey = dayKey;
           } else {
             target = {
-              id: 'g-' + Date.now().toString(36) + Math.random().toString(36).substr(2, 4),
+              id: id || ('g-' + Date.now().toString(36) + Math.random().toString(36).substr(2, 4)),
               title: title || '',
               period: period || 'Haftalık',
               periodKey: periodKey || '',
               dayKey: dayKey || '',
               done: !!done,
-              created: Date.now()
+              created: body?.created || Date.now()
             };
             goals.push(target);
           }
@@ -1337,14 +1340,33 @@
     },
 
     _tasks: [],   // bellekteki önbellek
+    _notes: [],   // Not Defteri önbelleği
 
     async loadTasks() {
-      const data = await apiFetch('/tasks');
-      this._tasks = data || [];
+      const [tasks, notes] = await Promise.all([
+        apiFetch('/tasks'),
+        apiFetch('/notes')
+      ]);
+      this._tasks = tasks || [];
+      this._notes = notes || [];
     },
 
     async render() {
       await this.loadTasks();
+
+      // ─── 1. Not Defteri Kolonu (Tüm notlar bu başlık altında ayrı olarak listelenir) ───
+      const notesList = $('#kanban-notes');
+      const countNotes = $('#count-notes');
+      if (countNotes) countNotes.textContent = this._notes.length;
+      if (notesList) {
+        if (this._notes.length === 0) {
+          notesList.innerHTML = '<div class="empty-state" style="padding:2rem 1rem;text-align:center;color:var(--text-muted);font-size:0.85rem;">Henüz not bulunmuyor</div>';
+        } else {
+          notesList.innerHTML = this._notes.map(n => this.noteCardHTML(n)).join('');
+        }
+      }
+
+      // ─── 2. Görev Panosu Kolonları (Yapılacaklar, Yapılıyor, Yapıldı) ───
       const cols = { todo: [], doing: [], done: [] };
       this._tasks.forEach(t => { if (cols[t.status]) cols[t.status].push(t); });
 
@@ -1359,6 +1381,38 @@
         list.innerHTML = items.map(t => this.cardHTML(t)).join('');
       }
       this.bindCardEvents();
+    },
+
+    noteCardHTML(n) {
+      const esc = Dashboard.escapeHtml;
+      const catInfo = NOTEBOOK_CATEGORIES[n.tag] || NOTEBOOK_CATEGORIES.general;
+      const dateStr = n.updated ? new Date(n.updated).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' }) : 'Bugün';
+      const courseName = n.courseName || 'Genel';
+      const content = (n.content || '').trim();
+      const catBorderColors = {
+        exam: '#ef4444',
+        review: '#3b82f6',
+        important: '#f59e0b',
+        general: '#06b6d4'
+      };
+      const borderColor = catBorderColors[n.tag] || '#06b6d4';
+
+      return `
+        <div class="task-card kanban-note-card" draggable="true" data-note-id="${esc(n.id)}" style="border-left-color:${borderColor}">
+          <div class="kanban-note-badge-bar">
+            <span class="zen-card-badge ${catInfo.badgeCls}">${catInfo.icon} ${esc(catInfo.title)}</span>
+            <span class="kanban-note-course">📚 ${esc(courseName)}</span>
+          </div>
+          <div class="task-card-title">${esc(n.title || catInfo.title)}</div>
+          ${content ? `<div class="task-card-desc kanban-note-full-text">${esc(content)}</div>` : '<div class="task-card-desc" style="font-style:italic;color:var(--text-muted);">İçerik boş...</div>'}
+          <div class="kanban-note-footer">
+            <span class="kanban-note-date">🕒 ${dateStr}</span>
+            <div class="kanban-note-actions">
+              <button type="button" class="btn btn-sm btn-ghost kanban-open-note-btn" data-note-id="${esc(n.id)}" title="Not Defteri'nde aç">📖 Aç</button>
+              <button type="button" class="btn btn-sm btn-primary kanban-note-to-task-btn" data-note-id="${esc(n.id)}" title="Bu notu Yapılacaklar listesine görev olarak ekle">➕ Göreve Ekle</button>
+            </div>
+          </div>
+        </div>`;
     },
 
     cardHTML(t) {
@@ -1393,6 +1447,53 @@
     },
 
     bindCardEvents() {
+      // Not Defteri kartlarındaki butonlar
+      $$('.kanban-open-note-btn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          const noteId = btn.dataset.noteId;
+          if (noteId) {
+            Nav.goTo('notebook');
+            await Notebook.openNote(noteId);
+          }
+        });
+      });
+
+      $$('.kanban-note-to-task-btn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          const noteId = btn.dataset.noteId;
+          const note = this._notes.find(n => n.id === noteId);
+          if (note) {
+            const catInfo = NOTEBOOK_CATEGORIES[note.tag] || NOTEBOOK_CATEGORIES.general;
+            const coursePrefix = (note.courseName && note.courseName !== 'Genel') ? `[${note.courseName}] ` : '';
+            const taskTitle = `${catInfo.icon} ${coursePrefix}${note.title || catInfo.title}`;
+            const refTag = `[NotRef:${note.id}]`;
+
+            // Tekrarlı kayıt kontrolü
+            const existing = this._tasks.find(t => (t.desc && t.desc.includes(refTag)) || t.title === taskTitle);
+            if (existing) {
+              showToast('Bu not zaten Görev Panosu\'nda mevcut', 'info');
+              return;
+            }
+
+            const fullContent = (note.content || '').trim();
+            const descContent = `${fullContent}\n\n📚 ${note.courseName || 'Genel'} dersi için Not Defteri'nden aktarıldı. ${refTag}`;
+            await apiFetch('/tasks', 'POST', {
+              title: taskTitle,
+              desc: descContent,
+              color: note.tag === 'exam' ? '#ef4444' : '#06b6d4',
+              status: 'todo'
+            });
+            await this.render();
+            Dashboard.refresh();
+            showToast('Not, Yapılacaklar listesine eklendi ✨', 'success');
+          }
+        });
+      });
+
       $$('.task-open-note-btn').forEach(btn => {
         btn.addEventListener('click', async (e) => {
           e.preventDefault();
@@ -1480,6 +1581,7 @@
     },
 
     _draggedTaskId: null,
+    _draggedNoteId: null,
 
     // Sürükle bırak (Tarayıcının sayfayı yenilemesini kesin olarak engeller)
     initDragDrop() {
@@ -1493,10 +1595,12 @@
       board.addEventListener('dragstart', (e) => {
         const card = e.target.closest('.task-card');
         if (!card) return;
-        this._draggedTaskId = card.dataset.id;
+        this._draggedTaskId = card.dataset.id || null;
+        this._draggedNoteId = card.dataset.noteId || null;
         card.classList.add('dragging');
         try {
-          e.dataTransfer.setData('text/plain', card.dataset.id);
+          if (this._draggedTaskId) e.dataTransfer.setData('text/plain', this._draggedTaskId);
+          if (this._draggedNoteId) e.dataTransfer.setData('application/x-note-id', this._draggedNoteId);
           e.dataTransfer.effectAllowed = 'move';
         } catch (_) {}
       });
@@ -1505,6 +1609,7 @@
         const card = e.target.closest('.task-card') || $('.task-card.dragging');
         if (card) card.classList.remove('dragging');
         this._draggedTaskId = null;
+        this._draggedNoteId = null;
         $$('.kanban-list, .kanban-column').forEach(l => l.classList.remove('drag-over'));
       });
 
@@ -1537,13 +1642,47 @@
         const col = e.target.closest('.kanban-column');
         if (!col) return;
         const newStatus = col.dataset.status;
-        if (!newStatus) return;
+        if (!newStatus || newStatus === 'notes') return;
 
         let taskId = this._draggedTaskId;
+        let noteId = this._draggedNoteId;
         if (!taskId && e.dataTransfer) {
           try { taskId = e.dataTransfer.getData('text/plain'); } catch (_) {}
         }
+        if (!noteId && e.dataTransfer) {
+          try { noteId = e.dataTransfer.getData('application/x-note-id'); } catch (_) {}
+        }
         this._draggedTaskId = null;
+        this._draggedNoteId = null;
+
+        // Notu göreve aktararak ilgili kolona bırak
+        if (noteId) {
+          const note = this._notes.find(n => n.id === noteId);
+          if (note) {
+            const catInfo = NOTEBOOK_CATEGORIES[note.tag] || NOTEBOOK_CATEGORIES.general;
+            const coursePrefix = (note.courseName && note.courseName !== 'Genel') ? `[${note.courseName}] ` : '';
+            const taskTitle = `${catInfo.icon} ${coursePrefix}${note.title || catInfo.title}`;
+            const refTag = `[NotRef:${note.id}]`;
+
+            const existing = this._tasks.find(t => (t.desc && t.desc.includes(refTag)) || t.title === taskTitle);
+            if (existing) {
+              await apiFetch(`/tasks/${existing.id}`, 'PUT', { ...existing, status: newStatus });
+            } else {
+              const fullContent = (note.content || '').trim();
+              const descContent = `${fullContent}\n\n📚 ${note.courseName || 'Genel'} dersi için Not Defteri'nden aktarıldı. ${refTag}`;
+              await apiFetch('/tasks', 'POST', {
+                title: taskTitle,
+                desc: descContent,
+                color: note.tag === 'exam' ? '#ef4444' : '#06b6d4',
+                status: newStatus
+              });
+            }
+            await this.render();
+            Dashboard.refresh();
+            showToast('Not görev panosuna aktarıldı ✨', 'success');
+          }
+          return;
+        }
 
         if (!taskId) return;
         const task = this._tasks.find(t => t.id === taskId);
@@ -4948,6 +5087,16 @@
       $$('.zen-card').forEach(c => c.classList.remove('active'));
     },
 
+    async openNote(id) {
+      if (!this._notes || this._notes.length === 0) {
+        await this.loadNotes();
+      }
+      const note = this._notes.find(n => n.id === id);
+      if (note) {
+        this.openEditor(note, true);
+      }
+    },
+
     async createNewNote() {
       clearTimeout(this.autoSaveTimer);
 
@@ -5018,6 +5167,7 @@
 
         this.markSaved();
         this.renderList();
+        if (typeof Kanban !== 'undefined' && Kanban.render) Kanban.render();
 
         if (this.currentTag === 'exam') {
           await this.syncNoteToTask(updated, false);
@@ -5044,33 +5194,41 @@
       this.renderList();
       showToast('Not silindi', 'success');
       Dashboard.refresh();
+      if (typeof Kanban !== 'undefined' && Kanban.render) Kanban.render();
     },
 
     async syncNoteToTask(note, forceNotify = false) {
       if (!note) return;
       try {
         const tasks = (await apiFetch('/tasks')) || [];
-        const catTitle = NOTEBOOK_CATEGORIES[note.tag]?.title || 'Ders Notu';
+        const catInfo = NOTEBOOK_CATEGORIES[note.tag] || NOTEBOOK_CATEGORIES.general;
         const coursePrefix = (note.courseName && note.courseName !== 'Genel') ? `[${note.courseName}] ` : '';
-        const taskTitle = `🎯 ${coursePrefix}${catTitle}`;
+        const taskTitle = `${catInfo.icon} ${coursePrefix}${note.title || catInfo.title}`;
         const refTag = `[NotRef:${note.id}]`;
 
         const existing = tasks.find(t => (t.desc && t.desc.includes(refTag)) || t.title === taskTitle);
-        const descContent = `${(note.content || '').slice(0, 160)}\n\n📚 ${note.courseName || 'Genel'} dersi için Not Defteri'nden aktarıldı. ${refTag}`;
+        const fullContent = (note.content || '').trim();
+        const descContent = `${fullContent}\n\n📚 ${note.courseName || 'Genel'} dersi için Not Defteri'nden aktarıldı. ${refTag}`;
 
         if (existing) {
-          if (forceNotify) showToast('🎯 Sınav görevi zaten Görev Panosu\'nda mevcut', 'info');
+          await apiFetch(`/tasks/${existing.id}`, 'PUT', {
+            ...existing,
+            title: taskTitle,
+            desc: descContent,
+            color: note.tag === 'exam' ? '#ef4444' : '#06b6d4'
+          });
+          if (forceNotify) showToast('Not Görev Panosu\'nda güncellendi ✨', 'info');
         } else {
           await apiFetch('/tasks', 'POST', {
             title: taskTitle,
             desc: descContent,
-            color: '#ef4444',
+            color: note.tag === 'exam' ? '#ef4444' : '#06b6d4',
             status: 'todo',
           });
-          showToast(`🎯 Sınav görevi panoya eklendi: "${taskTitle}"`, 'success');
-          if (typeof Kanban !== 'undefined' && Kanban.render) await Kanban.render();
-          Dashboard.refresh();
+          if (forceNotify) showToast(`🎯 Not Görev Panosu'na aktarıldı: "${taskTitle}"`, 'success');
         }
+        if (typeof Kanban !== 'undefined' && Kanban.render) await Kanban.render();
+        Dashboard.refresh();
       } catch (e) {
         console.error('syncNoteToTask error:', e);
       }
