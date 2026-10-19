@@ -3,8 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="ASİ ✨ — Kişisel Ajanda ve Üretkenlik Uygulaması. Görevler, dersler, hedefler, notlar ve odaklanma sayacı.">
-  <title>ASİ ✨ — Kişisel Ajanda</title>
+  <meta name="description" content="Planova ✨ — Kişisel Ajanda ve Üretkenlik Uygulaması. Görevler, dersler, hedefler, notlar ve odaklanma sayacı.">
+  <title>Planova ✨ — Kişisel Ajanda</title>
+  <link rel="icon" type="image/png" href="planova-icon.png">
+  <link rel="apple-touch-icon" href="planova-icon.png">
   <link rel="stylesheet" href="style.css?v=4.0">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -51,9 +53,20 @@
         <button id="menu-toggle" class="menu-toggle" aria-label="Menü">
           <span></span><span></span><span></span>
         </button>
-        <h1 class="app-logo">ASİ <span class="sparkle">✨</span></h1>
+        <div class="app-logo-wrap">
+          <img src="planova-icon.png" alt="Planova" class="app-logo-img">
+          <h1 class="app-logo">Planova <span class="sparkle">✨</span></h1>
+        </div>
       </div>
       <div class="top-bar-right">
+        <!-- Sıradaki Namaz Vakti Göstergesi -->
+        <div id="top-prayer-badge" class="top-prayer-badge" data-module="prayer" title="Sıradaki Namaz Vakti ve Kalan Süre (Detay için tıkla)" role="button" tabindex="0">
+          <span class="prayer-pulse-dot"></span>
+          <span class="top-prayer-icon">🕌</span>
+          <span id="top-prayer-name" class="top-prayer-name">Yükleniyor...</span>
+          <span class="top-prayer-sep">•</span>
+          <span id="top-prayer-countdown" class="top-prayer-countdown">--:--</span>
+        </div>
         <!-- Streak (Gün Serisi) Rozeti -->
         <div id="top-streak-badge" class="top-streak-badge" title="Aktif Gün Seriniz">
           <span class="streak-flame">🔥</span>
@@ -71,11 +84,6 @@
             <span id="top-clock" class="top-clock"></span>
           </div>
         </div>
-        <!-- Pano Görünürlük Ayarları Butonu -->
-        <button id="module-settings-btn" class="module-settings-btn" title="Pano Ayarları (Modül Görünürlüğü)" aria-label="Pano Ayarları">
-          <span class="module-btn-icon">🎛️</span>
-          <span class="module-btn-text">Pano Ayarları</span>
-        </button>
         <!-- Hızlı Koyu / Açık Mod Butonu -->
         <button id="theme-toggle-btn" class="theme-toggle-btn" title="Koyu / Açık Mod Değiştir" aria-label="Tema Değiştir">
           <span id="theme-toggle-icon">🌙</span>
@@ -86,7 +94,10 @@
     <!-- ─── Kenar Menüsü ─── -->
     <nav id="sidebar" class="sidebar">
       <div class="sidebar-header">
-        <h2 class="sidebar-logo">ASİ <span class="sparkle">✨</span></h2>
+        <div class="sidebar-logo-wrap">
+          <img src="planova-icon.png" alt="Planova" class="sidebar-logo-img">
+          <h2 class="sidebar-logo">Planova <span class="sparkle">✨</span></h2>
+        </div>
       </div>
       <ul class="nav-list">
         <li data-module="dashboard"><a href="#" class="nav-link active" data-page="dashboard"><span class="nav-icon">🏠</span> Ana Sayfa</a></li>
@@ -1351,6 +1362,18 @@
             </div>
           </div>
 
+          <!-- Sıradaki Vakit Vurgusu & Geri Sayım -->
+          <div class="prayer-next-banner prayer-page-next-banner" id="prayer-page-next-banner">
+            <div class="prayer-next-info">
+              <span class="prayer-next-badge pulse-dot">● Sıradaki Vakit</span>
+              <strong id="prayer-page-next-name">--</strong>
+              <span id="prayer-page-next-countdown" class="prayer-countdown-tag">--:-- kaldı</span>
+            </div>
+            <div class="prayer-progress-summary">
+              <span id="prayer-page-done-count-text">0/5 Vakit Kılındı</span>
+            </div>
+          </div>
+
           <div class="prayer-page-times-grid" id="prayer-page-times-grid">
             <!-- JS ile doldurulur -->
           </div>
@@ -1424,7 +1447,7 @@
                     <span style="background:#F97316"></span>
                     <span style="background:#06B6D4"></span>
                   </div>
-                  <span class="palette-name">ASİ Klasik</span>
+                  <span class="palette-name">Planova Klasik</span>
                 </button>
                 <button type="button" class="theme-palette-card" data-palette="purple">
                   <div class="palette-swatch">
@@ -1544,8 +1567,14 @@
           </div>
           <div class="settings-card glass-card">
             <h3>ℹ️ Hakkında</h3>
-            <p><strong>ASİ ✨</strong> — Kişisel Ajanda ve Üretkenlik Uygulaması</p>
-            <p class="text-muted">Verileriniz kendi bilgisayarınızda çalışan ASP.NET Core API üzerinden yerel SQLite veritabanında (<code>asi.db</code>) saklanır.</p>
+            <div class="settings-about-branding">
+              <img src="planova-icon.png" alt="Planova" class="settings-about-icon">
+              <div>
+                <p><strong>Planova ✨</strong> — Kişisel Ajanda ve Üretkenlik Uygulaması</p>
+                <p class="text-muted">Google Play Store sürümü için hazırlanan yeni nesil üretkenlik ve düzen asistanı.</p>
+              </div>
+            </div>
+            <p class="text-muted">Verileriniz kendi bilgisayarınızda çalışan ASP.NET Core API üzerinden yerel SQLite veritabanında saklanır.</p>
             <p class="text-muted">Farklı bir cihaza veri taşımak için yedekleme özelliğini kullanın.</p>
           </div>
         </div>
@@ -2158,6 +2187,7 @@
       </form>
     </div>
   </div>
+
   <div id="toast-container" class="toast-container"></div>
 
   <script src="script.js?v=4.3"></script>

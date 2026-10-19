@@ -931,7 +931,7 @@
         settings: this.loadSettings(),
         theme: Storage.get('asi_theme_config', null),
         _exportDate: new Date().toISOString(),
-        _app: 'ASİ ✨'
+        _app: 'Planova ✨'
       };
     },
 
@@ -5507,7 +5507,7 @@
   // ═══════════════════════════════════════════════════════
 
   const PALETTES = {
-    default: { name: 'ASİ Klasik', primary: '#F97316', secondary: '#06B6D4' },
+    default: { name: 'Planova Klasik', primary: '#F97316', secondary: '#06B6D4' },
     purple:  { name: 'Siber Gece', primary: '#8B5CF6', secondary: '#EC4899' },
     emerald: { name: 'Zümrüt Doğa', primary: '#10B981', secondary: '#06B6D4' },
     blue:    { name: 'Derin Okyanus', primary: '#3B82F6', secondary: '#6366F1' },
@@ -6069,7 +6069,7 @@
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `asi-yedek-${formatDateShort(new Date())}.json`;
+        a.download = `planova-yedek-${formatDateShort(new Date())}.json`;
         a.click();
         URL.revokeObjectURL(url);
         showToast('Veriler dışa aktarıldı ✓', 'success');
@@ -6236,6 +6236,14 @@
         const dashWidget = $(`#dash-prayer-widget[data-module="${m.id}"]`);
         if (dashWidget) {
           dashWidget.style.display = isVis ? '' : 'none';
+        }
+
+        // Üst çubuk Namaz göstergesi (top-prayer-badge)
+        if (m.id === 'prayer') {
+          const topPrayerBadge = document.getElementById('top-prayer-badge');
+          if (topPrayerBadge) {
+            topPrayerBadge.style.display = isVis ? '' : 'none';
+          }
         }
 
         // Sayfa elementini işaretle
@@ -6414,11 +6422,16 @@
       $('#prayer-refresh-btn')?.addEventListener('click', () => this.fetchTimings(true));
       $('#prayer-page-refresh-btn')?.addEventListener('click', () => this.fetchTimings(true));
 
+      // Top bar namaz göstergesi tıklama olayı
+      $('#top-prayer-badge')?.addEventListener('click', () => {
+        Nav.goTo('prayer');
+      });
+
       // İlk veri çekme
       this.fetchTimings();
 
-      // Dakikada bir sonraki vakit geri sayımını güncelle
-      setInterval(() => this.updateNextPrayerDisplay(), 60000);
+      // Sıradaki vakit geri sayımını güncelle (10 saniyede bir)
+      setInterval(() => this.updateNextPrayerDisplay(), 10000);
     },
 
     async setCity(newCity) {
@@ -6557,11 +6570,31 @@
       const next = this.getNextPrayer();
       if (!next) return;
 
+      // Dashboard widget
       const nextNameEl = $('#prayer-next-name');
       if (nextNameEl) nextNameEl.textContent = `${next.name} (${next.time})`;
 
       const nextCountEl = $('#prayer-next-countdown');
       if (nextCountEl) nextCountEl.textContent = `${next.remainingText} kaldı`;
+
+      // Top bar göstergesi
+      const topPrayerName = $('#top-prayer-name');
+      if (topPrayerName) topPrayerName.textContent = `${next.name} ${next.time}`;
+
+      const topPrayerCountdown = $('#top-prayer-countdown');
+      if (topPrayerCountdown) topPrayerCountdown.textContent = `${next.remainingText} kaldı`;
+
+      const topBadge = $('#top-prayer-badge');
+      if (topBadge) {
+        topBadge.setAttribute('title', `Sıradaki Namaz Vakti: ${next.name} (${next.time}) • Kalan süre: ${next.remainingText}\nDetaylar ve ibadet takibi için tıklayın.`);
+      }
+
+      // Namaz sayfası göstergesi
+      const pageNextName = $('#prayer-page-next-name');
+      if (pageNextName) pageNextName.textContent = `${next.name} (${next.time})`;
+
+      const pageNextCountdown = $('#prayer-page-next-countdown');
+      if (pageNextCountdown) pageNextCountdown.textContent = `${next.remainingText} kaldı`;
     },
 
     renderWidget() {
@@ -6675,6 +6708,11 @@
 
       const progFill = $('#prayer-page-progress-fill');
       if (progFill) progFill.style.width = `${doneCount * 20}%`;
+
+      const pageDoneSummary = $('#prayer-page-done-count-text');
+      if (pageDoneSummary) pageDoneSummary.textContent = `${doneCount}/5 Vakit Kılındı`;
+
+      this.updateNextPrayerDisplay();
     }
   };
 
@@ -6730,7 +6768,7 @@
         emoji: '🚀',
         category: 'general',
         targetDays: 7,
-        desc: '7 gün boyunca ASİ ajandanı aktif kullanarak hedeflerine ulaş.'
+        desc: '7 gün boyunca Planova ajandanı aktif kullanarak hedeflerine ulaş.'
       }
     ],
 
@@ -7394,8 +7432,8 @@
   // BAŞLATMA
   // ═══════════════════════════════════════════════════════
 
-  // Genel API (dashboard butonları için)
-  window.ASI = {
+  // Genel API (dashboard butonları ve harici entegrasyon için)
+  window.Planova = window.ASI = {
     navigateTo(page) { Nav.goTo(page); },
     pomodoro: Pomodoro,
     workout: Workout,
@@ -7411,7 +7449,7 @@
   };
 
   // Motivasyon yenile butonu
-  $('#new-quote-btn').addEventListener('click', () => Dashboard.showQuote());
+  $('#new-quote-btn')?.addEventListener('click', () => Dashboard.showQuote());
 
   // Başlat
   async function boot() {
