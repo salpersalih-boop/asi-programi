@@ -5,6 +5,17 @@ using ASI.Api.Models;
 
 namespace ASI.Api.Controllers
 {
+    // Ortak sabitler / doğrulama yardımcıları
+    internal static class Allowed
+    {
+        public static readonly HashSet<string> TaskStatuses     = ["todo", "doing", "done"];
+        public static readonly HashSet<string> GoalPeriod       = ["daily", "weekly", "monthly", "yearly"];
+        public static readonly HashSet<string> AttendanceStatus = ["present", "absent", "excused"];
+        public static readonly HashSet<string> BookStatus       = ["to_read", "reading", "completed"];
+
+        public static string Today() => DateTime.Now.ToString("yyyy-MM-dd");
+    }
+
     // ═══════════════════════════════════
     //  GÖREVLER — /api/tasks
     // ═══════════════════════════════════
@@ -19,8 +30,9 @@ namespace ASI.Api.Controllers
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] TaskItem item)
         {
-            item.Id = Guid.NewGuid().ToString("N")[..8];
-            item.Created = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+            if (!Allowed.TaskStatuses.Contains(item.Status)) return BadRequest("Geçersiz durum (todo | doing | done).");
+            item.Id = IdGen.New();
+            item.Created = IdGen.Now();
             db.Tasks.Add(item);
             await db.SaveChangesAsync();
             return Ok(item);
@@ -29,6 +41,7 @@ namespace ASI.Api.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(string id, [FromBody] TaskItem item)
         {
+            if (!Allowed.TaskStatuses.Contains(item.Status)) return BadRequest("Geçersiz durum (todo | doing | done).");
             var existing = await db.Tasks.FindAsync(id);
             if (existing == null) return NotFound();
 
@@ -60,12 +73,12 @@ namespace ASI.Api.Controllers
     {
         [HttpGet]
         public async Task<IActionResult> GetAll()
-            => Ok(await db.Studies.ToListAsync());
+            => Ok(await db.Studies.OrderBy(s => s.Date).ThenBy(s => s.Time).ToListAsync());
 
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] StudyItem item)
         {
-            item.Id = Guid.NewGuid().ToString("N")[..8];
+            item.Id = IdGen.New();
             db.Studies.Add(item);
             await db.SaveChangesAsync();
             return Ok(item);
@@ -110,8 +123,8 @@ namespace ASI.Api.Controllers
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] ExerciseItem item)
         {
-            item.Id = Guid.NewGuid().ToString("N")[..8];
-            item.Created = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+            item.Id = IdGen.New();
+            item.Created = IdGen.Now();
             if (item.SortOrder == 0)
             {
                 var maxOrder = await db.Exercises.MaxAsync(e => (int?)e.SortOrder) ?? 0;
@@ -147,34 +160,23 @@ namespace ASI.Api.Controllers
             if (item == null) return NotFound();
 
             db.Exercises.Remove(item);
-
-            // İlişkili log kayıtlarını da temizle
-            var logs = await db.WorkoutLogs.Where(l => l.ExerciseId == id).ToListAsync();
-            db.WorkoutLogs.RemoveRange(logs);
+            // İlişkili antrenman kayıtlarını da temizle
+            db.WorkoutLogs.RemoveRange(db.WorkoutLogs.Where(l => l.ExerciseId == id));
 
             await db.SaveChangesAsync();
             return Ok();
         }
 
+        // Eksik varsayılan hareketleri geri ekler (kullanıcının eklediklerine dokunmaz)
         [HttpPost("reset")]
         public async Task<IActionResult> ResetDefault()
         {
-            // Sadece eksik olanları tamamla veya tüm varsayılanları garanti et
-            foreach (var def in DbInitializer.DefaultExercises)
+            var existingNames = await db.Exercises.Select(e => e.Name).ToListAsync();
+            foreach (var def in DbInitializer.CreateDefaultExercises())
             {
-                if (!await db.Exercises.AnyAsync(e => e.Name == def.Name))
-                {
-                    db.Exercises.Add(new ExerciseItem
-                    {
-                        Id        = Guid.NewGuid().ToString("N")[..8],
-                        Name      = def.Name,
-                        Category  = def.Category,
-                        Sets      = def.Sets,
-                        Reps      = def.Reps,
-                        Weight    = def.Weight,
-                        SortOrder = def.SortOrder
-                    });
-                }
+                if (existingNames.Contains(def.Name)) continue;
+                def.Id = IdGen.New(); // varsayılan ID başka bir kayıtla çakışmasın
+                db.Exercises.Add(def);
             }
             await db.SaveChangesAsync();
             return Ok(await db.Exercises.OrderBy(e => e.SortOrder).ToListAsync());
@@ -184,6 +186,14 @@ namespace ASI.Api.Controllers
     // ═══════════════════════════════════
     //  GÜNLÜK ANTRENMAN KAYITLARI — /api/workouts
     // ═══════════════════════════════════
+    public class WorkoutLogUpdateDto
+    {
+        public int? Sets { get; set; }
+        public int? Reps { get; set; }
+        public string? Weight { get; set; }
+        public bool? Completed { get; set; }
+    }
+
     [ApiController]
     [Route("api/workouts")]
     public class WorkoutsController(AsiDbContext db) : ControllerBase
@@ -191,15 +201,8 @@ namespace ASI.Api.Controllers
         [HttpGet]
         public async Task<IActionResult> GetByDate([FromQuery] string? date)
         {
-            var targetDate = string.IsNullOrWhiteSpace(date)
-                ? DateTime.Now.ToString("yyyy-MM-dd")
-                : date.Trim();
-
-            var logs = await db.WorkoutLogs
-                .Where(l => l.Date == targetDate)
-                .ToListAsync();
-
-            return Ok(logs);
+            var targetDate = string.IsNullOrWhiteSpace(date) ? Allowed.Today() : date.Trim();
+            return Ok(await db.WorkoutLogs.Where(l => l.Date == targetDate).ToListAsync());
         }
 
         [HttpPost("toggle")]
@@ -208,54 +211,62 @@ namespace ASI.Api.Controllers
             if (string.IsNullOrWhiteSpace(dto.ExerciseId))
                 return BadRequest("ExerciseId gereklidir.");
 
-            var targetDate = string.IsNullOrWhiteSpace(dto.Date)
-                ? DateTime.Now.ToString("yyyy-MM-dd")
-                : dto.Date.Trim();
+            var targetDate = string.IsNullOrWhiteSpace(dto.Date) ? Allowed.Today() : dto.Date.Trim();
 
             var log = await db.WorkoutLogs.FirstOrDefaultAsync(l => l.Date == targetDate && l.ExerciseId == dto.ExerciseId);
 
             if (log != null)
             {
                 log.Completed = !log.Completed;
-                if (dto.Sets.HasValue)   log.Sets   = dto.Sets.Value;
-                if (dto.Reps.HasValue)   log.Reps   = dto.Reps.Value;
+                if (dto.Sets.HasValue) log.Sets = dto.Sets.Value;
+                if (dto.Reps.HasValue) log.Reps = dto.Reps.Value;
                 if (!string.IsNullOrEmpty(dto.Weight)) log.Weight = dto.Weight;
-                log.CompletedAt = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+                if (log.Completed) log.CompletedAt = IdGen.Now();
                 await db.SaveChangesAsync();
                 return Ok(log);
             }
-            else
-            {
-                var exercise = await db.Exercises.FindAsync(dto.ExerciseId);
-                var newLog = new WorkoutLog
-                {
-                    Date         = targetDate,
-                    ExerciseId   = dto.ExerciseId,
-                    ExerciseName = exercise?.Name ?? "Egzersiz",
-                    Category     = exercise?.Category ?? "gogus",
-                    Completed    = true,
-                    Sets         = dto.Sets ?? exercise?.Sets ?? 3,
-                    Reps         = dto.Reps ?? exercise?.Reps ?? 10,
-                    Weight       = dto.Weight ?? exercise?.Weight ?? "0 kg",
-                    CompletedAt  = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
-                };
 
-                db.WorkoutLogs.Add(newLog);
+            var exercise = await db.Exercises.FindAsync(dto.ExerciseId);
+            if (exercise == null) return NotFound("Egzersiz bulunamadı.");
+
+            var newLog = new WorkoutLog
+            {
+                Date         = targetDate,
+                ExerciseId   = dto.ExerciseId,
+                ExerciseName = exercise.Name,
+                Category     = exercise.Category,
+                Completed    = true,
+                Sets         = dto.Sets ?? exercise.Sets,
+                Reps         = dto.Reps ?? exercise.Reps,
+                Weight       = string.IsNullOrEmpty(dto.Weight) ? exercise.Weight : dto.Weight,
+                CompletedAt  = IdGen.Now()
+            };
+
+            db.WorkoutLogs.Add(newLog);
+            try
+            {
                 await db.SaveChangesAsync();
-                return Ok(newLog);
             }
+            catch (DbUpdateException)
+            {
+                // Aynı anda gelen çift tıklama: kayıt az önce başka bir istekle oluşturuldu
+                return Conflict("Bu egzersiz için bugünün kaydı zaten oluşturuldu, sayfayı yenileyin.");
+            }
+            return Ok(newLog);
         }
 
+        // Kısmi güncelleme: yalnızca gönderilen alanlar değişir
+        // (eskiden tam WorkoutLog bekleniyordu; Date/ExerciseId gönderilmezse 400 dönüyordu)
         [HttpPut("log/{id:int}")]
-        public async Task<IActionResult> UpdateLog(int id, [FromBody] WorkoutLog update)
+        public async Task<IActionResult> UpdateLog(int id, [FromBody] WorkoutLogUpdateDto update)
         {
             var existing = await db.WorkoutLogs.FindAsync(id);
             if (existing == null) return NotFound();
 
-            existing.Sets      = update.Sets;
-            existing.Reps      = update.Reps;
-            existing.Weight    = update.Weight;
-            existing.Completed = update.Completed;
+            if (update.Sets.HasValue)      existing.Sets      = update.Sets.Value;
+            if (update.Reps.HasValue)      existing.Reps      = update.Reps.Value;
+            if (update.Weight != null)     existing.Weight    = update.Weight;
+            if (update.Completed.HasValue) existing.Completed = update.Completed.Value;
             await db.SaveChangesAsync();
             return Ok(existing);
         }
@@ -293,12 +304,12 @@ namespace ASI.Api.Controllers
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] NoteItem item)
         {
-            long now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-            item.Id          = Guid.NewGuid().ToString("N")[..8];
+            long now = IdGen.Now();
+            item.Id          = IdGen.New();
             item.Created     = now;
             item.Updated     = now;
             if (string.IsNullOrEmpty(item.Tag)) item.Tag = "general";
-            if (item.Tag == "exam") item.IsExamTopic = true;
+            item.IsExamTopic = item.IsExamTopic || item.Tag == "exam";
             db.Notes.Add(item);
             await db.SaveChangesAsync();
             return Ok(item);
@@ -314,10 +325,10 @@ namespace ASI.Api.Controllers
             existing.Content     = item.Content;
             existing.CourseId    = item.CourseId;
             existing.CourseName  = item.CourseName;
-            existing.Tag         = item.Tag;
-            existing.IsExamTopic = item.IsExamTopic || item.Tag == "exam";
+            existing.Tag         = string.IsNullOrEmpty(item.Tag) ? "general" : item.Tag;
+            existing.IsExamTopic = item.IsExamTopic || existing.Tag == "exam";
             existing.Color       = item.Color;
-            existing.Updated     = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+            existing.Updated     = IdGen.Now();
             await db.SaveChangesAsync();
             return Ok(existing);
         }
@@ -347,8 +358,9 @@ namespace ASI.Api.Controllers
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] QuickNote item)
         {
-            item.Id      = Guid.NewGuid().ToString("N")[..8];
-            item.Created = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+            if (string.IsNullOrWhiteSpace(item.Text)) return BadRequest("Not metni boş olamaz.");
+            item.Id      = IdGen.New();
+            item.Created = IdGen.Now();
             db.QuickNotes.Add(item);
             await db.SaveChangesAsync();
             return Ok(item);
@@ -374,13 +386,14 @@ namespace ASI.Api.Controllers
     {
         [HttpGet]
         public async Task<IActionResult> GetAll()
-            => Ok(await db.Goals.ToListAsync());
+            => Ok(await db.Goals.OrderBy(g => g.Created).ToListAsync());
 
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] GoalItem item)
         {
-            item.Id      = Guid.NewGuid().ToString("N")[..8];
-            item.Created = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+            if (!Allowed.GoalPeriod.Contains(item.Period)) return BadRequest("Geçersiz periyot.");
+            item.Id      = IdGen.New();
+            item.Created = IdGen.Now();
             db.Goals.Add(item);
             await db.SaveChangesAsync();
             return Ok(item);
@@ -389,6 +402,7 @@ namespace ASI.Api.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(string id, [FromBody] GoalItem item)
         {
+            if (!Allowed.GoalPeriod.Contains(item.Period)) return BadRequest("Geçersiz periyot.");
             var existing = await db.Goals.FindAsync(id);
             if (existing == null) return NotFound();
 
@@ -424,18 +438,26 @@ namespace ASI.Api.Controllers
         public async Task<IActionResult> GetCourses()
             => Ok(await db.AttendanceCourses.ToListAsync());
 
+        // Ders listesini toplu olarak değiştirir.
+        // Listeden çıkarılan derslerin haftalık kayıtları da silinir (yetim kayıt kalmaz).
         [HttpPost("courses")]
         public async Task<IActionResult> SaveCourses([FromBody] List<AttendanceCourse> courses)
         {
-            // Tümünü sil ve yeniden kaydet (basit batch replace)
-            db.AttendanceCourses.RemoveRange(db.AttendanceCourses);
             foreach (var c in courses)
             {
-                if (string.IsNullOrEmpty(c.Id))
-                    c.Id = Guid.NewGuid().ToString("N")[..8];
+                if (string.IsNullOrEmpty(c.Id)) c.Id = IdGen.New();
             }
+            var keepIds = courses.Select(c => c.Id).ToList();
+
+            await using var tx = await db.Database.BeginTransactionAsync();
+            db.AttendanceCourses.RemoveRange(await db.AttendanceCourses.ToListAsync());
+            db.AttendanceRecords.RemoveRange(
+                await db.AttendanceRecords.Where(r => !keepIds.Contains(r.CourseId)).ToListAsync());
+            await db.SaveChangesAsync();
+
             db.AttendanceCourses.AddRange(courses);
             await db.SaveChangesAsync();
+            await tx.CommitAsync();
             return Ok(courses);
         }
 
@@ -447,9 +469,12 @@ namespace ASI.Api.Controllers
         [HttpPost("records")]
         public async Task<IActionResult> UpsertRecord([FromBody] AttendanceRecord record)
         {
+            if (record.Week < 1 || record.Week > 52) return BadRequest("Hafta 1-52 arasında olmalıdır.");
+
             var existing = await db.AttendanceRecords
                 .FirstOrDefaultAsync(r => r.CourseId == record.CourseId && r.Week == record.Week);
 
+            // "none" veya boş durum = kaydı sil
             if (string.IsNullOrEmpty(record.Status) || record.Status == "none")
             {
                 if (existing != null)
@@ -460,16 +485,185 @@ namespace ASI.Api.Controllers
                 return Ok();
             }
 
-            if (existing == null)
-            {
-                db.AttendanceRecords.Add(record);
-            }
-            else
+            if (!Allowed.AttendanceStatus.Contains(record.Status))
+                return BadRequest("Geçersiz durum (present | absent | excused).");
+
+            if (existing != null)
             {
                 existing.Status = record.Status;
+                await db.SaveChangesAsync();
+                return Ok();
             }
+
+            record.Id = 0; // kimliği veritabanı versin
+            db.AttendanceRecords.Add(record);
+            try
+            {
+                await db.SaveChangesAsync();
+            }
+            catch (DbUpdateException)
+            {
+                // Aynı ders+hafta için eşzamanlı ikinci istek: benzersiz indeks ihlali → güncellemeye dön
+                db.ChangeTracker.Clear();
+                var row = await db.AttendanceRecords
+                    .FirstAsync(r => r.CourseId == record.CourseId && r.Week == record.Week);
+                row.Status = record.Status;
+                await db.SaveChangesAsync();
+            }
+            return Ok();
+        }
+    }
+
+    // ═══════════════════════════════════
+    //  KİTAPLAR — /api/books
+    // ═══════════════════════════════════
+    [ApiController]
+    [Route("api/books")]
+    public class BooksController(AsiDbContext db) : ControllerBase
+    {
+        [HttpGet]
+        public async Task<IActionResult> GetAll()
+            => Ok(await db.Books.OrderByDescending(b => b.Updated).ToListAsync());
+
+        [HttpGet("{id}")]
+        public async Task<IActionResult> Get(string id)
+        {
+            var book = await db.Books.FindAsync(id);
+            return book == null ? NotFound() : Ok(book);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Create([FromBody] BookItem item)
+        {
+            if (!Allowed.BookStatus.Contains(item.Status)) return BadRequest("Geçersiz durum (to_read | reading | completed).");
+            if (string.IsNullOrWhiteSpace(item.Id) || await db.Books.AnyAsync(b => b.Id == item.Id))
+                item.Id = IdGen.New();
+            item.CurrentPage = Math.Min(item.CurrentPage, item.TotalPages);
+            item.Created = item.Updated = IdGen.Now();
+            db.Books.Add(item);
+            await db.SaveChangesAsync();
+            return Ok(item);
+        }
+
+        // Kısmi güncelleme (ön yüzdeki { ...kitap, ...gövde } davranışıyla aynı)
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Update(string id, [FromBody] BookPatchDto p)
+        {
+            var b = await db.Books.FindAsync(id);
+            if (b == null) return NotFound();
+            if (p.Status != null && !Allowed.BookStatus.Contains(p.Status))
+                return BadRequest("Geçersiz durum (to_read | reading | completed).");
+
+            if (p.Title != null)       b.Title       = p.Title;
+            if (p.Author != null)      b.Author      = p.Author;
+            if (p.TotalPages != null)  b.TotalPages  = p.TotalPages.Value;
+            if (p.CurrentPage != null) b.CurrentPage = p.CurrentPage.Value;
+            if (p.Status != null)      b.Status      = p.Status;
+            if (p.Category != null)    b.Category    = p.Category;
+            if (p.Rating != null)      b.Rating      = p.Rating.Value;
+            if (p.StartDate != null)   b.StartDate   = p.StartDate;
+            if (p.FinishDate != null)  b.FinishDate  = p.FinishDate;
+            if (p.Notes != null)       b.Notes       = p.Notes;
+            if (p.CoverImage != null)  b.CoverImage  = p.CoverImage;
+            if (p.CoverColor != null)  b.CoverColor  = p.CoverColor;
+
+            b.CurrentPage = Math.Min(b.CurrentPage, b.TotalPages);
+            b.Updated = IdGen.Now();
+            await db.SaveChangesAsync();
+            return Ok(b);
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(string id)
+        {
+            var book = await db.Books.FindAsync(id);
+            if (book == null) return NotFound();
+            db.Books.Remove(book);
+            // İlgili okuma oturumlarını da temizle
+            db.ReadingSessions.RemoveRange(db.ReadingSessions.Where(s => s.BookId == id));
             await db.SaveChangesAsync();
             return Ok();
+        }
+    }
+
+    // ═══════════════════════════════════
+    //  OKUMA — /api/reading/sessions & /api/reading/goals
+    // ═══════════════════════════════════
+    [ApiController]
+    [Route("api/reading")]
+    public class ReadingController(AsiDbContext db) : ControllerBase
+    {
+        [HttpGet("sessions")]
+        public async Task<IActionResult> GetSessions()
+            => Ok(await db.ReadingSessions
+                .OrderByDescending(s => s.Date)
+                .ThenByDescending(s => s.Timestamp)
+                .ToListAsync());
+
+        // Oturumu kaydeder ve kitabın ilerlemesini / durumunu günceller
+        [HttpPost("sessions")]
+        public async Task<IActionResult> CreateSession([FromBody] ReadingSession s)
+        {
+            if (s.EndPage < s.StartPage) return BadRequest("Bitiş sayfası başlangıçtan küçük olamaz.");
+
+            s.Id = IdGen.New();
+            if (string.IsNullOrWhiteSpace(s.Date)) s.Date = Allowed.Today();
+            if (s.PagesRead <= 0) s.PagesRead = s.EndPage - s.StartPage;
+            s.Timestamp = IdGen.Now();
+
+            var book = string.IsNullOrEmpty(s.BookId) ? null : await db.Books.FindAsync(s.BookId);
+            if (book != null)
+            {
+                if (string.IsNullOrEmpty(s.BookTitle)) s.BookTitle = book.Title;
+                if (s.EndPage > book.CurrentPage) book.CurrentPage = Math.Min(book.TotalPages, s.EndPage);
+
+                if (book.CurrentPage >= book.TotalPages)
+                {
+                    book.Status = "completed";
+                    if (string.IsNullOrEmpty(book.FinishDate)) book.FinishDate = s.Date;
+                }
+                else if (book.Status == "to_read")
+                {
+                    book.Status = "reading";
+                    if (string.IsNullOrEmpty(book.StartDate)) book.StartDate = s.Date;
+                }
+                book.Updated = IdGen.Now();
+            }
+
+            db.ReadingSessions.Add(s);
+            await db.SaveChangesAsync();
+            return Ok(s);
+        }
+
+        [HttpDelete("sessions/{id}")]
+        public async Task<IActionResult> DeleteSession(string id)
+        {
+            var s = await db.ReadingSessions.FindAsync(id);
+            if (s == null) return NotFound();
+            db.ReadingSessions.Remove(s);
+            await db.SaveChangesAsync();
+            return Ok();
+        }
+
+        [HttpGet("goals")]
+        public async Task<IActionResult> GetGoals()
+            => Ok(await db.ReadingGoals.FindAsync(1) ?? new ReadingGoals());
+
+        // Kısmi güncelleme: gönderilmeyen hedefler değişmez
+        [HttpPost("goals")]
+        public async Task<IActionResult> SaveGoals([FromBody] ReadingGoalsDto dto)
+        {
+            var goals = await db.ReadingGoals.FindAsync(1);
+            if (goals == null)
+            {
+                goals = new ReadingGoals();
+                db.ReadingGoals.Add(goals);
+            }
+            if (dto.DailyPages.HasValue)   goals.DailyPages   = dto.DailyPages.Value;
+            if (dto.WeeklyPages.HasValue)  goals.WeeklyPages  = dto.WeeklyPages.Value;
+            if (dto.DailyMinutes.HasValue) goals.DailyMinutes = dto.DailyMinutes.Value;
+            await db.SaveChangesAsync();
+            return Ok(goals);
         }
     }
 
@@ -480,17 +674,30 @@ namespace ASI.Api.Controllers
     [Route("api/reset")]
     public class ResetController(AsiDbContext db) : ControllerBase
     {
+        // Tüm kullanıcı verisini siler, spor programını varsayılana döndürür.
+        // (Eskiden egzersizler, antrenman kayıtları ve kitaplar silinmiyordu.)
         [HttpPost]
         public async Task<IActionResult> ResetAll()
         {
-            db.Tasks.RemoveRange(db.Tasks);
-            db.Studies.RemoveRange(db.Studies);
-            db.Notes.RemoveRange(db.Notes);
-            db.QuickNotes.RemoveRange(db.QuickNotes);
-            db.Goals.RemoveRange(db.Goals);
-            db.AttendanceCourses.RemoveRange(db.AttendanceCourses);
-            db.AttendanceRecords.RemoveRange(db.AttendanceRecords);
+            await using var tx = await db.Database.BeginTransactionAsync();
+
+            await db.Tasks.ExecuteDeleteAsync();
+            await db.Studies.ExecuteDeleteAsync();
+            await db.Notes.ExecuteDeleteAsync();
+            await db.QuickNotes.ExecuteDeleteAsync();
+            await db.Goals.ExecuteDeleteAsync();
+            await db.AttendanceRecords.ExecuteDeleteAsync();
+            await db.AttendanceCourses.ExecuteDeleteAsync();
+            await db.WorkoutLogs.ExecuteDeleteAsync();
+            await db.Exercises.ExecuteDeleteAsync();
+            await db.ReadingSessions.ExecuteDeleteAsync();
+            await db.Books.ExecuteDeleteAsync();
+            await db.ReadingGoals.ExecuteDeleteAsync();
+
+            db.Exercises.AddRange(DbInitializer.CreateDefaultExercises());
             await db.SaveChangesAsync();
+            await tx.CommitAsync();
+
             return Ok(new { success = true, message = "Tüm veritabanı temizlendi." });
         }
     }

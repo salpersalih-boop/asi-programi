@@ -180,6 +180,9 @@
   }
 
   // ─── Güvenli LocalStorage Yardımcısı (Kota Kontrollü & Hata Yakalamalı) ───
+  // Değişince rozet kontrolü tetikleyen veri anahtarları
+  const BADGE_WATCH = /^asi_(tasks|goals|notes|quicknotes|books|reading_sessions|workouts|workout_history|prayer_checks_|attendance_|user_vki_data|pomodoro_stats)/;
+
   const Storage = {
     get(key, fallback) {
       try {
@@ -193,6 +196,7 @@
     set(key, val) {
       try {
         localStorage.setItem(key, JSON.stringify(val));
+        if (BADGE_WATCH.test(key) && typeof scheduleBadgeCheck === 'function') scheduleBadgeCheck();
         return true;
       } catch (e) {
         console.error('Storage yazma hatası:', key, e);
@@ -1090,8 +1094,19 @@
       const btn = $('#splash-btn');
       const settings = DB.load('settings');
 
+      // Firebase auth tamamlandıysa (kullanıcı giriş yaptı) splash'ı anında atla
+      const authDone = !!(window.PlanovaAuth && window.PlanovaAuth.user);
+
+      if (authDone) {
+        if (splash) splash.style.display = 'none';
+        const app = $('#app');
+        if (app) app.classList.remove('hidden');
+        Dashboard.refresh();
+        return;
+      }
+
       if (!settings.firstVisit) {
-        // Kısa karşılama
+        // Kullanıcı daha önce splash görmüşse 1.5 sn sonra kapat
         setTimeout(() => this.dismiss(), 1500);
       }
 
@@ -5343,6 +5358,13 @@
       $('#pomo-start').classList.remove('hidden');
       $('#pomo-complete-msg').classList.remove('hidden');
 
+      // Odak rozetleri için tamamlanan seansları say
+      const stats = Storage.get('asi_pomodoro_stats', { count: 0, minutes: 0 }) || {};
+      Storage.set('asi_pomodoro_stats', {
+        count: (Number(stats.count) || 0) + 1,
+        minutes: (Number(stats.minutes) || 0) + Math.round(this.duration / 60)
+      });
+
       // Sesli bildirim (kullanıcı etkileşimi gerekebilir)
       this.playSound();
 
@@ -6334,7 +6356,6 @@
       Sakarya: 'Sakarya',
       Denizli: 'Denizli',
       Kahramanmaras: 'Kahramanmaraş',
-      Urfa: 'Şanlıurfa',
       Malatya: 'Malatya',
       Erzurum: 'Erzurum',
       Van: 'Van',
@@ -6391,10 +6412,25 @@
       Isparta: 'Isparta',
       Burdur: 'Burdur',
       Bilecik: 'Bilecik',
+      Kirsehir: 'Kırşehir',
+      Bayburt: 'Bayburt',
+      Duzce: 'Düzce',
+      Gumushane: 'Gümüşhane',
+      Yalova: 'Yalova',
+    },
+
+    // Eski sürümlerde kaydedilmiş farklı yazımlar
+    CITY_ALIASES: { Urfa: 'Sanliurfa' },
+
+    // Şehir seçim kutularını tek listeden (cityNames) doldurur — HTML'de 2 kez elle yazılmış liste gerekmez
+    populateCitySelect(select) {
+      if (!select) return;
+      const sorted = Object.entries(this.cityNames).sort((a, b) => a[1].localeCompare(b[1], 'tr'));
+      select.innerHTML = sorted.map(([value, label]) => `<option value="${value}">${label}</option>`).join('');
     },
 
     PRAYER_KEYS: [
-      { id: 'fajr', name: 'Sabah', icon: '🌅', aladhanKey: 'Fajr', isWorship: true },
+      { id: 'fajr', name: 'İmsak', prayer: 'Sabah', icon: '🌅', aladhanKey: 'Fajr', isWorship: true },
       { id: 'sunrise', name: 'Güneş', icon: '☀️', aladhanKey: 'Sunrise', isWorship: false },
       { id: 'dhuhr', name: 'Öğle', icon: '☀️', aladhanKey: 'Dhuhr', isWorship: true },
       { id: 'asr', name: 'İkindi', icon: '🌤️', aladhanKey: 'Asr', isWorship: true },
@@ -6402,11 +6438,43 @@
       { id: 'isha', name: 'Yatsı', icon: '🌙', aladhanKey: 'Isha', isWorship: true }
     ],
 
+    // Hicri ay adları (API yalnızca İngilizce/Arapça döndürür)
+    HIJRI_MONTHS_TR: ['Muharrem', 'Safer', 'Rebiülevvel', 'Rebiülahir', 'Cemaziyelevvel', 'Cemaziyelahir',
+      'Recep', 'Şaban', 'Ramazan', 'Şevval', 'Zilkade', 'Zilhicce'],
+
+    // Yedek (internet yokken) vakitler — gerçek vakit değildir, ekranda "tahmini" uyarısı gösterilir
+    FALLBACK_TIMINGS: { Fajr: '05:45', Sunrise: '07:10', Dhuhr: '12:55', Asr: '16:00', Maghrib: '18:30', Isha: '19:50' },
+
+    isApprox: false,
+
+    hijriText(suffix) {
+      const h = this.dateData?.hijri;
+      if (!h) return '';
+      const month = this.HIJRI_MONTHS_TR[(Number(h.month?.number) || 0) - 1] || h.month?.en || '';
+      return `${h.day} ${month} ${h.year} ${suffix}`;
+    },
+
+    // Eski günlerin önbelleklerini temizler (localStorage ve bulut şişmesin)
+    cleanupOldCaches(todayKeySuffix) {
+      try {
+        const stale = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i);
+          if (k && k.startsWith('asi_prayer_cache_') && !k.endsWith(todayKeySuffix)) stale.push(k);
+        }
+        stale.forEach(k => localStorage.removeItem(k));
+      } catch (e) { /* depolama erişilemiyor — önemli değil */ }
+    },
+
     init() {
-      this.city = Storage.get('asi_prayer_city', 'Istanbul');
+      const saved = Storage.get('asi_prayer_city', 'Istanbul');
+      this.city = this.CITY_ALIASES[saved] || (this.cityNames[saved] ? saved : 'Istanbul');
 
       // Şehir seçiciler
       const citySelect = $('#prayer-city-select');
+      const pageCitySelectEl = $('#prayer-page-city-select');
+      this.populateCitySelect(citySelect);
+      this.populateCitySelect(pageCitySelectEl);
       if (citySelect) {
         citySelect.value = this.city;
         citySelect.addEventListener('change', (e) => this.setCity(e.target.value));
@@ -6430,8 +6498,16 @@
       // İlk veri çekme
       this.fetchTimings();
 
-      // Sıradaki vakit geri sayımını güncelle (10 saniyede bir)
-      setInterval(() => this.updateNextPrayerDisplay(), 10000);
+      // Sıradaki vakit geri sayımını güncelle (10 saniyede bir).
+      // Gün değiştiyse (uygulama gece açık kaldıysa) yeni günün vakitlerini çek.
+      setInterval(() => {
+        if (document.hidden) return;
+        if (this.cachedDate && this.cachedDate !== formatDateShort(new Date())) {
+          this.fetchTimings();
+        } else {
+          this.updateNextPrayerDisplay();
+        }
+      }, 10000);
     },
 
     async setCity(newCity) {
@@ -6445,18 +6521,25 @@
       showToast(`Namaz vakitleri ${this.cityNames[newCity] || newCity} için güncellendi ✓`, 'success');
     },
 
+    applyTimings(timings, dateData, today, isApprox) {
+      this.timings = timings;
+      this.dateData = dateData || null;
+      this.cachedDate = today;
+      this.isApprox = !!isApprox;
+      document.querySelectorAll('.prayer-approx-note').forEach(el => el.classList.toggle('hidden', !this.isApprox));
+      this.renderWidget();
+      this.renderPage();
+    },
+
     async fetchTimings(force = false) {
       const today = formatDateShort(new Date());
       const cacheKey = `asi_prayer_cache_${this.city}_${today}`;
+      const lastKey = `asi_prayer_last_${this.city}`;
 
       if (!force) {
         const cached = Storage.get(cacheKey, null);
         if (cached && cached.timings) {
-          this.timings = cached.timings;
-          this.dateData = cached.date;
-          this.cachedDate = today;
-          this.renderWidget();
-          this.renderPage();
+          this.applyTimings(cached.timings, cached.date, today, false);
           return;
         }
       }
@@ -6468,12 +6551,11 @@
         if (res.ok) {
           const json = await res.json();
           if (json.code === 200 && json.data) {
-            this.timings = json.data.timings;
-            this.dateData = json.data.date;
-            this.cachedDate = today;
-            Storage.set(cacheKey, { timings: this.timings, date: this.dateData });
-            this.renderWidget();
-            this.renderPage();
+            const payload = { timings: json.data.timings, date: json.data.date };
+            this.cleanupOldCaches(`_${today}`);
+            Storage.set(cacheKey, payload);
+            Storage.set(lastKey, payload.timings);
+            this.applyTimings(payload.timings, payload.date, today, false);
             return;
           }
         }
@@ -6481,18 +6563,11 @@
         console.warn('Aladhan API bağlantı hatası, yerel hesaplama/yedek kullanılıyor:', err);
       }
 
-      // API ulaşılamazsa veya offline ise akıllı varsayılan vakitler
-      this.timings = {
-        Fajr: '05:45',
-        Sunrise: '07:10',
-        Dhuhr: '12:55',
-        Asr: '16:00',
-        Maghrib: '18:30',
-        Isha: '19:50'
-      };
-      this.cachedDate = today;
-      this.renderWidget();
-      this.renderPage();
+      // API'ye ulaşılamadı: bu şehir için en son bilinen vakitleri (birkaç dakika sapabilir),
+      // o da yoksa sabit yedek değerleri kullan. Her iki durumda da "tahmini" uyarısı gösterilir.
+      const last = Storage.get(lastKey, null);
+      this.applyTimings(last || this.FALLBACK_TIMINGS, null, today, true);
+      if (force) showToast('İnternet bağlantısı yok — tahmini vakitler gösteriliyor.', 'error');
     },
 
     getTodayChecks() {
@@ -6520,7 +6595,7 @@
 
       const pMeta = this.PRAYER_KEYS.find(p => p.id === prayerId);
       if (isChecked) {
-        showToast(`✨ ${pMeta ? pMeta.name : ''} namazı tamamlandı olarak kaydedildi.`, 'success');
+        showToast(`✨ ${pMeta ? (pMeta.prayer || pMeta.name) : ''} namazı tamamlandı olarak kaydedildi.`, 'success');
       }
     },
 
@@ -6548,7 +6623,8 @@
           return {
             ...p,
             time: timeStr,
-            remainingText: diffH > 0 ? `${diffH} sa ${diffM} dk` : `${diffM} dk`
+            remainingText: diffH > 0 ? `${diffH} sa ${diffM} dk` : `${diffM} dk`,
+            shortText: diffH > 0 ? `${diffH}s ${diffM}dk` : `${diffM} dk`
           };
         }
       }
@@ -6562,7 +6638,8 @@
       return {
         ...fajr,
         time: this.cleanTime(this.timings.Fajr),
-        remainingText: `${diffH} sa ${diffM} dk (Yarın)`
+        remainingText: `${diffH} sa ${diffM} dk (Yarın)`,
+        shortText: `${diffH}s ${diffM}dk`
       };
     },
 
@@ -6577,12 +6654,17 @@
       const nextCountEl = $('#prayer-next-countdown');
       if (nextCountEl) nextCountEl.textContent = `${next.remainingText} kaldı`;
 
-      // Top bar göstergesi
+      // Top bar göstergesi — mobilde CSS saati ve "kaldı" ekini gizler, kısa sayaç gösterir
       const topPrayerName = $('#top-prayer-name');
-      if (topPrayerName) topPrayerName.textContent = `${next.name} ${next.time}`;
+      if (topPrayerName) {
+        topPrayerName.innerHTML = `${next.name} <span class="top-prayer-time">${next.time}</span>`;
+      }
 
       const topPrayerCountdown = $('#top-prayer-countdown');
-      if (topPrayerCountdown) topPrayerCountdown.textContent = `${next.remainingText} kaldı`;
+      if (topPrayerCountdown) {
+        topPrayerCountdown.innerHTML =
+          `<span class="cd-long">${next.remainingText} kaldı</span><span class="cd-short">${next.shortText}</span>`;
+      }
 
       const topBadge = $('#top-prayer-badge');
       if (topBadge) {
@@ -6604,9 +6686,9 @@
 
       // Hicri Tarih
       const hijriEl = $('#prayer-hijri-date');
-      if (hijriEl && this.dateData?.hijri) {
-        const h = this.dateData.hijri;
-        hijriEl.textContent = `${h.day} ${h.month?.en || ''} ${h.year} H. • ${this.cityNames[this.city] || this.city}`;
+      if (hijriEl) {
+        const cityName = this.cityNames[this.city] || this.city;
+        hijriEl.textContent = this.dateData?.hijri ? `${this.hijriText('H.')} • ${cityName}` : cityName;
       }
 
       // Sıradaki Vakit
@@ -6665,9 +6747,12 @@
       if (gregEl) gregEl.textContent = formatDate(now);
 
       const hijriEl = $('#prayer-page-hijri-date');
-      if (hijriEl && this.dateData?.hijri) {
-        const h = this.dateData.hijri;
-        hijriEl.textContent = `${h.day} ${h.month?.en || ''} ${h.year} Hicri`;
+      if (hijriEl) {
+        const hasHijri = !!this.dateData?.hijri;
+        hijriEl.textContent = hasHijri ? this.hijriText('Hicri') : '';
+        hijriEl.hidden = !hasHijri;
+        const sep = hijriEl.previousElementSibling;
+        if (sep && sep.classList.contains('date-sep')) sep.hidden = !hasHijri;
       }
 
       let doneCount = 0;
@@ -6691,7 +6776,7 @@
                 <span class="prayer-check-text">${isChecked ? 'Tamamlandı' : 'Kılındı'}</span>
               </label>
             ` : `
-              <div class="prayer-ref-badge">Güneş Doğuşu</div>
+              <div class="prayer-ref-badge">Doğuş</div>
             `}
           </div>
         `;
@@ -6721,278 +6806,513 @@
   // ═══════════════════════════════════════════════════════
 
   const StreakManager = {
+    EARNED_KEY: 'asi_badges_earned', // { rozetId: kazanılma zamanı (ms) } — bir kez kazanılan rozet kalıcıdır
+
+    GROUPS: {
+      reading: { label: 'Okuma', icon: '📚' },
+      workout: { label: 'Spor', icon: '🏋️' },
+      prayer:  { label: 'İbadet', icon: '🕌' },
+      tasks:   { label: 'Görev & Hedef', icon: '✅' },
+      notes:   { label: 'Notlar', icon: '📝' },
+      focus:   { label: 'Odak', icon: '⏱️' },
+      school:  { label: 'Okul', icon: '🎒' },
+      general: { label: 'Genel', icon: '⚡' }
+    },
+
+    // metric: computeStats() içindeki alan adı · target: hedef değer · unit: ilerleme birimi
     BADGES: [
-      {
-        id: 'book-worm',
-        title: 'Kitap Kurdu',
-        emoji: '🐛',
-        category: 'reading',
-        targetDays: 7,
-        desc: '7 gün üst üste kitap okuyarak düzenli okuma serisini yakala.'
-      },
-      {
-        id: 'wise-owl',
-        title: 'Bilge Baykuş',
-        emoji: '🦉',
-        category: 'reading',
-        targetDays: 30,
-        desc: '1 ay (30 gün) boyunca aralıksız kitap oku ve bilge baykuş rozetini kazan.'
-      },
-      {
-        id: 'sport-fire',
-        title: 'Ateşli Sporcu',
-        emoji: '🔥',
-        category: 'workout',
-        targetDays: 3,
-        desc: '3 gün üst üste spor yaparak antrenman ateşini yak.'
-      },
-      {
-        id: 'iron-gorilla',
-        title: 'Demir Goril',
-        emoji: '🦍',
-        category: 'workout',
-        targetDays: 7,
-        desc: '7 gün boyunca düzenli spor yaparak muazzam bir güç kazan.'
-      },
-      {
-        id: 'peace-pilgrim',
-        title: 'Huzur Yolcusu',
-        emoji: '🕊️',
-        category: 'prayer',
-        targetDays: 7,
-        desc: '7 gün boyunca günlük namazlarını aksatmadan takip et.'
-      },
-      {
-        id: 'productivity-beast',
-        title: 'Üretkenlik Canavarı',
-        emoji: '🚀',
-        category: 'general',
-        targetDays: 7,
-        desc: '7 gün boyunca Planova ajandanı aktif kullanarak hedeflerine ulaş.'
-      }
+      // ─── Okuma ───
+      { id: 'first-page',    group: 'reading', emoji: '📖', title: 'İlk Sayfa',          metric: 'readingSessions',  target: 1,    unit: 'oturum', desc: 'İlk okuma oturumunu kaydet.' },
+      { id: 'reading-3',     group: 'reading', emoji: '📚', title: 'Okuma Alışkanlığı',  metric: 'readingStreak',    target: 3,    unit: 'gün',    desc: '3 gün üst üste kitap oku.' },
+      { id: 'book-worm',     group: 'reading', emoji: '🐛', title: 'Kitap Kurdu',        metric: 'readingStreak',    target: 7,    unit: 'gün',    desc: '7 gün üst üste kitap okuyarak düzenli okuma serisini yakala.' },
+      { id: 'wise-owl',      group: 'reading', emoji: '🦉', title: 'Bilge Baykuş',       metric: 'readingStreak',    target: 30,   unit: 'gün',    desc: '30 gün boyunca aralıksız kitap oku.' },
+      { id: 'reading-100',   group: 'reading', emoji: '🐉', title: 'Okuma Ejderhası',    metric: 'readingStreak',    target: 100,  unit: 'gün',    desc: '100 gün üst üste kitap oku. Efsanevi bir seri!' },
+      { id: 'pages-100',     group: 'reading', emoji: '📄', title: '100 Sayfa',          metric: 'pagesRead',        target: 100,  unit: 'sayfa',  desc: 'Toplam 100 sayfa oku.' },
+      { id: 'pages-500',     group: 'reading', emoji: '📜', title: '500 Sayfa',          metric: 'pagesRead',        target: 500,  unit: 'sayfa',  desc: 'Toplam 500 sayfa oku.' },
+      { id: 'pages-1000',    group: 'reading', emoji: '🏛️', title: 'Bin Sayfa',          metric: 'pagesRead',        target: 1000, unit: 'sayfa',  desc: 'Toplam 1.000 sayfa oku.' },
+      { id: 'pages-5000',    group: 'reading', emoji: '🗿', title: 'Sayfa Ustası',       metric: 'pagesRead',        target: 5000, unit: 'sayfa',  desc: 'Toplam 5.000 sayfa oku.' },
+      { id: 'books-1',       group: 'reading', emoji: '🎓', title: 'İlk Kitap',          metric: 'booksCompleted',   target: 1,    unit: 'kitap',  desc: 'Bir kitabı baştan sona bitir.' },
+      { id: 'books-5',       group: 'reading', emoji: '🏅', title: 'Kitapsever',         metric: 'booksCompleted',   target: 5,    unit: 'kitap',  desc: '5 kitap bitir.' },
+      { id: 'books-10',      group: 'reading', emoji: '👑', title: 'Kütüphane Kralı',    metric: 'booksCompleted',   target: 10,   unit: 'kitap',  desc: '10 kitap bitir.' },
+      { id: 'books-25',      group: 'reading', emoji: '🧙', title: 'Kitap Bilgesi',      metric: 'booksCompleted',   target: 25,   unit: 'kitap',  desc: '25 kitap bitir.' },
+      { id: 'read-10h',      group: 'reading', emoji: '⏳', title: '10 Saat Okuma',      metric: 'readingMinutes',   target: 600,  unit: 'dk',     desc: 'Toplam 10 saat (600 dk) okuma yap.' },
+
+      // ─── Spor ───
+      { id: 'first-workout', group: 'workout', emoji: '💪', title: 'İlk Antrenman',      metric: 'workoutDays',      target: 1,    unit: 'gün',    desc: 'İlk antrenmanını tamamla.' },
+      { id: 'sport-fire',    group: 'workout', emoji: '🔥', title: 'Ateşli Sporcu',      metric: 'workoutStreak',    target: 3,    unit: 'gün',    desc: '3 gün üst üste spor yaparak antrenman ateşini yak.' },
+      { id: 'iron-gorilla',  group: 'workout', emoji: '🦍', title: 'Demir Goril',        metric: 'workoutStreak',    target: 7,    unit: 'gün',    desc: '7 gün boyunca düzenli spor yap.' },
+      { id: 'wolf-discipline', group: 'workout', emoji: '🐺', title: 'Kurt Disiplini',   metric: 'workoutStreak',    target: 30,   unit: 'gün',    desc: '30 gün üst üste spor yap.' },
+      { id: 'workout-10',    group: 'workout', emoji: '🏋️', title: '10 Antrenman',       metric: 'workoutDays',      target: 10,   unit: 'gün',    desc: 'Toplam 10 farklı günde antrenman yap.' },
+      { id: 'workout-50',    group: 'workout', emoji: '🥇', title: '50 Antrenman',       metric: 'workoutDays',      target: 50,   unit: 'gün',    desc: 'Toplam 50 farklı günde antrenman yap.' },
+      { id: 'workout-100',   group: 'workout', emoji: '🏆', title: 'Yüz Antrenman',      metric: 'workoutDays',      target: 100,  unit: 'gün',    desc: 'Toplam 100 farklı günde antrenman yap.' },
+      { id: 'bmi-set',       group: 'workout', emoji: '⚖️', title: 'Kendini Tanı',       metric: 'vkiSet',           target: 1,    unit: '',       desc: 'Boy ve kilonu girerek VKİ değerini hesapla.' },
+
+      // ─── İbadet ───
+      { id: 'first-prayer',  group: 'prayer',  emoji: '🤲', title: 'İlk Adım',           metric: 'prayerChecks',     target: 1,    unit: 'vakit',  desc: 'İlk namazını işaretle.' },
+      { id: 'full-day',      group: 'prayer',  emoji: '🌙', title: 'Tam Gün',            metric: 'prayerFullDays',   target: 1,    unit: 'gün',    desc: 'Bir günde 5 vaktin tamamını kıl.' },
+      { id: 'early-bird',    group: 'prayer',  emoji: '🌅', title: 'Erken Kalkan',       metric: 'fajrCount',        target: 7,    unit: 'sabah',  desc: '7 kez sabah namazını kıl.' },
+      { id: 'peace-pilgrim', group: 'prayer',  emoji: '🕊️', title: 'Huzur Yolcusu',      metric: 'prayerStreak',     target: 7,    unit: 'gün',    desc: '7 gün boyunca namazlarını aksatmadan takip et.' },
+      { id: 'prayer-40',     group: 'prayer',  emoji: '🕌', title: 'Kırk Gün',           metric: 'prayerStreak',     target: 40,   unit: 'gün',    desc: '40 gün üst üste namaz takibi yap.' },
+      { id: 'full-day-30',   group: 'prayer',  emoji: '💎', title: 'Huzurlu Ay',         metric: 'prayerFullDays',   target: 30,   unit: 'gün',    desc: '30 gün boyunca 5 vaktin tamamını kıl.' },
+      { id: 'prayer-100',    group: 'prayer',  emoji: '✨', title: 'Yüz Vakit',          metric: 'prayerChecks',     target: 100,  unit: 'vakit',  desc: 'Toplam 100 vakit namaz kıl.' },
+      { id: 'prayer-500',    group: 'prayer',  emoji: '🌟', title: 'Beş Yüz Vakit',      metric: 'prayerChecks',     target: 500,  unit: 'vakit',  desc: 'Toplam 500 vakit namaz kıl.' },
+
+      // ─── Görev & Hedef ───
+      { id: 'first-task',    group: 'tasks',   emoji: '✅', title: 'İlk Görev',          metric: 'tasksDone',        target: 1,    unit: 'görev',  desc: 'Bir görevi "Tamamlandı" sütununa taşı.' },
+      { id: 'tasks-10',      group: 'tasks',   emoji: '📋', title: 'Görev Avcısı',       metric: 'tasksDone',        target: 10,   unit: 'görev',  desc: '10 görev tamamla.' },
+      { id: 'tasks-50',      group: 'tasks',   emoji: '🎯', title: 'Odaklı Savaşçı',     metric: 'tasksDone',        target: 50,   unit: 'görev',  desc: '50 görev tamamla.' },
+      { id: 'tasks-100',     group: 'tasks',   emoji: '🦾', title: 'Görev Makinesi',     metric: 'tasksDone',        target: 100,  unit: 'görev',  desc: '100 görev tamamla.' },
+      { id: 'goals-1',       group: 'tasks',   emoji: '🚩', title: 'İlk Hedef',          metric: 'goalsDone',        target: 1,    unit: 'hedef',  desc: 'Bir haftalık hedefini tamamla.' },
+      { id: 'goals-10',      group: 'tasks',   emoji: '🏹', title: 'Keskin Nişancı',     metric: 'goalsDone',        target: 10,   unit: 'hedef',  desc: '10 hedef tamamla.' },
+      { id: 'goals-50',      group: 'tasks',   emoji: '🗻', title: 'Zirve',              metric: 'goalsDone',        target: 50,   unit: 'hedef',  desc: '50 hedef tamamla.' },
+
+      // ─── Notlar ───
+      { id: 'first-note',    group: 'notes',   emoji: '📝', title: 'İlk Not',            metric: 'notesCount',       target: 1,    unit: 'not',    desc: 'Not defterine ilk notunu yaz.' },
+      { id: 'notes-10',      group: 'notes',   emoji: '🗒️', title: 'Not Tutkunu',        metric: 'notesCount',       target: 10,   unit: 'not',    desc: '10 not oluştur.' },
+      { id: 'notes-50',      group: 'notes',   emoji: '🧠', title: 'İkinci Beyin',       metric: 'notesCount',       target: 50,   unit: 'not',    desc: '50 not oluştur.' },
+      { id: 'quick-10',      group: 'notes',   emoji: '📌', title: 'Hatırlatıcı',        metric: 'quickNotesCount',  target: 10,   unit: 'not',    desc: 'Aynı anda 10 hızlı not biriktir.' },
+
+      // ─── Odak (Pomodoro) ───
+      { id: 'pomo-1',        group: 'focus',   emoji: '🍅', title: 'İlk Domates',        metric: 'pomodoroCount',    target: 1,    unit: 'seans',  desc: 'Bir odaklanma seansını sonuna kadar tamamla.' },
+      { id: 'pomo-10',       group: 'focus',   emoji: '⏱️', title: 'Odak Ustası',        metric: 'pomodoroCount',    target: 10,   unit: 'seans',  desc: '10 odaklanma seansı tamamla.' },
+      { id: 'pomo-50',       group: 'focus',   emoji: '🧘', title: 'Derin Odak',         metric: 'pomodoroCount',    target: 50,   unit: 'seans',  desc: '50 odaklanma seansı tamamla.' },
+      { id: 'focus-10h',     group: 'focus',   emoji: '🔭', title: '10 Saat Odak',       metric: 'pomodoroMinutes',  target: 600,  unit: 'dk',     desc: 'Toplam 10 saat odaklanma süresi biriktir.' },
+
+      // ─── Okul ───
+      { id: 'semester-start', group: 'school', emoji: '🎒', title: 'Dönem Başladı',      metric: 'attendanceCourses', target: 1,   unit: 'ders',   desc: 'Devamsızlık takibine bir ders ekle.' },
+      { id: 'present-20',    group: 'school',  emoji: '🧑‍🎓', title: 'Derse Devam',        metric: 'attendancePresent', target: 20,  unit: 'ders',   desc: '20 kez derste "Katıldım" işaretle.' },
+      { id: 'present-100',   group: 'school',  emoji: '🏫', title: 'Sınıf Birincisi',    metric: 'attendancePresent', target: 100, unit: 'ders',   desc: '100 kez derste "Katıldım" işaretle.' },
+
+      // ─── Genel ───
+      { id: 'profile-done',  group: 'general', emoji: '🪪', title: 'Ben Buradayım',      metric: 'profileComplete',  target: 1,    unit: '',       desc: 'Profiline adını ve bir fotoğraf ya da emoji ekle.' },
+      { id: 'active-3',      group: 'general', emoji: '🌱', title: 'Filizlenme',         metric: 'activeStreak',     target: 3,    unit: 'gün',    desc: '3 gün üst üste okuma, spor veya ibadet kaydı yap.' },
+      { id: 'productivity-beast', group: 'general', emoji: '🚀', title: 'Üretkenlik Canavarı', metric: 'activeStreak', target: 7,  unit: 'gün',    desc: '7 gün boyunca Planova\'yı aktif kullan.' },
+      { id: 'active-30',     group: 'general', emoji: '🌳', title: 'Çınar',              metric: 'activeStreak',     target: 30,   unit: 'gün',    desc: '30 gün üst üste aktif ol.' },
+      { id: 'active-100',    group: 'general', emoji: '🌋', title: 'Durdurulamaz',       metric: 'activeStreak',     target: 100,  unit: 'gün',    desc: '100 gün üst üste aktif ol.' },
+      { id: 'collector-10',  group: 'general', emoji: '🎖️', title: 'Koleksiyoncu',       metric: 'badgesEarned',     target: 10,   unit: 'rozet',  desc: '10 rozet kazan.' },
+      { id: 'collector-25',  group: 'general', emoji: '🏵️', title: 'Rozet Avcısı',       metric: 'badgesEarned',     target: 25,   unit: 'rozet',  desc: '25 rozet kazan.' },
+      { id: 'legend',        group: 'general', emoji: '🌈', title: 'Efsane',             metric: 'badgesEarned',     target: 50,   unit: 'rozet',  desc: '50 rozet kazan.' }
     ],
 
+    activeTab: 'all',
+    _stats: null,
+
     init() {
+      $('#badges-tabs')?.addEventListener('click', (e) => {
+        const btn = e.target.closest('[data-group]');
+        if (!btn) return;
+        this.activeTab = btn.dataset.group;
+        this.renderShowcase();
+      });
       this.updateStreaksAndBadges();
     },
 
-    // Ardışık günleri (streak) sayan dinamik algoritma
+    getBadge(id) { return this.BADGES.find(b => b.id === id) || null; },
+    getEarned() { return Storage.get(this.EARNED_KEY, {}) || {}; },
+    isEarned(id) { return !!this.getEarned()[id]; },
+
+    // ─── Ardışık gün (seri) hesabı: bugün ya da dün aktifse geriye doğru sayar ───
     calculateStreak(dateSet) {
       if (!dateSet || dateSet.size === 0) return 0;
-
-      const todayStr = formatDateShort(new Date());
-      const yesterday = new Date();
-      yesterday.setDate(yesterday.getDate() - 1);
-      const yesterdayStr = formatDateShort(yesterday);
-
-      let checkDate = new Date();
-      if (!dateSet.has(todayStr)) {
-        if (dateSet.has(yesterdayStr)) {
-          checkDate = yesterday;
-        } else {
-          return 0;
-        }
+      const check = new Date();
+      if (!dateSet.has(formatDateShort(check))) {
+        check.setDate(check.getDate() - 1);
+        if (!dateSet.has(formatDateShort(check))) return 0;
       }
-
       let streak = 0;
-      while (true) {
-        const dStr = formatDateShort(checkDate);
-        if (dateSet.has(dStr)) {
-          streak++;
-          checkDate.setDate(checkDate.getDate() - 1);
-        } else {
-          break;
-        }
+      while (dateSet.has(formatDateShort(check))) {
+        streak++;
+        check.setDate(check.getDate() - 1);
       }
       return streak;
     },
 
-    getReadingStreak() {
-      const sessions = Storage.get('asi_reading_sessions', []);
+    readingDates() {
       const dates = new Set();
-      sessions.forEach(s => {
-        if (s.date && (s.pagesRead > 0 || s.duration > 0)) {
-          dates.add(s.date);
-        }
+      Storage.get('asi_reading_sessions', []).forEach(s => {
+        if (s && s.date && (s.pagesRead > 0 || s.duration > 0)) dates.add(s.date);
       });
-      return this.calculateStreak(dates);
+      return dates;
     },
 
-    getWorkoutStreak() {
-      const logs = Storage.get('asi_workouts', []);
-      const history = Storage.get('asi_workout_history', []);
+    workoutDates() {
       const dates = new Set();
-
-      logs.forEach(l => {
-        if (l.date && (l.completed || (Array.isArray(l.completedSets) && l.completedSets.length > 0))) {
-          dates.add(l.date);
-        }
-      });
-      history.forEach(h => {
-        if (h.date && (h.completed || (Array.isArray(h.completedSets) && h.completedSets.length > 0))) {
-          dates.add(h.date);
-        }
-      });
-      return this.calculateStreak(dates);
+      const add = (l) => {
+        if (l && l.date && (l.completed || (Array.isArray(l.completedSets) && l.completedSets.length > 0))) dates.add(l.date);
+      };
+      Storage.get('asi_workouts', []).forEach(add);
+      Storage.get('asi_workout_history', []).forEach(add);
+      return dates;
     },
 
-    getPrayerStreak() {
+    // Tüm namaz işaretlerini tek geçişte tarar
+    prayerData() {
       const dates = new Set();
-      const d = new Date();
-      for (let i = 0; i < 90; i++) {
-        const dStr = formatDateShort(d);
-        const chk = Storage.get(`asi_prayer_checks_${dStr}`, null);
-        if (chk && Object.values(chk).some(v => v === true)) {
-          dates.add(dStr);
-        }
-        d.setDate(d.getDate() - 1);
+      let checks = 0, fullDays = 0, fajr = 0;
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (!k || !k.startsWith('asi_prayer_checks_')) continue;
+        const chk = Storage.get(k, null);
+        if (!chk || typeof chk !== 'object') continue;
+        const n = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'].filter(p => chk[p] === true).length;
+        if (n > 0) dates.add(k.slice('asi_prayer_checks_'.length));
+        checks += n;
+        if (n === 5) fullDays++;
+        if (chk.fajr === true) fajr++;
       }
-      return this.calculateStreak(dates);
+      return { dates, checks, fullDays, fajr };
     },
 
-    getGeneralStreak() {
-      const r = this.getReadingStreak();
-      const w = this.getWorkoutStreak();
-      const p = this.getPrayerStreak();
-      return Math.max(r, w, p, 1);
+    getReadingStreak() { return this.calculateStreak(this.readingDates()); },
+    getWorkoutStreak() { return this.calculateStreak(this.workoutDates()); },
+    getPrayerStreak()  { return this.calculateStreak(this.prayerData().dates); },
+
+    computeStats() {
+      const rDates = this.readingDates();
+      const wDates = this.workoutDates();
+      const prayer = this.prayerData();
+      const sessions = Storage.get('asi_reading_sessions', []);
+      const books = Storage.get('asi_books', []);
+      const tasks = Storage.get('asi_tasks', []);
+      const goals = Storage.get('asi_goals', []);
+      const pomo = Storage.get('asi_pomodoro_stats', { count: 0, minutes: 0 }) || {};
+      const records = Storage.get('asi_attendance_records', []);
+      const hasName = !!(localStorage.getItem('asi_profile_name') || '').trim();
+      const hasPic = !!localStorage.getItem('asi_profile_photo') || !!localStorage.getItem('asi_profile_avatar');
+      const arr = (v) => (Array.isArray(v) ? v : []);
+
+      return {
+        readingSessions: arr(sessions).length,
+        readingStreak: this.calculateStreak(rDates),
+        pagesRead: arr(sessions).reduce((t, s) => t + (Number(s.pagesRead) || 0), 0),
+        readingMinutes: arr(sessions).reduce((t, s) => t + (Number(s.duration) || 0), 0),
+        booksCompleted: arr(books).filter(b => b.status === 'completed').length,
+        workoutDays: wDates.size,
+        workoutStreak: this.calculateStreak(wDates),
+        vkiSet: Storage.get('asi_user_vki_data', null) ? 1 : 0,
+        prayerChecks: prayer.checks,
+        prayerFullDays: prayer.fullDays,
+        fajrCount: prayer.fajr,
+        prayerStreak: this.calculateStreak(prayer.dates),
+        tasksDone: arr(tasks).filter(t => t.status === 'done').length,
+        goalsDone: arr(goals).filter(g => g.done).length,
+        notesCount: arr(Storage.get('asi_notes', [])).length,
+        quickNotesCount: arr(Storage.get('asi_quicknotes', [])).length,
+        pomodoroCount: Number(pomo.count) || 0,
+        pomodoroMinutes: Number(pomo.minutes) || 0,
+        attendanceCourses: arr(Storage.get('asi_attendance_courses', [])).length,
+        attendancePresent: arr(records).filter(r => r.status === 'present').length,
+        profileComplete: hasName && hasPic ? 1 : 0,
+        activeStreak: this.calculateStreak(new Set([...rDates, ...wDates, ...prayer.dates])),
+        badgesEarned: 0
+      };
     },
 
+    /**
+     * Ölçümleri hesaplar, yeni kazanılan rozetleri kalıcı kaydeder ve ekranı günceller.
+     * Rozet bir kez kazanıldıysa seri bozulsa bile kaybolmaz.
+     */
     updateStreaksAndBadges() {
-      const readingStreak = this.getReadingStreak();
-      const workoutStreak = this.getWorkoutStreak();
-      const prayerStreak = this.getPrayerStreak();
-      const generalStreak = this.getGeneralStreak();
+      const stats = this.computeStats();
+      const firstRun = Storage.get(this.EARNED_KEY, null) === null;
+      const earned = this.getEarned();
+      const fresh = [];
 
-      // Top Bar
-      const topCount = $('#top-streak-count');
-      if (topCount) topCount.textContent = generalStreak;
-
-      const topPill = $('#streak-top-pill');
-      if (topPill) topPill.textContent = `🔥 ${generalStreak} Gün Seri`;
-
-      // Dashboard Metrikleri
-      const rEl = $('#streak-book-count');
-      if (rEl) rEl.textContent = `${readingStreak} Gün`;
-
-      const wEl = $('#streak-workout-count');
-      if (wEl) wEl.textContent = `${workoutStreak} Gün`;
-
-      const pEl = $('#streak-prayer-count');
-      if (pEl) pEl.textContent = `${prayerStreak} Gün`;
-
-      const gEl = $('#streak-general-count');
-      if (gEl) gEl.textContent = `${generalStreak} Gün`;
-
-      // Modül İçi Barlar
-      const wStreakLbl = $('#workout-streak-label');
-      if (wStreakLbl) wStreakLbl.textContent = `${workoutStreak} Gün Spor Serisi`;
-
-      const bStreakLbl = $('#books-streak-label');
-      if (bStreakLbl) bStreakLbl.textContent = `${readingStreak} Gün Okuma Serisi`;
-
-      const pStreakBadge = $('#prayer-page-streak-badge');
-      if (pStreakBadge) pStreakBadge.textContent = `🕊️ ${prayerStreak} Gün İbadet Serisi`;
-
-      // Rozet Vitrinini Render Et
-      this.renderBadges({
-        reading: readingStreak,
-        workout: workoutStreak,
-        prayer: prayerStreak,
-        general: generalStreak
-      });
-    },
-
-    renderBadges(streaks) {
-      const container = $('#badges-container');
-      const workoutContainer = $('#workout-unlocked-badges');
-      const booksContainer = $('#books-unlocked-badges');
-
-      if (container) {
-        container.innerHTML = this.BADGES.map(b => {
-          const currentStreak = streaks[b.category] || 0;
-          const isUnlocked = currentStreak >= b.targetDays;
-          const progressPct = Math.min(100, Math.round((currentStreak / b.targetDays) * 100));
-
-          return `
-            <div class="badge-card ${isUnlocked ? 'unlocked' : 'locked'}" data-badge-id="${b.id}">
-              <div class="badge-emoji-box">${b.emoji}</div>
-              <div class="badge-title">${b.title}</div>
-              <div class="badge-desc">${b.desc}</div>
-              <div class="badge-pill-status">
-                ${isUnlocked ? '✓ Kazanıldı' : `${currentStreak}/${b.targetDays} Gün (%${progressPct})`}
-              </div>
-            </div>
-          `;
-        }).join('');
-
-        container.querySelectorAll('.badge-card').forEach(card => {
-          card.addEventListener('click', () => {
-            this.openBadgeDetail(card.dataset.badgeId, streaks);
-          });
+      // Koleksiyon rozetleri diğerlerine bağlı olduğu için iki tur
+      for (let pass = 0; pass < 2; pass++) {
+        stats.badgesEarned = Object.keys(earned).filter(id => this.getBadge(id)).length;
+        this.BADGES.forEach(b => {
+          if (!earned[b.id] && (stats[b.metric] || 0) >= b.target) {
+            earned[b.id] = Date.now();
+            fresh.push(b);
+          }
         });
       }
+      stats.badgesEarned = Object.keys(earned).filter(id => this.getBadge(id)).length;
+      this._stats = stats;
 
-      // Spor Modülü İçi Rozetler (🔥 ve 🦍)
-      if (workoutContainer) {
-        const sportBadges = this.BADGES.filter(b => b.category === 'workout');
-        workoutContainer.innerHTML = sportBadges.map(b => {
-          const isUnlocked = (streaks.workout || 0) >= b.targetDays;
-          return `
-            <span class="module-badge-chip ${isUnlocked ? 'unlocked' : 'locked'}" title="${b.title}: ${b.desc}">
-              ${b.emoji} ${b.title} ${isUnlocked ? '✓' : `(${streaks.workout || 0}/${b.targetDays}G)`}
-            </span>
-          `;
-        }).join('');
+      if (fresh.length || firstRun) Storage.set(this.EARNED_KEY, earned);
+
+      // İlk çalıştırmada (eski kullanıcılar) geçmiş başarılar sessizce eklenir
+      if (!firstRun && fresh.length) {
+        if (fresh.length === 1) showToast(`🏅 Yeni rozet: ${fresh[0].emoji} ${fresh[0].title}`, 'success');
+        else showToast(`🏅 ${fresh.length} yeni rozet kazandın: ${fresh.map(b => b.emoji).join(' ')}`, 'success');
       }
 
-      // Kitap Modülü İçi Rozetler (🐛 ve 🦉)
-      if (booksContainer) {
-        const bookBadges = this.BADGES.filter(b => b.category === 'reading');
-        booksContainer.innerHTML = bookBadges.map(b => {
-          const isUnlocked = (streaks.reading || 0) >= b.targetDays;
-          return `
-            <span class="module-badge-chip ${isUnlocked ? 'unlocked' : 'locked'}" title="${b.title}: ${b.desc}">
-              ${b.emoji} ${b.title} ${isUnlocked ? '✓' : `(${streaks.reading || 0}/${b.targetDays}G)`}
-            </span>
-          `;
-        }).join('');
-      }
+      this.renderCounters(stats);
+      this.renderShowcase();
+      this.renderModuleChips();
+      if (typeof ProfileAvatar !== 'undefined') ProfileAvatar.renderBadgeGrid();
     },
 
-    openBadgeDetail(badgeId, streaks) {
-      const b = this.BADGES.find(x => x.id === badgeId);
-      if (!b) return;
+    renderCounters(stats) {
+      const general = Math.max(stats.activeStreak, 1);
+      const set = (sel, text) => { const el = $(sel); if (el) el.textContent = text; };
+      set('#top-streak-count', general);
+      set('#streak-top-pill', `🔥 ${general} Gün Seri`);
+      set('#streak-book-count', `${stats.readingStreak} Gün`);
+      set('#streak-workout-count', `${stats.workoutStreak} Gün`);
+      set('#streak-prayer-count', `${stats.prayerStreak} Gün`);
+      set('#streak-general-count', `${stats.activeStreak} Gün`);
+      set('#workout-streak-label', `${stats.workoutStreak} Gün Spor Serisi`);
+      set('#books-streak-label', `${stats.readingStreak} Gün Okuma Serisi`);
+      set('#prayer-page-streak-badge', `🕊️ ${stats.prayerStreak} Gün İbadet Serisi`);
+    },
 
-      const current = (streaks && streaks[b.category]) || 0;
-      const isUnlocked = current >= b.targetDays;
-      const progressPct = Math.min(100, Math.round((current / b.targetDays) * 100));
+    progressOf(b) {
+      const cur = Math.min(b.target, (this._stats && this._stats[b.metric]) || 0);
+      return { cur, pct: Math.min(100, Math.round((cur / b.target) * 100)) };
+    },
+
+    // Dashboard rozet vitrini: grup sekmeleri + kartlar (kazanılanlar önce)
+    renderShowcase() {
+      const container = $('#badges-container');
+      if (!container) return;
+      const earned = this.getEarned();
+
+      const tabs = $('#badges-tabs');
+      if (tabs) {
+        const tabList = [['all', '🏅', 'Tümü'], ...Object.entries(this.GROUPS).map(([k, g]) => [k, g.icon, g.label])];
+        tabs.innerHTML = tabList.map(([k, icon, label]) => {
+          const list = k === 'all' ? this.BADGES : this.BADGES.filter(b => b.group === k);
+          const n = list.filter(b => earned[b.id]).length;
+          return `<button type="button" class="badges-tab ${this.activeTab === k ? 'active' : ''}" data-group="${k}">${icon} ${label} <small>${n}/${list.length}</small></button>`;
+        }).join('');
+      }
+
+      const total = $('#badges-total');
+      if (total) total.textContent = `${Object.keys(earned).filter(id => this.getBadge(id)).length}/${this.BADGES.length}`;
+
+      const list = (this.activeTab === 'all' ? this.BADGES : this.BADGES.filter(b => b.group === this.activeTab))
+        .slice()
+        .sort((a, b) => (earned[b.id] ? 1 : 0) - (earned[a.id] ? 1 : 0) || this.progressOf(b).pct - this.progressOf(a).pct);
+
+      container.innerHTML = list.map(b => {
+        const ok = !!earned[b.id];
+        const { cur, pct } = this.progressOf(b);
+        return `
+          <button type="button" class="badge-card ${ok ? 'unlocked' : 'locked'}" data-badge-id="${b.id}">
+            <div class="badge-emoji-box">${b.emoji}</div>
+            <div class="badge-title">${b.title}</div>
+            <div class="badge-desc">${b.desc}</div>
+            ${ok
+              ? '<div class="badge-pill-status">✓ Kazanıldı</div>'
+              : `<div class="badge-mini-track"><span style="width:${pct}%"></span></div>
+                 <div class="badge-pill-status">${cur}/${b.target}${b.unit ? ' ' + b.unit : ''}</div>`}
+          </button>`;
+      }).join('');
+
+      container.querySelectorAll('.badge-card').forEach(card => {
+        card.addEventListener('click', () => this.openBadgeDetail(card.dataset.badgeId));
+      });
+    },
+
+    // Spor ve Kitap sayfalarındaki rozet şeritleri: kazanılanlar + sıradaki hedef
+    renderModuleChips() {
+      const earned = this.getEarned();
+      [['#workout-unlocked-badges', 'workout'], ['#books-unlocked-badges', 'reading']].forEach(([sel, group]) => {
+        const box = $(sel);
+        if (!box) return;
+        const list = this.BADGES.filter(b => b.group === group);
+        const won = list.filter(b => earned[b.id]);
+        const next = list.filter(b => !earned[b.id]).sort((a, b) => this.progressOf(b).pct - this.progressOf(a).pct)[0];
+        const chips = won.map(b => `<span class="module-badge-chip unlocked" data-badge-id="${b.id}" title="${b.title}: ${b.desc}">${b.emoji} ${b.title} ✓</span>`);
+        if (next) {
+          const { cur } = this.progressOf(next);
+          chips.push(`<span class="module-badge-chip locked" data-badge-id="${next.id}" title="Sıradaki: ${next.desc}">${next.emoji} ${next.title} (${cur}/${next.target})</span>`);
+        }
+        box.innerHTML = chips.join('');
+        box.querySelectorAll('[data-badge-id]').forEach(el => el.addEventListener('click', () => this.openBadgeDetail(el.dataset.badgeId)));
+      });
+    },
+
+    openBadgeDetail(badgeId) {
+      const b = this.getBadge(badgeId);
+      if (!b) return;
+      const earnedAt = this.getEarned()[b.id];
+      const { cur, pct } = earnedAt ? { cur: b.target, pct: 100 } : this.progressOf(b);
+      const unit = b.unit ? ' ' + b.unit : '';
 
       $('#badge-modal-title').textContent = `${b.emoji} ${b.title}`;
       $('#badge-modal-icon').textContent = b.emoji;
       $('#badge-modal-name').textContent = b.title;
-      $('#badge-modal-desc').textContent = b.desc;
+      $('#badge-modal-desc').textContent = `${this.GROUPS[b.group]?.icon || ''} ${this.GROUPS[b.group]?.label || ''} · ${b.desc}`;
 
       const fill = $('#badge-modal-progress-fill');
-      if (fill) fill.style.width = `${progressPct}%`;
-
+      if (fill) fill.style.width = `${pct}%`;
       const progText = $('#badge-modal-progress-text');
-      if (progText) progText.textContent = `${current} / ${b.targetDays} Gün (${progressPct}%)`;
+      if (progText) progText.textContent = `${cur} / ${b.target}${unit} (%${pct})`;
 
       const statusTag = $('#badge-modal-status-badge');
       if (statusTag) {
-        if (isUnlocked) {
-          statusTag.textContent = '🎉 Rozet Açıldı ve Kazanıldı!';
+        if (earnedAt) {
+          statusTag.textContent = `🎉 Kazanıldı · ${new Date(earnedAt).toLocaleDateString('tr-TR')}`;
           statusTag.className = 'badge-modal-status-tag unlocked';
         } else {
-          const daysLeft = b.targetDays - current;
-          statusTag.textContent = `🔒 Kilitli - Hedefe ${daysLeft} gün kaldı`;
+          statusTag.textContent = `🔒 Kilitli · Hedefe ${b.target - cur}${unit} kaldı`;
           statusTag.className = 'badge-modal-status-tag';
         }
+      }
+
+      // Kazanılmış rozet profil resmi yapılabilir
+      const useBtn = $('#badge-modal-use-avatar');
+      if (useBtn) {
+        useBtn.classList.toggle('hidden', !earnedAt);
+        useBtn.onclick = () => {
+          ProfileAvatar.setBadge(b.id);
+          closeModal('badge-detail-modal');
+        };
       }
 
       openModal('badge-detail-modal');
     }
   };
+
+  // ═══════════════════════════════════════════════════════
+  // PROFİL RESMİ: EMOJİ & ROZET SEÇİCİ (Ayarlar › Profil)
+  // Görüntüleme auth.js içindeki PlanovaAuth.refreshProfile() ile yapılır.
+  // ═══════════════════════════════════════════════════════
+
+  const ProfileAvatar = {
+    KEY: 'asi_profile_avatar', // { type: 'emoji'|'badge', emoji, id?, bg? }
+
+    EMOJIS: [
+      '😀', '😎', '🤓', '🥳', '😇', '🤩', '🙂', '😺', '🦊', '🐼', '🐨', '🐯',
+      '🦁', '🐸', '🐵', '🐧', '🦄', '🐝', '🐢', '🐬', '🦋', '🌸', '🌻', '🌵',
+      '🍀', '🌙', '⭐', '☀️', '🌈', '⚡', '🔥', '💧', '❄️', '🍎', '🍕', '☕',
+      '⚽', '🏀', '🎮', '🎧', '🎨', '🎸', '📚', '💻', '🚀', '🧠', '💎', '👑',
+      '🧕', '🧔', '👩‍🎓', '👨‍🎓', '👩‍💻', '👨‍💻', '🧑‍🚀', '🥷', '🦸', '🧙'
+    ],
+
+    BG_COLORS: ['', '#06B6D4', '#F97316', '#8B5CF6', '#10B981', '#EF4444', '#0F172A', '#F59E0B'],
+
+    tab: 'emoji',
+
+    init() {
+      const root = $('#avatar-picker');
+      if (!root) return;
+
+      root.querySelectorAll('.avatar-tab').forEach(btn => btn.addEventListener('click', () => {
+        this.tab = btn.dataset.tab;
+        root.querySelectorAll('.avatar-tab').forEach(b => b.classList.toggle('active', b === btn));
+        root.querySelectorAll('.avatar-panel').forEach(p => p.classList.toggle('hidden', p.dataset.panel !== this.tab));
+      }));
+
+      $('#avatar-emoji-grid').innerHTML = this.EMOJIS
+        .map(e => `<button type="button" class="avatar-emoji-btn" data-emoji="${e}" aria-label="${e}">${e}</button>`).join('');
+      $('#avatar-emoji-grid').addEventListener('click', (e) => {
+        const btn = e.target.closest('[data-emoji]');
+        if (btn) this.setEmoji(btn.dataset.emoji);
+      });
+
+      $('#avatar-bg-row').innerHTML = this.BG_COLORS.map(c =>
+        `<button type="button" class="avatar-bg-btn ${c ? '' : 'is-default'}" data-bg="${c}" style="${c ? `background:${c}` : ''}" aria-label="${c ? 'Arka plan ' + c : 'Varsayılan arka plan'}"></button>`
+      ).join('');
+      $('#avatar-bg-row').addEventListener('click', (e) => {
+        const btn = e.target.closest('[data-bg]');
+        if (btn) this.setBg(btn.dataset.bg);
+      });
+
+      $('#avatar-custom-apply')?.addEventListener('click', () => this.applyCustom());
+      $('#avatar-custom-emoji')?.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); this.applyCustom(); } });
+
+      $('#avatar-badge-grid')?.addEventListener('click', (e) => {
+        const btn = e.target.closest('[data-badge-id]');
+        if (!btn) return;
+        if (btn.classList.contains('locked')) StreakManager.openBadgeDetail(btn.dataset.badgeId);
+        else this.setBadge(btn.dataset.badgeId);
+      });
+
+      this.renderBadgeGrid();
+      this.markSelected();
+    },
+
+    get() {
+      const a = Storage.get(this.KEY, null);
+      return a && a.emoji ? a : null;
+    },
+
+    save(avatar) {
+      Storage.set(this.KEY, avatar);
+      localStorage.removeItem('asi_profile_photo'); // emoji/rozet seçilince fotoğraf yerine geçer
+      window.PlanovaAuth?.refreshProfile?.();
+      this.markSelected();
+      StreakManager.updateStreaksAndBadges();
+    },
+
+    setEmoji(emoji) {
+      const prev = this.get();
+      this.save({ type: 'emoji', emoji, bg: prev?.bg || '' });
+      showToast(`Profil resmin ${emoji} olarak ayarlandı`, 'success');
+    },
+
+    setBadge(id) {
+      const b = StreakManager.getBadge(id);
+      if (!b || !StreakManager.isEarned(id)) return;
+      // Rozetler varsayılan olarak altın çerçeveyle gösterilir; renk sonradan seçilebilir
+      this.save({ type: 'badge', id, emoji: b.emoji, bg: '' });
+      showToast(`🏅 "${b.title}" rozeti profil resmin oldu`, 'success');
+    },
+
+    setBg(bg) {
+      const cur = this.get();
+      if (!cur) { showToast('Önce bir emoji veya rozet seç', 'info'); return; }
+      this.save({ ...cur, bg });
+    },
+
+    applyCustom() {
+      const input = $('#avatar-custom-emoji');
+      const raw = (input?.value || '').trim();
+      if (!raw) return;
+      // Tek bir emoji (birleşik emojiler dahil) kabul et
+      let first = raw;
+      if (window.Intl && Intl.Segmenter) {
+        first = [...new Intl.Segmenter('tr', { granularity: 'grapheme' }).segment(raw)][0]?.segment || '';
+      } else {
+        first = Array.from(raw)[0] || '';
+      }
+      if (!/\p{Extended_Pictographic}|\p{Regional_Indicator}/u.test(first)) {
+        showToast('Lütfen bir emoji gir (ör. 🦄)', 'error');
+        return;
+      }
+      this.setEmoji(first);
+      input.value = '';
+    },
+
+    renderBadgeGrid() {
+      const grid = $('#avatar-badge-grid');
+      if (!grid) return;
+      const earned = StreakManager.getEarned();
+      const sorted = StreakManager.BADGES.slice().sort((a, b) => (earned[b.id] ? 1 : 0) - (earned[a.id] ? 1 : 0));
+      grid.innerHTML = sorted.map(b => {
+        const ok = !!earned[b.id];
+        return `<button type="button" class="avatar-badge-btn ${ok ? 'unlocked' : 'locked'}" data-badge-id="${b.id}"
+                  title="${b.title}${ok ? '' : ' (kilitli): ' + b.desc}">
+                  <span class="avatar-badge-emoji">${b.emoji}</span>
+                  <span class="avatar-badge-name">${b.title}</span>
+                </button>`;
+      }).join('');
+      const cnt = $('#avatar-badge-count');
+      if (cnt) cnt.textContent = `${Object.keys(earned).filter(id => StreakManager.getBadge(id)).length}/${StreakManager.BADGES.length}`;
+      this.markSelected();
+    },
+
+    markSelected() {
+      const a = this.get();
+      $$('#avatar-emoji-grid .avatar-emoji-btn').forEach(b => b.classList.toggle('selected', !!a && a.type === 'emoji' && b.dataset.emoji === a.emoji));
+      $$('#avatar-badge-grid .avatar-badge-btn').forEach(b => b.classList.toggle('selected', !!a && a.type === 'badge' && b.dataset.badgeId === a.id));
+      $$('#avatar-bg-row .avatar-bg-btn').forEach(b => b.classList.toggle('selected', (a?.bg || '') === b.dataset.bg));
+    }
+  };
+
+  // Veri değiştikçe rozetleri kontrol et (Storage.set içinden çağrılır, art arda yazmalarda tek sefer çalışır)
+  let badgeCheckTimer = null;
+  function scheduleBadgeCheck() {
+    clearTimeout(badgeCheckTimer);
+    badgeCheckTimer = setTimeout(() => {
+      try { StreakManager.updateStreaksAndBadges(); } catch (e) { console.warn('Rozet kontrolü başarısız:', e); }
+    }, 700);
+  }
 
   // ═══════════════════════════════════════════════════════
   // VÜCUT KİTLE İNDEKSİ (VKİ) VE GELİŞİM ÇUBUĞU
@@ -7442,6 +7762,7 @@
     modules: ModuleManager,
     prayer: PrayerManager,
     streak: StreakManager,
+    profileAvatar: ProfileAvatar,
     vki: VkiManager,
     bookFocus: BookFocusManager,
     openModal,
@@ -7468,6 +7789,7 @@
     Settings.init();
     PrayerManager.init();
     StreakManager.init();
+    ProfileAvatar.init();
     VkiManager.init();
     BookFocusManager.init();
 

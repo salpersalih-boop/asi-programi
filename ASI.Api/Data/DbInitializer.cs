@@ -5,7 +5,11 @@ namespace ASI.Api.Data
 {
     public static class DbInitializer
     {
-        public static readonly List<ExerciseItem> DefaultExercises = new()
+        /// <summary>
+        /// Varsayılan 21 hareket. Her çağrıda YENİ nesneler döner: aynı statik nesnelerin
+        /// birden fazla DbContext tarafından izlenmesi (tracking) hatalarını önler.
+        /// </summary>
+        public static List<ExerciseItem> CreateDefaultExercises() => new()
         {
             // Göğüs
             new() { Id = "ex-ch-1", Name = "Bench Press",             Category = "gogus", Sets = 4, Reps = 10, Weight = "50 kg",           SortOrder = 1 },
@@ -43,26 +47,27 @@ namespace ASI.Api.Data
 
         public static void Initialize(AsiDbContext ctx)
         {
+            // Yeni veritabanında tüm tabloları modele göre oluşturur
             ctx.Database.EnsureCreated();
 
-            // SQLite Tablolarının varlığını garantiye al
+            // Eski sürümden kalan veritabanlarında sonradan eklenen tabloları tamamla
+            // (EnsureCreated, veritabanı zaten varsa yeni tablo eklemez)
             ctx.Database.ExecuteSqlRaw(@"
                 CREATE TABLE IF NOT EXISTS Exercises (
-                    Id TEXT PRIMARY KEY,
+                    Id TEXT NOT NULL PRIMARY KEY,
                     Name TEXT NOT NULL,
                     Category TEXT NOT NULL,
                     Sets INTEGER NOT NULL DEFAULT 3,
                     Reps INTEGER NOT NULL DEFAULT 10,
-                    Weight TEXT DEFAULT '0 kg',
-                    Notes TEXT DEFAULT '',
+                    Weight TEXT NOT NULL DEFAULT '0 kg',
+                    Notes TEXT NULL DEFAULT '',
                     SortOrder INTEGER NOT NULL DEFAULT 0,
                     Created INTEGER NOT NULL DEFAULT 0
-                );
-            ");
+                );");
 
             ctx.Database.ExecuteSqlRaw(@"
                 CREATE TABLE IF NOT EXISTS WorkoutLogs (
-                    Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    Id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
                     Date TEXT NOT NULL,
                     ExerciseId TEXT NOT NULL,
                     ExerciseName TEXT NOT NULL,
@@ -70,26 +75,79 @@ namespace ASI.Api.Data
                     Completed INTEGER NOT NULL DEFAULT 1,
                     Sets INTEGER NOT NULL DEFAULT 3,
                     Reps INTEGER NOT NULL DEFAULT 10,
-                    Weight TEXT DEFAULT '0 kg',
+                    Weight TEXT NOT NULL DEFAULT '0 kg',
                     CompletedAt INTEGER NOT NULL DEFAULT 0
-                );
-            ");
+                );");
+            ctx.Database.ExecuteSqlRaw(
+                "CREATE UNIQUE INDEX IF NOT EXISTS IX_WorkoutLogs_Date_ExerciseId ON WorkoutLogs (Date, ExerciseId);");
 
             ctx.Database.ExecuteSqlRaw(@"
-                CREATE UNIQUE INDEX IF NOT EXISTS IX_WorkoutLogs_Date_ExerciseId ON WorkoutLogs (Date, ExerciseId);
-            ");
+                CREATE TABLE IF NOT EXISTS Books (
+                    Id TEXT NOT NULL PRIMARY KEY,
+                    Title TEXT NOT NULL,
+                    Author TEXT NOT NULL DEFAULT '',
+                    TotalPages INTEGER NOT NULL DEFAULT 100,
+                    CurrentPage INTEGER NOT NULL DEFAULT 0,
+                    Status TEXT NOT NULL DEFAULT 'to_read',
+                    Category TEXT NOT NULL DEFAULT '',
+                    Rating INTEGER NOT NULL DEFAULT 0,
+                    StartDate TEXT NOT NULL DEFAULT '',
+                    FinishDate TEXT NOT NULL DEFAULT '',
+                    Notes TEXT NOT NULL DEFAULT '',
+                    CoverImage TEXT NOT NULL DEFAULT '',
+                    CoverColor TEXT NOT NULL DEFAULT '#0284C7',
+                    Created INTEGER NOT NULL DEFAULT 0,
+                    Updated INTEGER NOT NULL DEFAULT 0
+                );");
 
-            // Notes tablosu güncellemesi (önceden oluşturulmuşsa yeni sütunları ekle)
-            try { ctx.Database.ExecuteSqlRaw("ALTER TABLE Notes ADD COLUMN CourseId TEXT DEFAULT ''"); } catch {}
-            try { ctx.Database.ExecuteSqlRaw("ALTER TABLE Notes ADD COLUMN CourseName TEXT DEFAULT 'Genel'"); } catch {}
-            try { ctx.Database.ExecuteSqlRaw("ALTER TABLE Notes ADD COLUMN Tag TEXT DEFAULT 'general'"); } catch {}
-            try { ctx.Database.ExecuteSqlRaw("ALTER TABLE Notes ADD COLUMN IsExamTopic INTEGER DEFAULT 0"); } catch {}
+            ctx.Database.ExecuteSqlRaw(@"
+                CREATE TABLE IF NOT EXISTS ReadingSessions (
+                    Id TEXT NOT NULL PRIMARY KEY,
+                    BookId TEXT NOT NULL DEFAULT '',
+                    BookTitle TEXT NOT NULL DEFAULT '',
+                    Date TEXT NOT NULL DEFAULT '',
+                    StartPage INTEGER NOT NULL DEFAULT 0,
+                    EndPage INTEGER NOT NULL DEFAULT 0,
+                    PagesRead INTEGER NOT NULL DEFAULT 0,
+                    Duration INTEGER NOT NULL DEFAULT 20,
+                    Notes TEXT NOT NULL DEFAULT '',
+                    Timestamp INTEGER NOT NULL DEFAULT 0
+                );");
+            ctx.Database.ExecuteSqlRaw(
+                "CREATE INDEX IF NOT EXISTS IX_ReadingSessions_BookId ON ReadingSessions (BookId);");
 
-            // Egzersizler tablosunu varsayılan 21 hareketle doldur
+            ctx.Database.ExecuteSqlRaw(@"
+                CREATE TABLE IF NOT EXISTS ReadingGoals (
+                    Id INTEGER NOT NULL PRIMARY KEY,
+                    DailyPages INTEGER NOT NULL DEFAULT 20,
+                    WeeklyPages INTEGER NOT NULL DEFAULT 150,
+                    DailyMinutes INTEGER NOT NULL DEFAULT 30
+                );");
+
+            // Notes tablosuna sonradan eklenen sütunlar (yalnızca eksikse eklenir — hata yutmaya gerek yok)
+            AddColumnIfMissing(ctx, "Notes", "CourseId",    "TEXT NOT NULL DEFAULT ''");
+            AddColumnIfMissing(ctx, "Notes", "CourseName",  "TEXT NOT NULL DEFAULT 'Genel'");
+            AddColumnIfMissing(ctx, "Notes", "Tag",         "TEXT NOT NULL DEFAULT 'general'");
+            AddColumnIfMissing(ctx, "Notes", "IsExamTopic", "INTEGER NOT NULL DEFAULT 0");
+
+            // Egzersizler boşsa varsayılan 21 hareketle doldur
             if (!ctx.Exercises.Any())
             {
-                ctx.Exercises.AddRange(DefaultExercises);
+                ctx.Exercises.AddRange(CreateDefaultExercises());
                 ctx.SaveChanges();
+            }
+        }
+
+        private static void AddColumnIfMissing(AsiDbContext ctx, string table, string column, string definition)
+        {
+            // Tablo/sütun adları yalnızca bu dosyadaki sabitlerden gelir (kullanıcı girdisi değildir)
+            var columns = ctx.Database
+                .SqlQueryRaw<string>($"SELECT name AS Value FROM pragma_table_info('{table}')")
+                .ToList();
+
+            if (!columns.Contains(column, StringComparer.OrdinalIgnoreCase))
+            {
+                ctx.Database.ExecuteSqlRaw($"ALTER TABLE {table} ADD COLUMN {column} {definition}");
             }
         }
     }

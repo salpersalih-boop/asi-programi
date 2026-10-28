@@ -16,6 +16,9 @@ namespace ASI.Api.Data
         public DbSet<AttendanceRecord>  AttendanceRecords   { get; set; }
         public DbSet<ExerciseItem>      Exercises           { get; set; }
         public DbSet<WorkoutLog>        WorkoutLogs         { get; set; }
+        public DbSet<BookItem>          Books               { get; set; }
+        public DbSet<ReadingSession>    ReadingSessions     { get; set; }
+        public DbSet<ReadingGoals>      ReadingGoals        { get; set; }
 
         protected override void OnModelCreating(ModelBuilder mb)
         {
@@ -28,6 +31,14 @@ namespace ASI.Api.Data
             mb.Entity<WorkoutLog>()
               .HasIndex(l => new { l.Date, l.ExerciseId })
               .IsUnique();
+
+            // Okuma hedefleri tek satırdır (Id = 1); otomatik artan kimlik kullanılmaz
+            mb.Entity<ReadingGoals>()
+              .Property(g => g.Id)
+              .ValueGeneratedNever();
+
+            mb.Entity<ReadingSession>()
+              .HasIndex(s => s.BookId);
         }
     }
 }

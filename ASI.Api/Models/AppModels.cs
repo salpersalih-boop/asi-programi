@@ -2,11 +2,20 @@ using System.ComponentModel.DataAnnotations;
 
 namespace ASI.Api.Models
 {
+    // ─── Kimlik üretici ───
+    // Eskiden GUID'in ilk 8 karakteri kullanılıyordu (32 bit → kayıt sayısı arttıkça çakışma riski).
+    // Artık tam 32 karakterlik GUID kullanılıyor; eski 8 karakterli ID'ler de çalışmaya devam eder.
+    public static class IdGen
+    {
+        public static string New() => Guid.NewGuid().ToString("N");
+        public static long Now() => DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+    }
+
     // ─── Görev (Kanban Kartı) ───
     public class TaskItem
     {
         [Key]
-        public string Id { get; set; } = Guid.NewGuid().ToString("N")[..8];
+        public string Id { get; set; } = IdGen.New();
 
         [Required]
         public string Title { get; set; } = string.Empty;
@@ -25,7 +34,7 @@ namespace ASI.Api.Models
     public class StudyItem
     {
         [Key]
-        public string Id { get; set; } = Guid.NewGuid().ToString("N")[..8];
+        public string Id { get; set; } = IdGen.New();
 
         [Required]
         public string Name { get; set; } = string.Empty;
@@ -43,7 +52,7 @@ namespace ASI.Api.Models
     public class ExerciseItem
     {
         [Key]
-        public string Id { get; set; } = Guid.NewGuid().ToString("N")[..8];
+        public string Id { get; set; } = IdGen.New();
 
         [Required]
         public string Name { get; set; } = string.Empty;
@@ -106,7 +115,7 @@ namespace ASI.Api.Models
     public class NoteItem
     {
         [Key]
-        public string Id { get; set; } = Guid.NewGuid().ToString("N")[..8];
+        public string Id { get; set; } = IdGen.New();
 
         [Required]
         public string Title { get; set; } = string.Empty;
@@ -133,7 +142,7 @@ namespace ASI.Api.Models
     public class QuickNote
     {
         [Key]
-        public string Id { get; set; } = Guid.NewGuid().ToString("N")[..8];
+        public string Id { get; set; } = IdGen.New();
 
         public string Text { get; set; } = string.Empty;
 
@@ -144,7 +153,7 @@ namespace ASI.Api.Models
     public class GoalItem
     {
         [Key]
-        public string Id { get; set; } = Guid.NewGuid().ToString("N")[..8];
+        public string Id { get; set; } = IdGen.New();
 
         [Required]
         public string Title { get; set; } = string.Empty;
@@ -167,7 +176,7 @@ namespace ASI.Api.Models
     public class AttendanceCourse
     {
         [Key]
-        public string Id { get; set; } = Guid.NewGuid().ToString("N")[..8];
+        public string Id { get; set; } = IdGen.New();
 
         public string Code { get; set; } = string.Empty;
         public string Name { get; set; } = string.Empty;
@@ -190,5 +199,100 @@ namespace ASI.Api.Models
 
         // "present" | "absent" | "excused"
         public string Status { get; set; } = "present";
+    }
+
+    // ─── Kitap ───
+    public class BookItem
+    {
+        [Key]
+        public string Id { get; set; } = IdGen.New();
+
+        [Required]
+        public string Title { get; set; } = "İsimsiz Kitap";
+
+        public string Author { get; set; } = "Bilinmeyen Yazar";
+
+        [Range(1, 100000)]
+        public int TotalPages { get; set; } = 100;
+
+        [Range(0, 100000)]
+        public int CurrentPage { get; set; } = 0;
+
+        // "to_read" | "reading" | "completed"
+        public string Status { get; set; } = "to_read";
+
+        public string Category { get; set; } = string.Empty;
+
+        [Range(0, 5)]
+        public int Rating { get; set; } = 0;
+
+        public string StartDate { get; set; } = string.Empty;   // YYYY-MM-DD
+        public string FinishDate { get; set; } = string.Empty;  // YYYY-MM-DD
+        public string Notes { get; set; } = string.Empty;
+
+        // base64 data URL (küçültülmüş kapak görseli)
+        public string CoverImage { get; set; } = string.Empty;
+        public string CoverColor { get; set; } = "#0284C7";
+
+        public long Created { get; set; } = IdGen.Now();
+        public long Updated { get; set; } = IdGen.Now();
+    }
+
+    // Kitap kısmi güncellemesi: yalnızca gönderilen alanlar değişir
+    public class BookPatchDto
+    {
+        public string? Title { get; set; }
+        public string? Author { get; set; }
+        [Range(1, 100000)] public int? TotalPages { get; set; }
+        [Range(0, 100000)] public int? CurrentPage { get; set; }
+        public string? Status { get; set; }
+        public string? Category { get; set; }
+        [Range(0, 5)] public int? Rating { get; set; }
+        public string? StartDate { get; set; }
+        public string? FinishDate { get; set; }
+        public string? Notes { get; set; }
+        public string? CoverImage { get; set; }
+        public string? CoverColor { get; set; }
+    }
+
+    // ─── Okuma Oturumu ───
+    public class ReadingSession
+    {
+        [Key]
+        public string Id { get; set; } = IdGen.New();
+
+        public string BookId { get; set; } = string.Empty;
+        public string BookTitle { get; set; } = string.Empty;
+
+        public string Date { get; set; } = string.Empty; // YYYY-MM-DD
+
+        [Range(0, 100000)] public int StartPage { get; set; }
+        [Range(0, 100000)] public int EndPage { get; set; }
+        [Range(0, 100000)] public int PagesRead { get; set; }
+
+        // dakika
+        [Range(0, 1440)] public int Duration { get; set; } = 20;
+
+        public string Notes { get; set; } = string.Empty;
+
+        public long Timestamp { get; set; } = IdGen.Now();
+    }
+
+    // ─── Okuma Hedefleri (tek satır, Id = 1) ───
+    public class ReadingGoals
+    {
+        [Key]
+        public int Id { get; set; } = 1;
+
+        public int DailyPages { get; set; } = 20;
+        public int WeeklyPages { get; set; } = 150;
+        public int DailyMinutes { get; set; } = 30;
+    }
+
+    public class ReadingGoalsDto
+    {
+        [Range(0, 10000)] public int? DailyPages { get; set; }
+        [Range(0, 100000)] public int? WeeklyPages { get; set; }
+        [Range(0, 1440)] public int? DailyMinutes { get; set; }
     }
 }

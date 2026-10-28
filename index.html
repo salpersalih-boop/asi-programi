@@ -7,7 +7,7 @@
   <title>Planova ✨ — Kişisel Ajanda</title>
   <link rel="icon" type="image/png" href="planova-icon.png">
   <link rel="apple-touch-icon" href="planova-icon.png">
-  <link rel="stylesheet" href="style.css?v=4.0">
+  <link rel="stylesheet" href="style.css?v=5.1">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -84,6 +84,11 @@
             <span id="top-clock" class="top-clock"></span>
           </div>
         </div>
+        <!-- Üst Çubuk Profil Avatarı -->
+        <button id="top-avatar" class="top-avatar" type="button" title="Profil Ayarları" aria-label="Profil">
+          <img id="top-avatar-img" class="top-avatar-img hidden" alt="Profil">
+          <span id="top-avatar-initial" class="top-avatar-initial">?</span>
+        </button>
         <!-- Hızlı Koyu / Açık Mod Butonu -->
         <button id="theme-toggle-btn" class="theme-toggle-btn" title="Koyu / Açık Mod Değiştir" aria-label="Tema Değiştir">
           <span id="theme-toggle-icon">🌙</span>
@@ -120,7 +125,7 @@
       <!-- ════════ DASHBOARD ════════ -->
       <section id="page-dashboard" class="page active">
         <div class="page-header">
-          <h2>Merhaba! 👋</h2>
+          <h2 id="dashboard-greeting">Merhaba! 👋</h2>
           <p id="dashboard-date" class="date-text"></p>
         </div>
 
@@ -195,87 +200,7 @@
               <div class="prayer-city-wrap">
                 <span class="city-pin">📍</span>
                 <select id="prayer-city-select" class="prayer-city-select" aria-label="Şehir Seçimi">
-                  <option value="Adana">Adana</option>
-                  <option value="Adiyaman">Adıyaman</option>
-                  <option value="Afyonkarahisar">Afyonkarahisar</option>
-                  <option value="Agri">Ağrı</option>
-                  <option value="Aksaray">Aksaray</option>
-                  <option value="Amasya">Amasya</option>
-                  <option value="Ankara">Ankara</option>
-                  <option value="Antalya">Antalya</option>
-                  <option value="Ardahan">Ardahan</option>
-                  <option value="Artvin">Artvin</option>
-                  <option value="Aydin">Aydın</option>
-                  <option value="Balikesir">Balıkesir</option>
-                  <option value="Bartin">Bartın</option>
-                  <option value="Batman">Batman</option>
-                  <option value="Bayburt">Bayburt</option>
-                  <option value="Bilecik">Bilecik</option>
-                  <option value="Bingol">Bingöl</option>
-                  <option value="Bitlis">Bitlis</option>
-                  <option value="Bolu">Bolu</option>
-                  <option value="Burdur">Burdur</option>
-                  <option value="Bursa">Bursa</option>
-                  <option value="Canakkale">Çanakkale</option>
-                  <option value="Cankiri">Çankırı</option>
-                  <option value="Corum">Çorum</option>
-                  <option value="Denizli">Denizli</option>
-                  <option value="Diyarbakir">Diyarbakır</option>
-                  <option value="Duzce">Düzce</option>
-                  <option value="Edirne">Edirne</option>
-                  <option value="Elazig">Elazığ</option>
-                  <option value="Erzincan">Erzincan</option>
-                  <option value="Erzurum">Erzurum</option>
-                  <option value="Eskisehir">Eskişehir</option>
-                  <option value="Gaziantep">Gaziantep</option>
-                  <option value="Giresun">Giresun</option>
-                  <option value="Gumushane">Gümüşhane</option>
-                  <option value="Hakkari">Hakkari</option>
-                  <option value="Hatay">Hatay</option>
-                  <option value="Igdir">Iğdır</option>
-                  <option value="Isparta">Isparta</option>
-                  <option value="Istanbul" selected>İstanbul</option>
-                  <option value="Izmir">İzmir</option>
-                  <option value="Kahramanmaras">Kahramanmaraş</option>
-                  <option value="Karabuk">Karabük</option>
-                  <option value="Karaman">Karaman</option>
-                  <option value="Kars">Kars</option>
-                  <option value="Kastamonu">Kastamonu</option>
-                  <option value="Kayseri">Kayseri</option>
-                  <option value="Kilis">Kilis</option>
-                  <option value="Kirikkale">Kırıkkale</option>
-                  <option value="Kirklareli">Kırklareli</option>
-                  <option value="Kirsehir">Kırşehir</option>
-                  <option value="Kocaeli">Kocaeli</option>
-                  <option value="Konya">Konya</option>
-                  <option value="Kutahya">Kütahya</option>
-                  <option value="Malatya">Malatya</option>
-                  <option value="Manisa">Manisa</option>
-                  <option value="Mardin">Mardin</option>
-                  <option value="Mersin">Mersin</option>
-                  <option value="Mugla">Muğla</option>
-                  <option value="Mus">Muş</option>
-                  <option value="Nevsehir">Nevşehir</option>
-                  <option value="Nigde">Niğde</option>
-                  <option value="Ordu">Ordu</option>
-                  <option value="Osmaniye">Osmaniye</option>
-                  <option value="Rize">Rize</option>
-                  <option value="Sakarya">Sakarya</option>
-                  <option value="Samsun">Samsun</option>
-                  <option value="Sanliurfa">Şanlıurfa</option>
-                  <option value="Siirt">Siirt</option>
-                  <option value="Sinop">Sinop</option>
-                  <option value="Sirnak">Şırnak</option>
-                  <option value="Sivas">Sivas</option>
-                  <option value="Tekirdag">Tekirdağ</option>
-                  <option value="Tokat">Tokat</option>
-                  <option value="Trabzon">Trabzon</option>
-                  <option value="Tunceli">Tunceli</option>
-                  <option value="Usak">Uşak</option>
-                  <option value="Van">Van</option>
-                  <option value="Yalova">Yalova</option>
-                  <option value="Yozgat">Yozgat</option>
-                  <option value="Zonguldak">Zonguldak</option>
+                  <option value="Istanbul">İstanbul</option><!-- Diğer 80 il script.js (PrayerManager.cityNames) içinden doldurulur -->
                 </select>
               </div>
               <button type="button" id="prayer-refresh-btn" class="btn btn-ghost btn-xs" title="Vakitleri Yenile">↺</button>
@@ -295,6 +220,7 @@
           </div>
 
           <!-- Vakit Kartları & Checkbox'lar -->
+          <div class="prayer-approx-note hidden" role="status">⚠️ İnternete bağlanılamadı — gösterilen vakitler tahminidir.</div>
           <div class="prayer-times-grid" id="prayer-times-grid">
             <!-- Sabah -->
             <div class="prayer-card" data-vakit="fajr">
@@ -433,9 +359,10 @@
           <!-- Emoji Rozetleri Vitrini -->
           <div class="badges-showcase">
             <div class="badges-showcase-title">
-              <span>🏅 Kazanılan ve Hedeflenen Rozetler</span>
-              <span class="text-xs text-muted">Detaylar için rozete tıklayın</span>
+              <span>🏅 Rozetlerim <span class="badges-total" id="badges-total">0/0</span></span>
+              <span class="text-xs text-muted">Detay için rozete dokun</span>
             </div>
+            <div class="badges-tabs" id="badges-tabs" role="tablist"></div>
             <div class="badges-grid" id="badges-container">
               <!-- JS ile dinamik doldurulur -->
             </div>
@@ -1261,87 +1188,7 @@
             <div class="prayer-city-wrap">
               <span class="city-pin">📍</span>
               <select id="prayer-page-city-select" class="prayer-city-select" aria-label="Şehir Seçimi">
-                  <option value="Adana">Adana</option>
-                  <option value="Adiyaman">Adıyaman</option>
-                  <option value="Afyonkarahisar">Afyonkarahisar</option>
-                  <option value="Agri">Ağrı</option>
-                  <option value="Aksaray">Aksaray</option>
-                  <option value="Amasya">Amasya</option>
-                  <option value="Ankara">Ankara</option>
-                  <option value="Antalya">Antalya</option>
-                  <option value="Ardahan">Ardahan</option>
-                  <option value="Artvin">Artvin</option>
-                  <option value="Aydin">Aydın</option>
-                  <option value="Balikesir">Balıkesir</option>
-                  <option value="Bartin">Bartın</option>
-                  <option value="Batman">Batman</option>
-                  <option value="Bayburt">Bayburt</option>
-                  <option value="Bilecik">Bilecik</option>
-                  <option value="Bingol">Bingöl</option>
-                  <option value="Bitlis">Bitlis</option>
-                  <option value="Bolu">Bolu</option>
-                  <option value="Burdur">Burdur</option>
-                  <option value="Bursa">Bursa</option>
-                  <option value="Canakkale">Çanakkale</option>
-                  <option value="Cankiri">Çankırı</option>
-                  <option value="Corum">Çorum</option>
-                  <option value="Denizli">Denizli</option>
-                  <option value="Diyarbakir">Diyarbakır</option>
-                  <option value="Duzce">Düzce</option>
-                  <option value="Edirne">Edirne</option>
-                  <option value="Elazig">Elazığ</option>
-                  <option value="Erzincan">Erzincan</option>
-                  <option value="Erzurum">Erzurum</option>
-                  <option value="Eskisehir">Eskişehir</option>
-                  <option value="Gaziantep">Gaziantep</option>
-                  <option value="Giresun">Giresun</option>
-                  <option value="Gumushane">Gümüşhane</option>
-                  <option value="Hakkari">Hakkari</option>
-                  <option value="Hatay">Hatay</option>
-                  <option value="Igdir">Iğdır</option>
-                  <option value="Isparta">Isparta</option>
-                  <option value="Istanbul" selected>İstanbul</option>
-                  <option value="Izmir">İzmir</option>
-                  <option value="Kahramanmaras">Kahramanmaraş</option>
-                  <option value="Karabuk">Karabük</option>
-                  <option value="Karaman">Karaman</option>
-                  <option value="Kars">Kars</option>
-                  <option value="Kastamonu">Kastamonu</option>
-                  <option value="Kayseri">Kayseri</option>
-                  <option value="Kilis">Kilis</option>
-                  <option value="Kirikkale">Kırıkkale</option>
-                  <option value="Kirklareli">Kırklareli</option>
-                  <option value="Kirsehir">Kırşehir</option>
-                  <option value="Kocaeli">Kocaeli</option>
-                  <option value="Konya">Konya</option>
-                  <option value="Kutahya">Kütahya</option>
-                  <option value="Malatya">Malatya</option>
-                  <option value="Manisa">Manisa</option>
-                  <option value="Mardin">Mardin</option>
-                  <option value="Mersin">Mersin</option>
-                  <option value="Mugla">Muğla</option>
-                  <option value="Mus">Muş</option>
-                  <option value="Nevsehir">Nevşehir</option>
-                  <option value="Nigde">Niğde</option>
-                  <option value="Ordu">Ordu</option>
-                  <option value="Osmaniye">Osmaniye</option>
-                  <option value="Rize">Rize</option>
-                  <option value="Sakarya">Sakarya</option>
-                  <option value="Samsun">Samsun</option>
-                  <option value="Sanliurfa">Şanlıurfa</option>
-                  <option value="Siirt">Siirt</option>
-                  <option value="Sinop">Sinop</option>
-                  <option value="Sirnak">Şırnak</option>
-                  <option value="Sivas">Sivas</option>
-                  <option value="Tekirdag">Tekirdağ</option>
-                  <option value="Tokat">Tokat</option>
-                  <option value="Trabzon">Trabzon</option>
-                  <option value="Tunceli">Tunceli</option>
-                  <option value="Usak">Uşak</option>
-                  <option value="Van">Van</option>
-                  <option value="Yalova">Yalova</option>
-                  <option value="Yozgat">Yozgat</option>
-                  <option value="Zonguldak">Zonguldak</option>
+                  <option value="Istanbul">İstanbul</option><!-- Diğer 80 il script.js (PrayerManager.cityNames) içinden doldurulur -->
               </select>
             </div>
             <button type="button" id="prayer-page-refresh-btn" class="btn btn-secondary btn-sm">↺ Vakitleri Yenile</button>
@@ -1374,6 +1221,7 @@
             </div>
           </div>
 
+          <div class="prayer-approx-note hidden" role="status">⚠️ İnternete bağlanılamadı — gösterilen vakitler tahminidir.</div>
           <div class="prayer-page-times-grid" id="prayer-page-times-grid">
             <!-- JS ile doldurulur -->
           </div>
@@ -1545,6 +1393,60 @@
                   <div class="theme-preview-progress-fill"></div>
                 </div>
               </div>
+            </div>
+          </div>
+
+          <div class="settings-card glass-card" id="settings-profile-card">
+            <h3>👤 Profil Ayarları</h3>
+            <div class="profile-edit">
+              <div class="profile-photo-box">
+                <img id="profile-photo-img" class="profile-photo-img hidden" alt="Profil fotoğrafı">
+                <span id="profile-photo-initial" class="profile-photo-initial">?</span>
+              </div>
+              <div class="profile-fields">
+                <label for="profile-name">Görünen Adın</label>
+                <input type="text" id="profile-name" maxlength="30" placeholder="Örn: Salih">
+                <div class="settings-actions">
+                  <button type="button" id="profile-photo-btn" class="btn btn-secondary btn-sm">📷 Fotoğraf Seç</button>
+                  <button type="button" id="profile-photo-remove" class="btn btn-ghost btn-sm hidden">↺ Baş Harflere Dön</button>
+                  <input type="file" id="profile-photo-file" accept="image/*" class="hidden">
+                </div>
+              </div>
+            </div>
+            <!-- Profil resmi: emoji veya kazanılmış rozet -->
+            <div class="avatar-picker" id="avatar-picker">
+              <div class="avatar-tabs" role="tablist">
+                <button type="button" class="avatar-tab active" data-tab="emoji">😀 Emoji</button>
+                <button type="button" class="avatar-tab" data-tab="badges">🏅 Rozetlerim <small id="avatar-badge-count">0</small></button>
+              </div>
+              <div class="avatar-panel" data-panel="emoji">
+                <div class="avatar-emoji-grid" id="avatar-emoji-grid"></div>
+                <div class="avatar-custom-row">
+                  <input type="text" id="avatar-custom-emoji" maxlength="16" placeholder="Başka bir emoji yaz: 🦄" aria-label="Özel emoji">
+                  <button type="button" id="avatar-custom-apply" class="btn btn-secondary btn-sm">Kullan</button>
+                </div>
+                <div class="avatar-bg-label">Arka plan rengi</div>
+                <div class="avatar-bg-row" id="avatar-bg-row"></div>
+              </div>
+              <div class="avatar-panel hidden" data-panel="badges">
+                <p class="text-xs text-muted avatar-badge-hint">Kazandığın bir rozete dokun, profil resmin olsun. Kilitli rozete dokunursan nasıl kazanacağını görürsün.</p>
+                <div class="avatar-badge-grid" id="avatar-badge-grid"></div>
+                <div class="avatar-bg-label">Arka plan rengi, Emoji sekmesinden değiştirilebilir.</div>
+              </div>
+            </div>
+
+            <p class="text-muted">E-posta: <strong id="profile-email">Giriş yapılmadı</strong></p>
+            <div class="settings-actions">
+              <button type="button" id="profile-save" class="btn btn-primary">💾 Kaydet</button>
+              <button type="button" id="profile-reset-pass" class="btn btn-ghost hidden" data-auth-only>🔑 Şifre Sıfırlama E-postası Gönder</button>
+            </div>
+          </div>
+
+          <div class="settings-card glass-card hidden" data-auth-only>
+            <h3>👤 Hesabım</h3>
+            <p>Giriş yapılan e-posta: <strong id="account-email">-</strong></p>
+            <div class="settings-actions">
+              <button type="button" id="account-logout-btn" class="btn btn-secondary">Çıkış Yap</button>
             </div>
           </div>
 
@@ -2144,6 +2046,7 @@
         <div id="badge-modal-status-badge" class="badge-modal-status-tag">Kilitli 🔒</div>
       </div>
       <div class="modal-actions">
+        <button type="button" id="badge-modal-use-avatar" class="btn btn-secondary hidden">🪪 Profil Resmim Yap</button>
         <button type="button" class="btn btn-primary" data-modal="badge-detail-modal">Harika!</button>
       </div>
     </div>
@@ -2190,6 +2093,46 @@
 
   <div id="toast-container" class="toast-container"></div>
 
-  <script src="script.js?v=4.3"></script>
+  <!-- ═══════════════════ GİRİŞ / KAYIT EKRANI ═══════════════════ -->
+  <div id="auth-overlay" class="auth-overlay hidden">
+    <div class="auth-card">
+      <img src="planova-icon.png" alt="Planova" class="auth-logo">
+      <h2 class="auth-brand">Planova ✨</h2>
+      <h3 id="auth-title" class="auth-title">Giriş Yap</h3>
+      <p class="auth-sub">Verilerin hesabına bağlı kalır; hangi cihazdan girersen gir hepsi seninle.</p>
+      
+      <form id="auth-form" autocomplete="on" onsubmit="return false;">
+        <div class="auth-field">
+          <label for="auth-email">E-posta</label>
+          <input type="email" id="auth-email" autocomplete="email" placeholder="ornek@mail.com" required>
+        </div>
+        <div class="auth-field">
+          <label for="auth-pass">Şifre</label>
+          <input type="password" id="auth-pass" autocomplete="current-password" placeholder="En az 6 karakter" required>
+        </div>
+        <div class="auth-field hidden" id="auth-pass2-wrap">
+          <label for="auth-pass2">Şifre (Tekrar)</label>
+          <input type="password" id="auth-pass2" autocomplete="new-password" placeholder="Şifrenizi tekrar girin">
+        </div>
+        <div id="auth-msg" class="auth-msg"></div>
+        <button type="submit" id="auth-submit" class="btn btn-primary auth-submit">Giriş Yap</button>
+      </form>
+
+      <div class="auth-or"><span>veya</span></div>
+      <button type="button" id="auth-google" class="auth-google">
+        <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9 3.6l6.7-6.7C35.6 2.4 30.2 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.8 6.1C12.3 13.6 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.3 5.5-4.8 7.2l7.5 5.8c4.4-4.1 7.1-10.1 7.1-17.5z"/><path fill="#FBBC05" d="M10.4 28.7c-.5-1.5-.8-3-.8-4.7s.3-3.2.8-4.7l-7.8-6.1C1 16.4 0 20.100 0 24s1 7.600 2.600 10.800l7.800-6.100z"/><path fill="#34A853" d="M24 48c6.200 0 11.500-2 15.300-5.600l-7.500-5.800c-2.100 1.400-4.700 2.200-7.800 2.200-6.300 0-11.700-4.100-13.600-9.800l-7.800 6.100C6.500 42.600 14.600 48 24 48z"/></svg>
+        Google ile devam et
+      </button>
+      <button type="button" id="auth-quick" class="auth-quick">⚡ Hızlı Giriş (hesapsız)</button>
+      <button type="button" id="auth-forgot" class="auth-link">Şifremi unuttum</button>
+      <button type="button" id="auth-switch" class="auth-link">Hesabın yok mu? Kayıt ol</button>
+    </div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="firebase-config.js"></script>
+  <script src="auth.js?v=5.0"></script>
 </body>
 </html>

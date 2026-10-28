@@ -1,6 +1,37 @@
-@ASI.Api_HostAddress = http://localhost:5215
+@api = http://localhost:5000
 
-GET {{ASI.Api_HostAddress}}/weatherforecast/
-Accept: application/json
+### Durum
+GET {{api}}/
+
+### Görevler
+GET {{api}}/api/tasks
 
 ###
+POST {{api}}/api/tasks
+Content-Type: application/json
+
+{ "title": "Deneme görevi", "status": "todo" }
+
+### Kitaplar
+GET {{api}}/api/books
+
+###
+POST {{api}}/api/books
+Content-Type: application/json
+
+{ "title": "Suç ve Ceza", "author": "Dostoyevski", "totalPages": 687 }
+
+### Okuma oturumu (bookId'yi yukarıdaki yanıttan kopyalayın)
+POST {{api}}/api/reading/sessions
+Content-Type: application/json
+
+{ "bookId": "BURAYA_ID", "startPage": 0, "endPage": 25, "duration": 30 }
+
+### Okuma hedefleri
+GET {{api}}/api/reading/goals
+
+### Bugünün antrenman kayıtları
+GET {{api}}/api/workouts
+
+### Devamsızlık kayıtları
+GET {{api}}/api/attendance/records

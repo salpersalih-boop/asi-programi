@@ -23,10 +23,14 @@ if (!File.Exists(dbPath) && File.Exists(localDb))
 builder.Services.AddDbContext<AsiDbContext>(opt =>
     opt.UseSqlite($"Data Source={dbPath}"));
 
-// CORS — Frontend (HTML dosyası veya VS Code Live Server) erişebilsin
+// CORS — yalnızca bu bilgisayardaki sayfalar erişebilsin
+// (localhost / 127.0.0.1 her port: node server.js, Live Server; "null": çift tıklanarak açılan file:// sayfası).
+// Eskiden AllowAnyOrigin vardı: açık olan HERHANGİ bir web sitesi /api/reset çağırıp verileri silebilirdi.
 builder.Services.AddCors(opt =>
     opt.AddDefaultPolicy(policy =>
-        policy.AllowAnyOrigin()
+        policy.SetIsOriginAllowed(origin =>
+                  origin == "null" ||
+                  (Uri.TryCreate(origin, UriKind.Absolute, out var uri) && uri.IsLoopback))
               .AllowAnyMethod()
               .AllowAnyHeader()));
 
