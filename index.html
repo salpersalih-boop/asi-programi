@@ -7,7 +7,7 @@
   <title>Planova ✨ — Kişisel Ajanda</title>
   <link rel="icon" type="image/png" href="planova-icon.png">
   <link rel="apple-touch-icon" href="planova-icon.png">
-  <link rel="stylesheet" href="style.css?v=5.2">
+  <link rel="stylesheet" href="style.css?v=5.3">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -454,31 +454,6 @@
           <div class="workout-header-btns">
             <button type="button" id="add-workout-exercise-btn" class="btn btn-primary btn-sm">+ Hareket</button>
             <button type="button" id="workout-history-btn" class="btn btn-secondary btn-sm" title="Antrenman geçmişi ve kullanılan ağırlıklar">📜 Geçmiş</button>
-          </div>
-        </div>
-
-        <!-- ⏱️ Dinlenme Sayacı (yalnızca set bitince görünür, mobilde üstte sabit) -->
-        <div id="workout-rest-card" class="workout-rest-card glass-card hidden">
-          <div class="workout-rest-content">
-            <div class="workout-rest-indicator">
-              <span class="workout-rest-icon pulse">⏱️</span>
-              <div class="workout-rest-info">
-                <div class="workout-rest-title-row">
-                  <strong id="workout-rest-title">Dinlenme Süresi</strong>
-                  <span id="workout-rest-tag" class="badge badge-info">2 dk</span>
-                </div>
-                <span id="workout-rest-subtitle" class="workout-rest-sub">Bench Press • Set 1 tamamlandı</span>
-              </div>
-            </div>
-            <div class="workout-rest-clock-box">
-              <span id="workout-rest-time" class="workout-rest-time">02:00</span>
-            </div>
-            <div class="workout-rest-actions">
-              <button type="button" id="workout-rest-pause-btn" class="btn btn-sm btn-ghost" title="Duraklat">⏸️</button>
-              <button type="button" id="workout-rest-resume-btn" class="btn btn-sm btn-primary hidden" title="Devam Et">▶️</button>
-              <button type="button" id="workout-rest-skip-btn" class="btn btn-sm btn-secondary" title="Süreyi beklemeden sonraki sete geç">⏭️ Geç</button>
-              <button type="button" id="workout-rest-reset-btn" class="btn btn-sm btn-ghost" title="Sayacı Kapat">✕</button>
-            </div>
           </div>
         </div>
 
@@ -2068,6 +2043,6 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
   <script src="firebase-config.js"></script>
-  <script src="auth.js?v=5.2"></script>
+  <script src="auth.js?v=5.3"></script>
 </body>
 </html>

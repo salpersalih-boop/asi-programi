@@ -1807,19 +1807,6 @@
         });
       });
 
-      // Dinlenme Sayacı Kontrolleri
-      const pauseBtn = $('#workout-rest-pause-btn');
-      if (pauseBtn) pauseBtn.addEventListener('click', () => this.pauseRestTimer());
-
-      const resumeBtn = $('#workout-rest-resume-btn');
-      if (resumeBtn) resumeBtn.addEventListener('click', () => this.resumeRestTimer());
-
-      const skipBtn = $('#workout-rest-skip-btn');
-      if (skipBtn) skipBtn.addEventListener('click', () => this.skipRestTimer());
-
-      const resetTimerBtn = $('#workout-rest-reset-btn');
-      if (resetTimerBtn) resetTimerBtn.addEventListener('click', () => this.cancelRestTimer());
-
       // Sayfa yenilendiğinde devam eden sayacı geri yükle
       this.restoreRestTimer();
     },
@@ -1833,8 +1820,6 @@
           this.timerState = { ...saved, intervalId: null };
           this.showRestTimerUI();
           this.updateRestTimerDisplay(saved.remainingSec || 0);
-          $('#workout-rest-pause-btn')?.classList.add('hidden');
-          $('#workout-rest-resume-btn')?.classList.remove('hidden');
         } else if (saved.endTime > now) {
           const diff = Math.max(0, Math.round((saved.endTime - now) / 1000));
           this.timerState = { ...saved, remainingSec: diff, intervalId: null };
@@ -1904,39 +1889,17 @@
       const mins = Math.floor(totalSeconds / 60);
       const secs = totalSeconds % 60;
       const formatted = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
-
-      const timeEl = $('#workout-rest-time');
-      if (timeEl) timeEl.textContent = formatted;
+      const dur = this.timerState.durationSec || 120;
+      const pct = Math.max(0, Math.min(100, (totalSeconds / dur) * 100));
+      $$('.wc-rest-time').forEach(el => { el.textContent = formatted; });
+      $$('.wc-rest-fill').forEach(el => { el.style.width = `${pct}%`; });
     },
 
+    // Sayaç artık ayrı bir kartta değil, set butonuna basılan hareketin içinde açılır
     showRestTimerUI() {
-      const card = $('#workout-rest-card');
-      if (!card) return;
-
-      const titleEl = $('#workout-rest-title');
-      const tagEl = $('#workout-rest-tag');
-      const subEl = $('#workout-rest-subtitle');
-
-      const isLast = this.timerState.isLastSet;
-      const s = this.timerState.setNum;
-      const total = this.timerState.totalSets;
-
-      if (titleEl) titleEl.textContent = isLast ? 'Son set dinlenmesi' : 'Dinlenme';
-      if (tagEl) {
-        tagEl.textContent = isLast ? '5 dk' : '2 dk';
-        tagEl.className = `badge ${isLast ? 'badge-warning' : 'badge-info'}`;
-      }
-      if (subEl) {
-        subEl.textContent = isLast
-          ? `${this.timerState.exerciseName} • Tüm setler tamamlandı!`
-          : `${this.timerState.exerciseName} • Set ${s} tamamlandı (${s}/${total})`;
-      }
-
-      $('#workout-rest-pause-btn')?.classList.remove('hidden');
-      $('#workout-rest-resume-btn')?.classList.add('hidden');
-      card.classList.remove('hidden');
-
       this.renderListOnly();
+      const card = $(`.workout-card[data-id="${this.timerState.exerciseId}"]`);
+      if (card && card.scrollIntoView) card.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
     },
 
     pauseRestTimer() {
@@ -1951,9 +1914,7 @@
         intervalId: null
       });
 
-      $('#workout-rest-pause-btn')?.classList.add('hidden');
-      $('#workout-rest-resume-btn')?.classList.remove('hidden');
-      showToast('Dinlenme sayacı duraklatıldı', 'info');
+      this.renderListOnly();
     },
 
     resumeRestTimer() {
@@ -1967,16 +1928,14 @@
         intervalId: null
       });
 
-      $('#workout-rest-pause-btn')?.classList.remove('hidden');
-      $('#workout-rest-resume-btn')?.classList.add('hidden');
       this.startTimerInterval();
-      showToast('Dinlenme sayacı devam ediyor', 'info');
+      this.renderListOnly();
     },
 
     skipRestTimer() {
       if (!this.timerState.active) return;
       this.cancelRestTimer(false);
-      showToast('Dinlenme atlandı, sonraki sete geçildi 🚀', 'success');
+
     },
 
     cancelRestTimer(notify = true) {
@@ -1987,11 +1946,7 @@
       this.timerState.intervalId = null;
       Storage.remove('asi_workout_timer');
 
-      const card = $('#workout-rest-card');
-      if (card) card.classList.add('hidden');
-
       this.renderListOnly();
-      if (notify) showToast('Dinlenme sayacı kapatıldı', 'info');
     },
 
     completeRestTimer() {
@@ -2005,10 +1960,8 @@
       this.timerState.intervalId = null;
       Storage.remove('asi_workout_timer');
 
-      const card = $('#workout-rest-card');
-      if (card) card.classList.add('hidden');
-
       this.playChime();
+      if (navigator.vibrate) { try { navigator.vibrate([200, 100, 200]); } catch (_) {} }
 
       if (isLast) {
         showToast(`🏆 Tebrikler! ${exName} hareketinin son dinlenmesi bitti, egzersiz başarıyla tamamlandı!`, 'success');
@@ -2213,7 +2166,17 @@
         }
       });
 
-      container.innerHTML = list.map(ex => {
+      const t = this.timerState;
+      const timerHidden = t.active && !list.some(e => e.id === t.exerciseId);
+      const miniBar = timerHidden ? `
+        <div class="wc-rest-mini" style="grid-column: 1/-1;">
+          <span>⏱️ ${esc(t.exerciseName)} · Set ${t.setNum}</span>
+          <strong class="wc-rest-time">--:--</strong>
+          <button type="button" class="wc-rest-btn wc-rest-skip">⏭ Geç</button>
+          <button type="button" class="wc-rest-btn wc-rest-close" aria-label="Sayacı kapat">✕</button>
+        </div>` : '';
+
+      container.innerHTML = miniBar + list.map(ex => {
         const log = logMap.get(ex.id);
         const totalSets = (log && log.sets) ? log.sets : (ex.sets || 3);
         const reps = (log && log.reps) ? log.reps : (ex.reps || 10);
@@ -2258,14 +2221,49 @@
               </div>
             </div>
             <div class="workout-sets-pills">${setPills}<span class="wc-set-count">${completedSets.length}/${totalSets}</span></div>
+            ${this.restPanelHtml(ex)}
           </div>
         `;
       }).join('');
 
       this.bindListEvents();
+      if (timerHidden) {
+        const rem = t.paused ? (t.remainingSec || 0) : Math.max(0, Math.round((t.endTime - Date.now()) / 1000));
+        this.updateRestTimerDisplay(rem);
+      }
+    },
+
+    restPanelHtml(ex) {
+      const t = this.timerState;
+      if (!t.active || t.exerciseId !== ex.id) return '';
+      const rem = t.paused ? (t.remainingSec || 0) : Math.max(0, Math.round((t.endTime - Date.now()) / 1000));
+      const mm = String(Math.floor(rem / 60)).padStart(2, '0');
+      const ss = String(rem % 60).padStart(2, '0');
+      const pct = Math.max(0, Math.min(100, (rem / (t.durationSec || 120)) * 100));
+      const label = t.isLastSet ? `Son set bitti · ${Math.round((t.durationSec || 300) / 60)} dk dinlen` : `Set ${t.setNum} bitti · dinleniyor`;
+      return `
+        <div class="wc-rest ${t.paused ? 'is-paused' : ''} ${t.isLastSet ? 'is-last' : ''}">
+          <div class="wc-rest-top">
+            <span class="wc-rest-label">⏱️ ${label}</span>
+            <span class="wc-rest-time">${mm}:${ss}</span>
+          </div>
+          <div class="wc-rest-bar"><div class="wc-rest-fill" style="width:${pct}%"></div></div>
+          <div class="wc-rest-actions">
+            ${t.paused
+              ? '<button type="button" class="wc-rest-btn wc-rest-resume">▶ Devam</button>'
+              : '<button type="button" class="wc-rest-btn wc-rest-pause">⏸ Duraklat</button>'}
+            <button type="button" class="wc-rest-btn wc-rest-skip">⏭ Geç</button>
+            <button type="button" class="wc-rest-btn wc-rest-close" aria-label="Sayacı kapat">✕</button>
+          </div>
+        </div>`;
     },
 
     bindListEvents() {
+      $$('.wc-rest-pause').forEach(b => b.addEventListener('click', (e) => { e.stopPropagation(); this.pauseRestTimer(); }));
+      $$('.wc-rest-resume').forEach(b => b.addEventListener('click', (e) => { e.stopPropagation(); this.resumeRestTimer(); }));
+      $$('.wc-rest-skip').forEach(b => b.addEventListener('click', (e) => { e.stopPropagation(); this.skipRestTimer(); }));
+      $$('.wc-rest-close').forEach(b => b.addEventListener('click', (e) => { e.stopPropagation(); this.cancelRestTimer(false); }));
+
       // Bütün hareketi tek tıkla bitirme / geri alma (Master Checkbox)
       $$('.workout-check-btn').forEach(btn => {
         btn.addEventListener('click', async (e) => {
