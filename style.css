@@ -9262,3 +9262,287 @@ button.badge-card { font: inherit; color: inherit; width: 100%; }
 .profile-photo-box:hover {
   box-shadow: none;
 }
+
+/* ═══════════ SPOR SAYFASI — SADE DÜZEN ═══════════ */
+#page-schedule .workout-header { margin-bottom: 1rem; }
+#page-schedule .workout-subtitle { font-size: 0.86rem; color: var(--text-muted); margin-top: 0.2rem; }
+#page-schedule .workout-header-btns { display: flex; gap: 0.5rem; flex-wrap: nowrap; }
+
+/* Bugün kartı */
+.workout-today-card {
+  padding: 0.9rem 1rem;
+  margin-bottom: 1rem;
+  border-radius: var(--radius);
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+.wt-date-row { display: flex; align-items: center; gap: 0.5rem; }
+.wt-nav-btn {
+  width: 38px; height: 38px; flex-shrink: 0;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--bg-box);
+  color: var(--text-primary);
+  font-size: 1.4rem; line-height: 1; font-weight: 700;
+  cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.wt-nav-btn:hover { border-color: var(--accent-turquoise); color: var(--accent-turquoise); }
+.wt-date-center {
+  position: relative;
+  flex: 1; min-width: 0;
+  display: flex; align-items: center; justify-content: center; gap: 0.45rem;
+  font-weight: 800; font-size: 0.98rem; color: var(--text-primary);
+  cursor: pointer; text-align: center;
+}
+.wt-date-label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* Görünmez tarih seçici: etikete dokununca takvim açılır */
+.wt-date-input {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  opacity: 0; cursor: pointer;
+  border: 0; padding: 0;
+}
+.wt-date-input::-webkit-calendar-picker-indicator { position: absolute; inset: 0; width: 100%; height: 100%; cursor: pointer; }
+.wt-progress-row { display: flex; align-items: center; gap: 0.7rem; }
+.wt-progress-row .workout-progress-track { flex: 1; margin: 0; height: 8px; }
+.wt-pct { font-weight: 800; font-size: 0.9rem; color: var(--accent-turquoise-dark); min-width: 2.6rem; text-align: right; }
+.wt-meta-row {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 0.5rem; flex-wrap: wrap;
+  font-size: 0.84rem; color: var(--text-secondary);
+}
+.wt-meta-row strong { color: var(--text-primary); }
+.wt-streak { font-weight: 700; color: var(--accent-orange); white-space: nowrap; }
+.wt-desc { margin: 0; font-size: 0.84rem; color: var(--text-secondary); }
+.wt-today-link {
+  align-self: center;
+  border: 0; background: none;
+  color: var(--accent-turquoise-dark);
+  font-weight: 700; font-size: 0.84rem;
+  cursor: pointer; padding: 0.2rem 0.4rem;
+}
+.wt-today-link.hidden, .wt-desc.hidden { display: none; }
+
+/* Kas grubu çipleri: daha küçük, sayı rozet şeklinde */
+#page-schedule .workout-filter-bar { margin-bottom: 0.9rem; scrollbar-width: none; }
+#page-schedule .workout-filter-bar::-webkit-scrollbar { display: none; }
+#page-schedule .workout-cat-btn { padding: 0.42rem 0.8rem; font-size: 0.82rem; }
+#page-schedule .workout-cat-btn.active { transform: none; box-shadow: 0 3px 10px var(--accent-orange-glow); }
+.wcat-n {
+  font-size: 0.7rem; font-weight: 800;
+  min-width: 1.25rem; padding: 0 0.3rem;
+  border-radius: 9999px;
+  background: var(--bg-box); color: var(--text-muted);
+  text-align: center;
+}
+.workout-cat-btn.active .wcat-n { background: rgba(255, 255, 255, 0.25); color: #fff; }
+
+/* Hareket kartı: tek satır başlık + set satırı */
+#page-schedule .workout-exercise-grid { grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 0.75rem; }
+#page-schedule .workout-card {
+  display: block;
+  padding: 0.8rem 0.9rem;
+  border-left-width: 4px;
+}
+#page-schedule .workout-card:hover { transform: none; }
+.wc-head { display: flex; align-items: center; gap: 0.7rem; }
+#page-schedule .workout-check-btn { width: 34px; height: 34px; font-size: 1rem; align-self: center; }
+.wc-title-box { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.1rem; }
+#page-schedule .workout-card-title { font-size: 0.95rem; }
+.wc-specs { font-size: 0.78rem; color: var(--text-muted); line-height: 1.35; }
+.wc-prev { color: var(--accent-orange); font-weight: 600; }
+.wc-cat { font-weight: 700; color: var(--text-secondary); }
+#page-schedule .workout-card-actions { opacity: 0.55; gap: 0.15rem; flex-shrink: 0; }
+#page-schedule .workout-card:hover .workout-card-actions,
+#page-schedule .workout-card-actions:focus-within { opacity: 1; }
+#page-schedule .workout-action-btn { border: 0; background: transparent; padding: 0.3rem; font-size: 0.85rem; }
+#page-schedule .workout-sets-pills {
+  display: flex; align-items: center; flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.65rem;
+  padding-left: calc(34px + 0.7rem); /* onay dairesinin hizası */
+}
+#page-schedule .workout-set-btn {
+  padding: 0.38rem 0.8rem;
+  font-size: 0.8rem;
+  border-radius: 9999px;
+  min-height: 34px;
+}
+#page-schedule .workout-set-btn:hover { transform: none; }
+.wc-set-count { margin-left: auto; font-size: 0.75rem; font-weight: 700; color: var(--text-muted); }
+#page-schedule .workout-card.is-completed .wc-specs { color: #15803D; }
+
+/* Ek araçlar (VKİ) — katlanır */
+.workout-tools {
+  margin-top: 1.25rem;
+  padding: 0;
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.workout-tools-summary {
+  list-style: none;
+  display: flex; align-items: center; gap: 0.6rem;
+  padding: 0.85rem 1rem;
+  cursor: pointer;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.workout-tools-summary::-webkit-details-marker { display: none; }
+.wtools-title { white-space: nowrap; }
+.wtools-sub { flex: 1; text-align: right; font-size: 0.84rem; font-weight: 600; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.wtools-chevron { transition: transform 0.2s ease; color: var(--text-muted); }
+.workout-tools[open] .wtools-chevron { transform: rotate(180deg); }
+.workout-tools .vki-body { padding: 0 1rem 1rem; }
+.workout-tools .vki-inputs-row { display: grid; grid-template-columns: 1fr 1fr auto; gap: 0.75rem; align-items: end; }
+.workout-tools .vki-result-display { display: flex; flex-direction: column; align-items: center; gap: 0.2rem; padding: 0.45rem 0.8rem; }
+.workout-tools .vki-score-num { font-size: 1.5rem; }
+.workout-tools .vki-segment span { font-size: 0.68rem; white-space: nowrap; }
+.workout-footer-actions { display: flex; justify-content: center; margin-top: 0.75rem; }
+.workout-footer-actions .btn { color: var(--text-muted); font-size: 0.8rem; }
+
+/* Dinlenme sayacı: daha sıkı, mobilde üstte sabit */
+#page-schedule .workout-rest-card { padding: 0.75rem 1rem; margin-bottom: 1rem; }
+#page-schedule .workout-rest-content { gap: 0.75rem; }
+#page-schedule .workout-rest-indicator { min-width: 0; flex: 1; gap: 0.6rem; }
+#page-schedule .workout-rest-icon { font-size: 1.5rem; }
+#page-schedule .workout-rest-time { font-size: 1.7rem; }
+
+/* Koyu tema */
+[data-theme="dark"] #page-schedule .workout-card.is-completed { background: rgba(16, 185, 129, 0.10); border-color: rgba(16, 185, 129, 0.35); }
+[data-theme="dark"] #page-schedule .workout-card.is-completed .workout-card-title { color: #94A3B8; }
+[data-theme="dark"] #page-schedule .workout-card.is-completed .wc-specs { color: #34D399; }
+[data-theme="dark"] #page-schedule .workout-check-btn:not(:hover) { background: transparent; border-color: #334155; }
+[data-theme="dark"] #page-schedule .workout-card.is-completed .workout-check-btn { background: #10B981; border-color: #10B981; }
+[data-theme="dark"] #page-schedule .workout-set-btn { background: rgba(255, 255, 255, 0.04); border-color: #334155; color: #CBD5E1; }
+[data-theme="dark"] #page-schedule .workout-set-btn.is-set-done { background: rgba(16, 185, 129, 0.15); border-color: #10B981; color: #6EE7B7; }
+[data-theme="dark"] #page-schedule .workout-set-btn:hover { background: rgba(56, 189, 248, 0.12); border-color: #38BDF8; color: #7DD3FC; }
+[data-theme="dark"] .wt-pct { color: var(--accent-turquoise); }
+
+@media (max-width: 700px) {
+  #page-schedule .workout-header { flex-direction: row; align-items: flex-start; justify-content: space-between; gap: 0.6rem; }
+  #page-schedule .workout-header h2 { font-size: 1.35rem; }
+  #page-schedule .workout-header-btns { width: auto; flex-direction: column; align-items: stretch; gap: 0.35rem; }
+  #page-schedule .workout-header-btns .btn { padding: 0.4rem 0.7rem; font-size: 0.8rem; white-space: nowrap; }
+  #page-schedule .workout-exercise-grid { grid-template-columns: 1fr; }
+  #page-schedule .workout-card { display: block; }
+  #page-schedule .workout-card-actions { opacity: 0.7; }
+  #page-schedule .workout-sets-pills { padding-left: 0; }
+  #page-schedule .workout-rest-card {
+    position: sticky;
+    top: calc(var(--topbar-height, 60px) + 6px);
+    z-index: 30;
+  }
+  #page-schedule .workout-rest-indicator { flex-basis: 100%; }
+  #page-schedule .workout-rest-content { justify-content: space-between; }
+  .workout-tools .vki-inputs-row { grid-template-columns: 1fr 1fr; }
+  .workout-tools .vki-result-display { grid-column: 1 / -1; flex-direction: row; justify-content: center; gap: 0.6rem; }
+}
+
+/* ═══════════ ODAKLANARAK OKUMA — SADE DÜZEN ═══════════ */
+#book-focus-finish-modal { z-index: 10050; } /* odak ekranının (9999) üstünde açılsın */
+body.no-scroll-focus { overflow: hidden; }
+.book-focus-overlay { padding: max(1rem, env(safe-area-inset-top)) 1rem max(1rem, env(safe-area-inset-bottom)); }
+.book-focus-container {
+  max-width: 440px;
+  display: flex; flex-direction: column; align-items: center;
+  gap: 1.1rem;
+  color: #fff;
+  text-align: center;
+  margin: auto;
+}
+.book-focus-topbar { width: 100%; margin: 0; align-items: flex-start; gap: 0.75rem; }
+.bf-book { display: flex; align-items: center; gap: 0.8rem; min-width: 0; text-align: left; }
+.bf-cover {
+  width: 48px; height: 68px; flex-shrink: 0;
+  border-radius: 6px;
+  background: linear-gradient(135deg, #0284C7, #0f172a);
+  background-size: cover; background-position: center;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.5rem;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
+}
+.bf-meta { min-width: 0; display: flex; flex-direction: column; gap: 0.1rem; }
+.book-focus-container .book-focus-title {
+  font-size: 1.1rem; margin: 0; color: #fff;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.book-focus-container .book-focus-author { margin: 0; font-size: 0.82rem; color: #94A3B8; }
+.bf-pages { font-size: 0.78rem; font-weight: 700; color: #7DD3FC; }
+.bf-icon-btn {
+  width: 40px; height: 40px; flex-shrink: 0;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff; font-size: 1rem; cursor: pointer;
+}
+.bf-icon-btn:hover { background: rgba(239, 68, 68, 0.3); border-color: #EF4444; }
+
+/* Süre seçimi: tek satır, eşit çipler */
+.book-focus-container .book-focus-presets {
+  margin: 0;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0.4rem;
+}
+.book-focus-container .book-focus-presets.hidden { display: none; }
+.book-focus-container .focus-preset-btn {
+  min-width: 44px; height: 36px;
+  padding: 0 0.6rem;
+  font-size: 0.9rem;
+}
+.bf-preset-unit { font-size: 0.85rem; color: #94A3B8; font-weight: 700; margin-left: 0.15rem; }
+
+/* Halka: ekrana göre ölçeklenir */
+.book-focus-container .book-focus-ring-wrap {
+  width: min(68vw, 260px);
+  height: min(68vw, 260px);
+  margin: 0;
+}
+.book-focus-container .book-focus-timer-display { font-size: clamp(2.6rem, 13vw, 3.4rem); line-height: 1; }
+.book-focus-container .book-focus-status-text { margin-top: 0.4rem; font-size: 0.82rem; }
+.bf-end-time { margin-top: 0.2rem; font-size: 0.76rem; color: #7DD3FC; font-weight: 700; min-height: 1em; }
+.book-focus-container[data-state="paused"] .book-focus-circle-progress { stroke: #F59E0B; }
+.book-focus-container[data-state="paused"] .book-focus-timer-display { opacity: 0.75; }
+
+/* Ana düğme */
+.bf-main-ctrl { width: 100%; display: flex; justify-content: center; }
+.bf-main-btn {
+  width: min(100%, 300px);
+  height: 56px;
+  border: 0; border-radius: 9999px;
+  background: linear-gradient(135deg, #F97316, #FB923C);
+  color: #fff; font-size: 1.1rem; font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 10px 24px rgba(249, 115, 22, 0.35);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.bf-main-btn:active { transform: scale(0.97); }
+.bf-main-btn.is-pause {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow: none;
+}
+.bf-main-btn.hidden { display: none; }
+
+/* İkincil düğmeler: aynı boy, tek satır */
+.bf-sub-ctrl { width: 100%; display: flex; justify-content: center; gap: 0.5rem; flex-wrap: wrap; }
+.bf-sub-btn {
+  height: 42px; padding: 0 0.9rem;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.06);
+  color: #E2E8F0; font-weight: 700; font-size: 0.88rem;
+  cursor: pointer;
+}
+.bf-sub-btn:hover { background: rgba(255, 255, 255, 0.14); }
+.bf-sub-btn.is-finish { background: rgba(16, 185, 129, 0.18); border-color: rgba(16, 185, 129, 0.55); color: #6EE7B7; }
+.bf-sub-btn.hidden { display: none; }
+.book-focus-container .book-focus-quote { margin: 0.25rem 0 0; font-size: 0.8rem; opacity: 0.8; }
+
+@media (max-height: 640px) {
+  .book-focus-container { gap: 0.75rem; }
+  .book-focus-container .book-focus-ring-wrap { width: min(56vw, 200px); height: min(56vw, 200px); }
+  .book-focus-container .book-focus-quote { display: none; }
+}

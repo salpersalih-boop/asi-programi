@@ -1717,7 +1717,7 @@
 
   const Workout = {
     selectedDate: formatDateShort(new Date()),
-    selectedCategory: 'gogus',
+    selectedCategory: (() => { try { return localStorage.getItem('planova_workout_cat') || 'gogus'; } catch (_) { return 'gogus'; } })(),
     _exercises: [],
     _logs: [],
     _history: [],
@@ -1792,13 +1792,18 @@
       }
 
       // Kas Grubu Filtre Butonları
-      $$('.workout-cat-btn').forEach(btn => {
+      const catBtns = $$('.workout-cat-btn');
+      if (!catBtns.some(b => b.dataset.cat === this.selectedCategory)) this.selectedCategory = 'gogus';
+      catBtns.forEach(b => b.classList.toggle('active', b.dataset.cat === this.selectedCategory));
+      catBtns.forEach(btn => {
         btn.addEventListener('click', (e) => {
           e.preventDefault();
-          $$('.workout-cat-btn').forEach(b => b.classList.remove('active'));
+          catBtns.forEach(b => b.classList.remove('active'));
           btn.classList.add('active');
           this.selectedCategory = btn.dataset.cat || 'all';
+          try { localStorage.setItem('planova_workout_cat', this.selectedCategory); } catch (_) {}
           this.renderListOnly();
+          this.updateProgressUI();
         });
       });
 
@@ -1875,8 +1880,6 @@
       this.updateRestTimerDisplay(duration);
       this.startTimerInterval();
 
-      const timeText = isLast ? '5 Dakika' : '2 Dakika';
-      showToast(`⏱️ ${ex.name} (${setNum}/${totalSets}. Set): ${timeText} dinlenme sayacı başladı!`, 'info');
     },
 
     startTimerInterval() {
@@ -1918,7 +1921,7 @@
       const s = this.timerState.setNum;
       const total = this.timerState.totalSets;
 
-      if (titleEl) titleEl.textContent = isLast ? '🔥 Son Set Dinlenmesi' : '⏱️ Dinlenme Süresi';
+      if (titleEl) titleEl.textContent = isLast ? 'Son set dinlenmesi' : 'Dinlenme';
       if (tagEl) {
         tagEl.textContent = isLast ? '5 dk' : '2 dk';
         tagEl.className = `badge ${isLast ? 'badge-warning' : 'badge-info'}`;
@@ -2092,7 +2095,11 @@
 
       const dateLabel = $('#workout-date-label');
       if (dateLabel) {
-        dateLabel.textContent = formatDate(d);
+        // Bu yılın tarihlerinde yılı yazma: "29 Ekim, Perşembe" telefona sığsın
+        const sameYear = d.getFullYear() === new Date().getFullYear();
+        dateLabel.textContent = sameYear
+          ? d.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', weekday: 'long' })
+          : formatDate(d);
       }
 
       const todayBadge = $('#workout-today-badge');
@@ -2100,19 +2107,23 @@
         if (isToday) todayBadge.classList.remove('hidden');
         else todayBadge.classList.add('hidden');
       }
+      $('#workout-today-btn')?.classList.toggle('hidden', isToday);
 
       const dateInput = $('#workout-date-input');
       if (dateInput) dateInput.value = this.selectedDate;
     },
 
     updateProgressUI() {
-      const total = this._exercises.length;
-      const completedIds = new Set(
-        this._logs.filter(l => l.completed).map(l => l.exerciseId)
-      );
-      const done = this._exercises.filter(e => completedIds.has(e.id)).length;
+      // İlerleme seçili kas grubuna göre (Göğüs günü → 4 göğüs hareketinden kaçı bitti)
+      const CAT_NAMES = { all: 'Tümü', gogus: 'Göğüs', sirt: 'Sırt', omuz: 'Omuz', biceps: 'Biceps', triceps: 'Triceps', karin: 'Karın', bacak: 'Bacak', onkol: 'Ön Kol', kardiyo: 'Kardiyo' };
+      const cat = this.selectedCategory || 'all';
+      const scope = cat === 'all' ? this._exercises : this._exercises.filter(e => e.category === cat);
+      const completedIds = new Set(this._logs.filter(l => l.completed).map(l => l.exerciseId));
+      const total = scope.length;
+      const done = scope.filter(e => completedIds.has(e.id)).length;
       const remaining = Math.max(0, total - done);
       const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+      const setsToday = this._logs.reduce((n, l) => n + (Array.isArray(l.completedSets) ? l.completedSets.length : (l.completed ? (l.sets || 0) : 0)), 0);
 
       const pctBadge = $('#workout-pct-badge');
       if (pctBadge) pctBadge.textContent = `%${pct}`;
@@ -2129,15 +2140,22 @@
       const remainEl = $('#workout-remaining-count');
       if (remainEl) remainEl.textContent = remaining;
 
+      const scopeEl = $('#workout-scope-label');
+      if (scopeEl) scopeEl.textContent = cat === 'all' ? 'hareket' : `${CAT_NAMES[cat] || ''} hareketi`;
+
+      const setsEl = $('#workout-sets-today');
+      if (setsEl) setsEl.textContent = setsToday;
+
       const descEl = $('#workout-progress-status-desc');
       if (descEl) {
         if (pct === 100 && total > 0) {
-          descEl.textContent = '🔥 Harika! Bugünkü antrenmanı eksiksiz tamamladın!';
+          descEl.textContent = cat === 'all' ? '🔥 Harika! Tüm hareketleri bitirdin!' : `🔥 Harika! ${CAT_NAMES[cat]} antrenmanı tamam.`;
         } else if (done > 0) {
-          descEl.textContent = `💪 Harika gidiyorsun! ${done} hareket tamamlandı, ${remaining} kaldı.`;
+          descEl.textContent = `💪 Harika gidiyorsun, ${remaining} hareket kaldı.`;
         } else {
-          descEl.textContent = 'Antrenmana başlamak için setleri veya hareketleri tamamlandıkça tikleyin.';
+          descEl.textContent = '';
         }
+        descEl.classList.toggle('hidden', !descEl.textContent);
       }
     },
 
@@ -2217,51 +2235,29 @@
             this.timerState.exerciseId === ex.id &&
             this.timerState.setNum === sNum;
 
-          return `
-            <button type="button" 
-                    class="workout-set-btn ${isDone ? 'is-set-done' : ''} ${isLast ? 'is-last-set' : ''} ${isTimerActive ? 'active-timer' : ''}" 
-                    data-ex-id="${ex.id}" 
-                    data-set-num="${sNum}" 
-                    data-total-sets="${totalSets}"
-                    title="${isDone ? `${sNum}. Seti İptal Et` : `${sNum}. Seti Tamamla (${isLast ? '5 dk' : '2 dk'} dinlenme)`}">
-              <span class="set-dot">${isDone ? '✓' : sNum}</span>
-              <span>Set ${sNum}${isLast ? ' ★' : ''}</span>
-            </button>
-          `;
+          return `<button type="button"
+                    class="workout-set-btn ${isDone ? 'is-set-done' : ''} ${isLast ? 'is-last-set' : ''} ${isTimerActive ? 'active-timer' : ''}"
+                    data-ex-id="${ex.id}" data-set-num="${sNum}" data-total-sets="${totalSets}"
+                    title="${isDone ? `${sNum}. seti geri al` : `${sNum}. seti tamamla (${isLast ? '5 dk' : '2 dk'} dinlenme)`}">${isDone ? '✓ ' : ''}Set ${sNum}</button>`;
         }).join('');
+
+        const weightText = weight && weight !== 'Vücut Ağırlığı' ? esc(weight) : 'Vücut ağırlığı';
+        const showTag = this.selectedCategory === 'all';
 
         return `
           <div class="workout-card ${isCompleted ? 'is-completed' : ''}" data-id="${ex.id}" data-cat="${ex.category}">
-            <button type="button" class="workout-check-btn" data-id="${ex.id}" title="${isCompleted ? 'Tamamlanmadı yap' : 'Tüm setleri tamamlandı olarak işaretle'}">
-              ✓
-            </button>
-            <div class="workout-card-body">
-              <div class="workout-card-top-row">
+            <div class="wc-head">
+              <button type="button" class="workout-check-btn" data-id="${ex.id}" title="${isCompleted ? 'Tamamlanmadı yap' : 'Tüm setleri bitti olarak işaretle'}" aria-label="Hareketi tamamla">✓</button>
+              <div class="wc-title-box">
                 <span class="workout-card-title">${esc(ex.name)}</span>
-                <span class="workout-muscle-tag cat-${ex.category}">${catNames[ex.category] || ex.category}</span>
+                <span class="wc-specs">${totalSets} set × ${reps} tekrar · ${weightText}${prevWeight && prevWeight !== weight ? ` <span class="wc-prev" title="Önceki antrenmandaki ağırlık">(önceki ${esc(prevWeight)})</span>` : ''}${showTag ? ` · <span class="wc-cat cat-${ex.category}">${catNames[ex.category] || ex.category}</span>` : ''}</span>
               </div>
-              <div class="workout-specs-wrap">
-                <span class="workout-spec-badge">${totalSets} Set</span>
-                <span class="workout-spec-badge">${reps} Tekrar</span>
-                <span class="workout-spec-badge weight-badge">⚖️ ${esc(weight)}</span>
-                ${prevWeight ? `<span class="prev-weight-tag" title="Önceki antrenmanda kullanılan ağırlık">⏱️ Önceki: ${esc(prevWeight)}</span>` : ''}
-              </div>
-
-              <!-- Set Bazlı Tamamlama ve Sayaç Butonları -->
-              <div class="workout-card-sets-wrap">
-                <div class="workout-sets-header">
-                  <span><strong>${completedSets.length}/${totalSets} Set</strong> tamamlandı</span>
-                  ${isCompleted ? '<span class="text-success" style="font-weight:700;">✅ Hareket Bitti</span>' : ''}
-                </div>
-                <div class="workout-sets-pills">
-                  ${setPills}
-                </div>
+              <div class="workout-card-actions">
+                <button type="button" class="workout-action-btn edit-btn" data-id="${ex.id}" title="Düzenle" aria-label="Düzenle">✏️</button>
+                <button type="button" class="workout-action-btn del-btn" data-id="${ex.id}" title="Sil" aria-label="Sil">🗑️</button>
               </div>
             </div>
-            <div class="workout-card-actions">
-              <button type="button" class="workout-action-btn edit-btn" data-id="${ex.id}" title="Düzenle">✏️</button>
-              <button type="button" class="workout-action-btn del-btn" data-id="${ex.id}" title="Sil">🗑️</button>
-            </div>
+            <div class="workout-sets-pills">${setPills}<span class="wc-set-count">${completedSets.length}/${totalSets}</span></div>
           </div>
         `;
       }).join('');
@@ -7054,7 +7050,7 @@
       set('#streak-workout-count', `${stats.workoutStreak} Gün`);
       set('#streak-prayer-count', `${stats.prayerStreak} Gün`);
       set('#streak-general-count', `${stats.activeStreak} Gün`);
-      set('#workout-streak-label', `${stats.workoutStreak} Gün Spor Serisi`);
+      set('#workout-streak-label', `${stats.workoutStreak} gün seri`);
       set('#books-streak-label', `${stats.readingStreak} Gün Okuma Serisi`);
       set('#prayer-page-streak-badge', `🕊️ ${stats.prayerStreak} Gün İbadet Serisi`);
     },
@@ -7384,16 +7380,16 @@
 
       if (bmi < 18.5) {
         badgeClass = 'badge-info';
-        categoryText = 'Mavi: Zayıf (< 18.5)';
+        categoryText = 'Zayıf';
       } else if (bmi <= 24.9) {
         badgeClass = 'badge-success';
-        categoryText = 'Yeşil: İdeal Kilo (18.5 - 24.9)';
+        categoryText = 'İdeal';
       } else if (bmi <= 29.9) {
         badgeClass = 'badge-warning';
-        categoryText = 'Sarı: Fazla Kilolu (25 - 29.9)';
+        categoryText = 'Fazla kilolu';
       } else {
         badgeClass = 'badge-danger';
-        categoryText = 'Kırmızı: Obez (≥ 30)';
+        categoryText = 'Obez';
       }
 
       const catBadge = $('#vki-category-badge');
@@ -7401,6 +7397,8 @@
         catBadge.textContent = categoryText;
         catBadge.className = `badge ${badgeClass}`;
       }
+      const summaryEl = $('#vki-summary');
+      if (summaryEl) summaryEl.textContent = `VKİ ${scoreFormatted} · ${categoryText}`;
 
       // Renkli Görsel Bar Üzerindeki İbre (Needle) Konumu
       // Ölçek: BMI 15 = %0, BMI 35 = %100
@@ -7435,7 +7433,7 @@
         } else {
           diffNote = ' • Harika, sağlıklı ve dengeli bir formdasınız! ✨';
         }
-        adviceEl.innerHTML = `Boyunuza (${this.height} cm) göre ideal kilo aralığınız: <strong>${minIdealKg} - ${maxIdealKg} kg</strong>${diffNote}`;
+        adviceEl.innerHTML = `${this.height} cm boy için ideal kilo aralığı: <strong>${minIdealKg} – ${maxIdealKg} kg</strong>${diffNote}`;
       }
     }
   };
@@ -7445,6 +7443,7 @@
   // ═══════════════════════════════════════════════════════
 
   const BookFocusManager = {
+    STATE_KEY: 'planova_book_focus', // yalnızca bu cihazda (buluta gitmez)
     active: false,
     bookId: null,
     book: null,
@@ -7452,50 +7451,106 @@
     durationMinutes: 30,
     totalSeconds: 30 * 60,
     remainingSeconds: 30 * 60,
+    endAt: 0,          // çalışırken bitiş zamanı (ms) — ekran kilitlense de doğru sayar
     timerId: null,
     paused: false,
     elapsedSeconds: 0,
+    wakeLock: null,
+    _origTitle: '',
 
     init() {
-      // "Okumaya Başla" butonu
       $('#start-book-focus-btn')?.addEventListener('click', () => this.startFocusFlow());
+      $('#book-focus-exit-btn')?.addEventListener('click', () => this.requestExit());
 
-      // Kapatma butonu
-      $('#book-focus-exit-btn')?.addEventListener('click', () => this.exitFocusMode());
-
-      // Süre preset butonları
       $$('.focus-preset-btn').forEach(btn => {
         btn.addEventListener('click', () => {
-          if (this.active && !this.paused && this.elapsedSeconds > 0) {
-            if (!confirm('Süreyi değiştirmek sayacı sıfırlayacaktır. Devam edilsin mi?')) return;
-          }
-          $$('.focus-preset-btn').forEach(b => b.classList.remove('active'));
-          btn.classList.add('active');
-          const mins = parseInt(btn.dataset.minutes, 10) || 30;
-          this.setDuration(mins);
+          $$('.focus-preset-btn').forEach(b => b.classList.toggle('active', b === btn));
+          this.setDuration(parseInt(btn.dataset.minutes, 10) || 30);
         });
       });
 
-      // Kontroller
       $('#book-focus-start-btn')?.addEventListener('click', () => this.startTimer());
       $('#book-focus-pause-btn')?.addEventListener('click', () => this.pauseTimer());
       $('#book-focus-resume-btn')?.addEventListener('click', () => this.resumeTimer());
       $('#book-focus-reset-btn')?.addEventListener('click', () => this.resetTimer());
+      $('#book-focus-add5-btn')?.addEventListener('click', () => this.addMinutes(5));
       $('#book-focus-finish-early-btn')?.addEventListener('click', () => this.triggerFinishModal());
 
-      // "Şu an kaçıncı sayfadasın?" form submit
       $('#book-focus-finish-form')?.addEventListener('submit', (e) => {
         e.preventDefault();
         this.saveFinishedSession();
       });
 
-      // Stepper butonları
       $('#focus-step-minus-5')?.addEventListener('click', () => this.stepPage(-5));
       $('#focus-step-minus-1')?.addEventListener('click', () => this.stepPage(-1));
       $('#focus-step-plus-1')?.addEventListener('click', () => this.stepPage(1));
       $('#focus-step-plus-5')?.addEventListener('click', () => this.stepPage(5));
-
       $('#focus-current-page-input')?.addEventListener('input', () => this.updateLiveCalculation());
+
+      // Bitiş penceresi kapatılırsa (✕) sayaç kaldığı yerden duraklatılmış olarak beklesin
+      $('#book-focus-finish-modal [data-modal="book-focus-finish-modal"]')?.addEventListener('click', () => {
+        if (this.active) this.setUiState(this.elapsedSeconds > 0 ? 'paused' : 'ready');
+      });
+
+      // Sayfa kapanırken / arka plana geçerken son durumu kaydet
+      window.addEventListener('pagehide', () => { if (this.active) this.saveState(); });
+
+      // Uygulamaya geri dönünce: süreyi yenile, ekran kilidini tekrar iste
+      document.addEventListener('visibilitychange', () => {
+        if (!this.active) return;
+        if (document.visibilityState === 'hidden') { this.saveState(); return; }
+        if (this.timerId) { this.tick(); this.requestWakeLock(); }
+      });
+
+      this.restoreState();
+    },
+
+    // ─── Kalıcı durum (sayfa yenilense de oturum kaybolmasın) ───
+    saveState() {
+      try {
+        localStorage.setItem(this.STATE_KEY, JSON.stringify({
+          bookId: this.bookId, startPage: this.startPage,
+          durationMinutes: this.durationMinutes, totalSeconds: this.totalSeconds,
+          remainingSeconds: this.remainingSeconds, elapsedSeconds: this.elapsedSeconds,
+          endAt: this.timerId ? this.endAt : 0, running: !!this.timerId
+        }));
+      } catch (_) {}
+    },
+    clearState() { try { localStorage.removeItem(this.STATE_KEY); } catch (_) {} },
+
+    restoreState() {
+      let st = null;
+      try { st = JSON.parse(localStorage.getItem(this.STATE_KEY) || 'null'); } catch (_) {}
+      if (!st || !st.bookId) return;
+      const book = (Storage.get('asi_books', DEFAULT_BOOKS) || []).find(b => b.id === st.bookId);
+      if (!book) { this.clearState(); return; }
+
+      this.openFocusMode(book, true);
+      this.startPage = st.startPage ?? this.startPage;
+      this.durationMinutes = st.durationMinutes || 30;
+      this.totalSeconds = st.totalSeconds || this.durationMinutes * 60;
+      this.elapsedSeconds = st.elapsedSeconds || 0;
+      this.remainingSeconds = st.remainingSeconds ?? this.totalSeconds;
+      this.fillBookInfo();
+
+      if (st.running && st.endAt) {
+        const left = Math.ceil((st.endAt - Date.now()) / 1000);
+        if (left <= 0) {
+          // Süre uygulama kapalıyken doldu
+          this.elapsedSeconds = this.totalSeconds;
+          this.remainingSeconds = 0;
+          this.updateDisplay();
+          this.setUiState('paused');
+          this.triggerFinishModal();
+          return;
+        }
+        this.endAt = st.endAt;
+        this.runInterval();
+        this.setUiState('running');
+      } else {
+        this.setUiState(this.elapsedSeconds > 0 ? 'paused' : 'ready');
+      }
+      this.updateDisplay();
     },
 
     async startFocusFlow(bookId = null) {
@@ -7505,19 +7560,12 @@
         Books.openBookModal();
         return;
       }
-
-      let targetBook = null;
-      if (bookId) {
-        targetBook = books.find(b => b.id === bookId);
-      }
-      if (!targetBook) {
-        targetBook = books.find(b => b.status === 'reading') || books[0];
-      }
-
+      let targetBook = bookId ? books.find(b => b.id === bookId) : null;
+      if (!targetBook) targetBook = books.find(b => b.status === 'reading') || books[0];
       this.openFocusMode(targetBook);
     },
 
-    openFocusMode(book) {
+    openFocusMode(book, silent = false) {
       this.book = book;
       this.bookId = book.id;
       this.startPage = book.currentPage || 0;
@@ -7525,33 +7573,58 @@
       this.totalSeconds = 30 * 60;
       this.remainingSeconds = this.totalSeconds;
       this.elapsedSeconds = 0;
+      this.endAt = 0;
       this.active = true;
       this.paused = false;
+      if (this.timerId) { clearInterval(this.timerId); this.timerId = null; }
+      this._origTitle = this._origTitle || document.title;
 
-      // UI Doldur
+      this.fillBookInfo();
+      $$('.focus-preset-btn').forEach(b => b.classList.toggle('active', b.dataset.minutes === '30'));
+      this.updateDisplay();
+      $('#book-focus-overlay')?.classList.remove('hidden');
+      document.body.classList.add('no-scroll-focus');
+      this.setUiState('ready');
+      if (!silent) this.saveState();
+    },
+
+    fillBookInfo() {
+      const book = this.book;
+      if (!book) return;
       $('#book-focus-title').textContent = book.title;
       $('#book-focus-author').textContent = book.author || 'Belirtilmemiş Yazar';
-      $('#book-focus-current-page-tag').textContent = `Başlangıç: Sayfa ${this.startPage}`;
-      $('#book-focus-total-pages-tag').textContent = `Toplam ${book.totalPages} sayfa`;
+      const pageTag = $('#book-focus-current-page-tag');
+      if (pageTag) pageTag.textContent = `Sayfa ${this.startPage} / ${book.totalPages || '?'}`;
+      const cover = $('#book-focus-cover');
+      if (cover) {
+        if (book.coverImage) {
+          cover.textContent = '';
+          cover.style.backgroundImage = `url('${book.coverImage}')`;
+          cover.classList.add('has-img');
+        } else {
+          cover.textContent = '📚';
+          cover.style.backgroundImage = '';
+          cover.classList.remove('has-img');
+        }
+      }
+    },
 
-      // Süre presetini 30 dk yap
-      $$('.focus-preset-btn').forEach(b => {
-        if (b.dataset.minutes === '30') b.classList.add('active');
-        else b.classList.remove('active');
-      });
-
-      this.updateDisplay();
-
-      // Odak Modu Ekranını Aç
-      const overlay = $('#book-focus-overlay');
-      if (overlay) overlay.classList.remove('hidden');
-
-      $('#book-focus-start-btn')?.classList.remove('hidden');
-      $('#book-focus-pause-btn')?.classList.add('hidden');
-      $('#book-focus-resume-btn')?.classList.add('hidden');
-      $('#book-focus-status-text').textContent = 'Odaklanmaya Hazır';
-
-      showToast(`📖 "${book.title}" için 30 dk Okuma Odak Sayacı başlatıldı!`, 'success');
+    // ready | running | paused — düğmeler, süre seçimi ve durum yazısı tek yerden
+    setUiState(state) {
+      const show = (sel, on) => $(sel)?.classList.toggle('hidden', !on);
+      show('#book-focus-start-btn', state === 'ready');
+      show('#book-focus-pause-btn', state === 'running');
+      show('#book-focus-resume-btn', state === 'paused');
+      show('#book-focus-presets', state === 'ready');
+      show('#book-focus-reset-btn', state !== 'ready');
+      show('#book-focus-add5-btn', state !== 'ready');
+      show('#book-focus-finish-early-btn', state !== 'ready');
+      $('#book-focus-container')?.setAttribute('data-state', state);
+      this.paused = state === 'paused';
+      const status = $('#book-focus-status-text');
+      if (status) status.textContent = state === 'running' ? 'Okuma devam ediyor' : state === 'paused' ? '⏸ Duraklatıldı' : 'Süreyi seç ve başla';
+      this.updateEndTime();
+      this.updateTitle();
     },
 
     setDuration(minutes) {
@@ -7559,97 +7632,145 @@
       this.totalSeconds = minutes * 60;
       this.remainingSeconds = this.totalSeconds;
       this.elapsedSeconds = 0;
-      if (this.timerId) {
-        clearInterval(this.timerId);
-        this.timerId = null;
-      }
-      this.paused = false;
-      $('#book-focus-start-btn')?.classList.remove('hidden');
-      $('#book-focus-pause-btn')?.classList.add('hidden');
-      $('#book-focus-resume-btn')?.classList.add('hidden');
-      $('#book-focus-status-text').textContent = 'Odaklanmaya Hazır';
+      if (this.timerId) { clearInterval(this.timerId); this.timerId = null; }
+      this.setUiState('ready');
       this.updateDisplay();
+      this.saveState();
     },
 
     startTimer() {
+      this.endAt = Date.now() + this.remainingSeconds * 1000;
+      this.runInterval();
+      this.setUiState('running');
+      this.requestWakeLock();
+      this.saveState();
+    },
+
+    runInterval() {
       if (this.timerId) clearInterval(this.timerId);
-      this.paused = false;
+      this.timerId = setInterval(() => this.tick(), 500);
+    },
 
-      $('#book-focus-start-btn')?.classList.add('hidden');
-      $('#book-focus-pause-btn')?.classList.remove('hidden');
-      $('#book-focus-resume-btn')?.classList.add('hidden');
-      $('#book-focus-status-text').textContent = '⏱️ Okuma Devam Ediyor...';
-
-      this.timerId = setInterval(() => {
-        if (this.remainingSeconds > 0) {
-          this.remainingSeconds--;
-          this.elapsedSeconds++;
-          this.updateDisplay();
-        } else {
-          this.completeTimer();
-        }
-      }, 1000);
+    tick() {
+      const left = Math.max(0, Math.ceil((this.endAt - Date.now()) / 1000));
+      if (left !== this.remainingSeconds) {
+        this.elapsedSeconds += this.remainingSeconds - left;
+        this.remainingSeconds = left;
+        this.updateDisplay();
+        this.updateTitle();
+        if (left % 15 === 0) this.saveState();
+      }
+      if (left <= 0) this.completeTimer();
     },
 
     pauseTimer() {
       if (!this.timerId) return;
+      this.tick();
       clearInterval(this.timerId);
       this.timerId = null;
-      this.paused = true;
-      $('#book-focus-pause-btn')?.classList.add('hidden');
-      $('#book-focus-resume-btn')?.classList.remove('hidden');
-      $('#book-focus-status-text').textContent = '⏸️ Sayaç Duraklatıldı';
-      showToast('Odaklanma sayacı duraklatıldı', 'info');
+      this.releaseWakeLock();
+      this.setUiState('paused');
+      this.saveState();
     },
 
     resumeTimer() {
       this.startTimer();
-      showToast('Odaklanma sayacı devam ediyor', 'info');
     },
 
     resetTimer() {
       if (this.timerId) clearInterval(this.timerId);
       this.timerId = null;
-      this.remainingSeconds = this.totalSeconds;
+      this.remainingSeconds = this.totalSeconds = this.durationMinutes * 60;
       this.elapsedSeconds = 0;
-      this.paused = false;
-      $('#book-focus-start-btn')?.classList.remove('hidden');
-      $('#book-focus-pause-btn')?.classList.add('hidden');
-      $('#book-focus-resume-btn')?.classList.add('hidden');
-      $('#book-focus-status-text').textContent = 'Odaklanmaya Hazır';
+      this.releaseWakeLock();
+      this.setUiState('ready');
       this.updateDisplay();
+      this.saveState();
+    },
+
+    addMinutes(mins) {
+      const add = mins * 60;
+      this.totalSeconds += add;
+      this.remainingSeconds += add;
+      if (this.timerId) this.endAt += add * 1000;
+      this.updateDisplay();
+      this.updateEndTime();
+      this.saveState();
+      showToast(`+${mins} dk eklendi`, 'info');
     },
 
     completeTimer() {
       if (this.timerId) clearInterval(this.timerId);
       this.timerId = null;
+      this.releaseWakeLock();
       Workout.playChime();
-      showToast('🎉 Tebrikler! Okuma süreniz tamamlandı!', 'success');
+      if (navigator.vibrate) { try { navigator.vibrate([200, 100, 200]); } catch (_) {} }
+      this.setUiState('paused');
+      showToast('🎉 Tebrikler! Okuma süren tamamlandı!', 'success');
       this.triggerFinishModal();
     },
 
     updateDisplay() {
       const m = Math.floor(this.remainingSeconds / 60);
       const s = this.remainingSeconds % 60;
-      const str = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-
       const disp = $('#book-focus-timer-display');
-      if (disp) disp.textContent = str;
-
+      if (disp) disp.textContent = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
       const circle = $('#book-focus-circle-progress');
       if (circle) {
         const circumference = 660;
-        const progress = (this.totalSeconds - this.remainingSeconds) / this.totalSeconds;
-        const offset = circumference * (1 - progress);
-        circle.style.strokeDashoffset = offset;
+        const progress = this.totalSeconds > 0 ? (this.totalSeconds - this.remainingSeconds) / this.totalSeconds : 0;
+        circle.style.strokeDashoffset = circumference * (1 - progress);
       }
+    },
+
+    updateEndTime() {
+      const el = $('#book-focus-end-time');
+      if (!el) return;
+      if (this.timerId && this.endAt) {
+        const d = new Date(this.endAt);
+        el.textContent = `Bitiş ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+      } else if (this.elapsedSeconds >= 60) {
+        el.textContent = `${Math.floor(this.elapsedSeconds / 60)} dk okundu`;
+      } else {
+        el.textContent = '';
+      }
+    },
+
+    // Sekme başlığında kalan süre (başka sekmedeyken de görünsün)
+    updateTitle() {
+      if (!this._origTitle) this._origTitle = document.title;
+      if (this.active && this.timerId) {
+        const m = Math.floor(this.remainingSeconds / 60);
+        const s = this.remainingSeconds % 60;
+        document.title = `📖 ${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')} · ${this.book?.title || 'Okuma'}`;
+      } else {
+        document.title = this._origTitle;
+      }
+    },
+
+    // Okurken telefon ekranı kapanmasın (destekleyen tarayıcılarda)
+    async requestWakeLock() {
+      try {
+        if ('wakeLock' in navigator && !this.wakeLock) {
+          this.wakeLock = await navigator.wakeLock.request('screen');
+          this.wakeLock.addEventListener?.('release', () => { this.wakeLock = null; });
+        }
+      } catch (_) { this.wakeLock = null; }
+    },
+    releaseWakeLock() {
+      try { this.wakeLock?.release(); } catch (_) {}
+      this.wakeLock = null;
     },
 
     triggerFinishModal() {
       if (this.timerId) {
+        this.tick();
         clearInterval(this.timerId);
         this.timerId = null;
+        this.releaseWakeLock();
+        this.setUiState('paused');
       }
+      this.saveState();
 
       const elapsedMins = Math.max(1, Math.round(this.elapsedSeconds / 60));
       $('#focus-finish-duration-text').textContent = `${elapsedMins} dakika`;
@@ -7661,14 +7782,24 @@
         input.max = this.book?.totalPages || 10000;
         input.value = Math.min(this.book?.totalPages || 1000, this.startPage + 10);
       }
-
       const hint = $('#focus-total-pages-hint');
-      if (hint && this.book) {
-        hint.textContent = `"${this.book.title}" toplam sayfa sayısı: ${this.book.totalPages}`;
-      }
+      if (hint && this.book) hint.textContent = `"${this.book.title}" toplam sayfa sayısı: ${this.book.totalPages}`;
 
       this.updateLiveCalculation();
       openModal('book-focus-finish-modal');
+      setTimeout(() => { try { input?.focus(); input?.select(); } catch (_) {} }, 50);
+    },
+
+    // ✕: emek boşa gitmesin — 1 dakikadan uzun okunduysa önce kaydetmeyi öner
+    requestExit() {
+      if (this.elapsedSeconds >= 60) {
+        const mins = Math.round(this.elapsedSeconds / 60);
+        if (confirm(`${mins} dakikalık okuman kaydedilmedi.\n\nKaldığın sayfayı kaydetmek için "Tamam"a, kaydetmeden çıkmak için "İptal"e bas.`)) {
+          this.triggerFinishModal();
+          return;
+        }
+      }
+      this.exitFocusMode();
     },
 
     stepPage(delta) {
@@ -7686,28 +7817,19 @@
       const pagesRead = Math.max(0, curr - this.startPage);
       const elapsedMins = Math.max(1, Math.round(this.elapsedSeconds / 60));
 
-      // Okuma Hızı (Sayfa / Dakika ve Sayfa / Saat)
       const speedPerMin = (pagesRead / elapsedMins).toFixed(2);
       const speedPerHour = Math.round((pagesRead / elapsedMins) * 60);
 
-      // Kalan sayfa ve tahmini bitiş günü
       const totalPages = this.book?.totalPages || 300;
       const remainingPages = Math.max(0, totalPages - curr);
-
-      let estDays = 1;
-      if (pagesRead > 0) {
-        estDays = Math.ceil(remainingPages / Math.max(1, pagesRead));
-      } else {
-        estDays = Math.ceil(remainingPages / 20);
-      }
+      const estDays = pagesRead > 0 ? Math.ceil(remainingPages / Math.max(1, pagesRead)) : Math.ceil(remainingPages / 20);
 
       const estFinishDate = new Date();
       estFinishDate.setDate(estFinishDate.getDate() + estDays);
-      const estDateFormatted = `${formatDate(estFinishDate)} (~${estDays} gün)`;
 
       $('#focus-calc-pages-read').textContent = `+${pagesRead} sayfa`;
       $('#focus-calc-speed').textContent = `${speedPerMin} sf/dk (~${speedPerHour} sf/sa)`;
-      $('#focus-calc-est-date').textContent = remainingPages === 0 ? '🎉 Kitap Bitti!' : estDateFormatted;
+      $('#focus-calc-est-date').textContent = remainingPages === 0 ? '🎉 Kitap Bitti!' : `${formatDate(estFinishDate)} (~${estDays} gün)`;
     },
 
     async saveFinishedSession() {
@@ -7734,7 +7856,7 @@
       await Dashboard.refresh();
       StreakManager.updateStreaksAndBadges();
 
-      showToast(`🏆 Tebrikler! ${pagesRead} sayfa okundu, oturum başarıyla kaydedildi!`, 'success');
+      showToast(`🏆 Tebrikler! ${pagesRead} sayfa okundu, oturum kaydedildi!`, 'success');
     },
 
     exitFocusMode() {
@@ -7742,9 +7864,12 @@
         clearInterval(this.timerId);
         this.timerId = null;
       }
+      this.releaseWakeLock();
       this.active = false;
-      const overlay = $('#book-focus-overlay');
-      if (overlay) overlay.classList.add('hidden');
+      this.clearState();
+      $('#book-focus-overlay')?.classList.add('hidden');
+      document.body.classList.remove('no-scroll-focus');
+      this.updateTitle();
     }
   };
 
