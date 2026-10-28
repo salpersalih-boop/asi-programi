@@ -7,7 +7,7 @@
   <title>Planova ✨ — Kişisel Ajanda</title>
   <link rel="icon" type="image/png" href="planova-icon.png">
   <link rel="apple-touch-icon" href="planova-icon.png">
-  <link rel="stylesheet" href="style.css?v=5.1">
+  <link rel="stylesheet" href="style.css?v=5.2">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -448,108 +448,16 @@
       <section id="page-schedule" class="page">
         <div class="page-header workout-header">
           <div>
-            <h2>🏋️ Spor & Egzersiz Programı</h2>
-            <p class="workout-subtitle">Günlük antrenman hareketlerini takip et, tamamladıklarını tek dokunuşla işaretle.</p>
+            <h2>🏋️ Spor</h2>
+            <p class="workout-subtitle">Seti bitirince numarasına dokun, dinlenme sayacı kendiliğinden başlar.</p>
           </div>
           <div class="workout-header-btns">
-            <button type="button" id="workout-history-btn" class="btn btn-secondary btn-sm" title="Antrenman geçmişi ve kullanılan ağırlıklar">📜 Geçmiş Antrenmanlar</button>
-            <button type="button" id="add-workout-exercise-btn" class="btn btn-primary btn-sm">+ Yeni Hareket Ekle</button>
-            <button type="button" id="reset-workout-exercises-btn" class="btn btn-ghost btn-sm" title="Varsayılan 21 hareketi sıfırla/geri yükle">↺ Varsayılanları Yükle</button>
+            <button type="button" id="add-workout-exercise-btn" class="btn btn-primary btn-sm">+ Hareket</button>
+            <button type="button" id="workout-history-btn" class="btn btn-secondary btn-sm" title="Antrenman geçmişi ve kullanılan ağırlıklar">📜 Geçmiş</button>
           </div>
         </div>
 
-        <!-- 🦍 Spor Rozetleri & Seri Çubuğu -->
-        <div id="workout-badges-bar" class="workout-badges-bar glass-card">
-          <div class="w-badge-left">
-            <span class="w-flame">🔥</span>
-            <div>
-              <strong id="workout-streak-label">0 Gün Spor Serisi</strong>
-              <span class="text-xs text-muted">Düzenli spor yaparak 🔥 (3 gün) ve 🦍 (7 gün) rozetlerini kazanın!</span>
-            </div>
-          </div>
-          <div class="w-badge-pills" id="workout-unlocked-badges">
-            <!-- JS ile dinamik doldurulur -->
-          </div>
-        </div>
-
-        <!-- ⚖️ Vücut Kitle İndeksi (VKİ) ve Gelişim Çubuğu -->
-        <div id="workout-vki-card" class="workout-vki-card glass-card">
-          <div class="vki-header">
-            <div class="vki-title-box">
-              <span class="vki-icon">⚖️</span>
-              <div>
-                <h3 class="vki-title">Vücut Kitle İndeksi (VKİ) & Sağlık Durumu</h3>
-                <span class="vki-sub">Boy ve kilonuzu girin; VKİ oranınız renkli gelişim barı ve ibre ile anında hesaplansın.</span>
-              </div>
-            </div>
-            <div class="vki-badge-box">
-              <span id="vki-category-badge" class="badge badge-success">İdeal Kilo</span>
-            </div>
-          </div>
-
-          <div class="vki-body">
-            <!-- Giriş Alanları -->
-            <div class="vki-inputs-row">
-              <div class="vki-input-group">
-                <label for="vki-height-input">📏 Boyunuz (cm)</label>
-                <div class="vki-input-wrap">
-                  <input type="number" id="vki-height-input" min="100" max="250" step="1" placeholder="175" value="175">
-                  <span class="vki-unit">cm</span>
-                </div>
-              </div>
-              <div class="vki-input-group">
-                <label for="vki-weight-input">⚖️ Kilonuz (kg)</label>
-                <div class="vki-input-wrap">
-                  <input type="number" id="vki-weight-input" min="30" max="300" step="0.1" placeholder="70.0" value="70.0">
-                  <span class="vki-unit">kg</span>
-                </div>
-              </div>
-              <div class="vki-result-display">
-                <span class="vki-result-label">Hesaplanan VKİ</span>
-                <span id="vki-score-num" class="vki-score-num">22.9</span>
-              </div>
-            </div>
-
-            <!-- Renkli Görsel Bar ve İbre (Needle) -->
-            <div class="vki-visual-bar-wrap">
-              <div class="vki-needle-track" id="vki-needle-track">
-                <div class="vki-needle" id="vki-needle" style="left: 39.5%;">
-                  <div class="vki-needle-bubble" id="vki-needle-bubble">22.9</div>
-                  <div class="vki-needle-arrow"></div>
-                </div>
-              </div>
-              <div class="vki-bar">
-                <div class="vki-segment vki-underweight" title="Zayıf (< 18.5)">
-                  <span>Mavi: Zayıf (&lt;18.5)</span>
-                </div>
-                <div class="vki-segment vki-normal" title="İdeal Kilo (18.5 - 24.9)">
-                  <span>Yeşil: İdeal (18.5-24.9)</span>
-                </div>
-                <div class="vki-segment vki-overweight" title="Fazla Kilolu (25.0 - 29.9)">
-                  <span>Sarı: Kilolu (25-29.9)</span>
-                </div>
-                <div class="vki-segment vki-obese" title="Obez (≥ 30.0)">
-                  <span>Kırmızı: Obez (≥30)</span>
-                </div>
-              </div>
-              <div class="vki-bar-scale-labels">
-                <span>15</span>
-                <span>18.5</span>
-                <span>25.0</span>
-                <span>30.0</span>
-                <span>35+</span>
-              </div>
-            </div>
-
-            <!-- İdeal Kilo Aralığı & Bilgi -->
-            <div class="vki-info-footer">
-              <span id="vki-advice-text" class="vki-advice-text">Boyunuza göre ideal kilo aralığı: <strong>56.7 - 76.3 kg</strong></span>
-              <span id="vki-saved-indicator" class="vki-saved-indicator text-success">✓ Hafızaya Kaydedildi</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- ⏱️ Otomatik Dinlenme Sayacı Kartı -->
+        <!-- ⏱️ Dinlenme Sayacı (yalnızca set bitince görünür, mobilde üstte sabit) -->
         <div id="workout-rest-card" class="workout-rest-card glass-card hidden">
           <div class="workout-rest-content">
             <div class="workout-rest-indicator">
@@ -566,82 +474,116 @@
               <span id="workout-rest-time" class="workout-rest-time">02:00</span>
             </div>
             <div class="workout-rest-actions">
-              <button type="button" id="workout-rest-pause-btn" class="btn btn-sm btn-ghost" title="Duraklat">⏸️ Duraklat</button>
-              <button type="button" id="workout-rest-resume-btn" class="btn btn-sm btn-primary hidden" title="Devam Et">▶️ Devam</button>
-              <button type="button" id="workout-rest-skip-btn" class="btn btn-sm btn-secondary" title="Süreyi beklemeden sonraki sete geç">⏭️ Seti Geç</button>
-              <button type="button" id="workout-rest-reset-btn" class="btn btn-sm btn-ghost" title="Sayacı Kapat">✕ Kapat</button>
+              <button type="button" id="workout-rest-pause-btn" class="btn btn-sm btn-ghost" title="Duraklat">⏸️</button>
+              <button type="button" id="workout-rest-resume-btn" class="btn btn-sm btn-primary hidden" title="Devam Et">▶️</button>
+              <button type="button" id="workout-rest-skip-btn" class="btn btn-sm btn-secondary" title="Süreyi beklemeden sonraki sete geç">⏭️ Geç</button>
+              <button type="button" id="workout-rest-reset-btn" class="btn btn-sm btn-ghost" title="Sayacı Kapat">✕</button>
             </div>
           </div>
         </div>
 
-        <!-- Gün Seçici / Tarih Gezinti Kartı -->
-        <div class="workout-date-card glass-card">
-          <div class="workout-date-nav">
-            <button type="button" id="workout-prev-day-btn" class="btn btn-sm btn-ghost" title="Önceki Gün">← Önceki Gün</button>
-            <div class="workout-date-info">
-              <input type="date" id="workout-date-input" class="workout-date-input" aria-label="Tarih seçin">
-              <div class="workout-date-text-wrap">
-                <span id="workout-date-label" class="workout-date-label">12 Ekim 2026, Pazartesi</span>
-                <span id="workout-today-badge" class="badge-today">Bugün</span>
-              </div>
-            </div>
-            <button type="button" id="workout-next-day-btn" class="btn btn-sm btn-ghost" title="Sonraki Gün">Sonraki Gün →</button>
+        <!-- 📅 Bugün: tarih + ilerleme + seri tek kartta -->
+        <div class="workout-today-card glass-card">
+          <div class="wt-date-row">
+            <button type="button" id="workout-prev-day-btn" class="wt-nav-btn" title="Önceki gün" aria-label="Önceki gün">‹</button>
+            <label class="wt-date-center" title="Tarih seç">
+              <span id="workout-date-label" class="wt-date-label">—</span>
+              <span id="workout-today-badge" class="badge-today">Bugün</span>
+              <input type="date" id="workout-date-input" class="wt-date-input" aria-label="Tarih seçin">
+            </label>
+            <button type="button" id="workout-next-day-btn" class="wt-nav-btn" title="Sonraki gün" aria-label="Sonraki gün">›</button>
           </div>
-          <button type="button" id="workout-today-btn" class="btn btn-sm btn-secondary workout-today-btn">📅 Bugüne Git</button>
+          <div class="wt-progress-row">
+            <div class="progress-bar workout-progress-track">
+              <div id="workout-progress-bar-fill" class="progress-fill workout-progress-fill" style="width:0%"></div>
+            </div>
+            <span class="wt-pct" id="workout-pct-badge">%0</span>
+          </div>
+          <div class="wt-meta-row">
+            <span class="wt-count"><strong id="workout-done-count">0</strong>/<span id="workout-total-count">0</span> <span id="workout-scope-label">hareket</span> bitti · <strong id="workout-sets-today">0</strong> set<span class="hidden" id="workout-remaining-count">0</span></span>
+            <span class="wt-streak">🔥 <span id="workout-streak-label">0 Gün Spor Serisi</span></span>
+          </div>
+          <p id="workout-progress-status-desc" class="wt-desc"></p>
+          <button type="button" id="workout-today-btn" class="wt-today-link hidden">📅 Bugüne dön</button>
         </div>
 
-        <!-- Günlük İlerleme & Tamamlanma Kartı -->
-        <div class="workout-progress-card glass-card">
-          <div class="workout-progress-top">
-            <div class="workout-progress-title-box">
-              <div class="workout-icon-badge">💪</div>
-              <div>
-                <h3 class="workout-progress-title">Günün Antrenman İlerlemesi</h3>
-                <span id="workout-progress-status-desc" class="workout-progress-sub">Antrenmana başlamak için hareketleri tamamlandıkça tikleyin.</span>
-              </div>
-            </div>
-            <div class="workout-pct-badge" id="workout-pct-badge">%0</div>
-          </div>
-          <div class="progress-bar workout-progress-track">
-            <div id="workout-progress-bar-fill" class="progress-fill workout-progress-fill" style="width:0%"></div>
-          </div>
-          <div class="workout-stats-row">
-            <div class="workout-stat-item">
-              <span class="workout-stat-num text-success" id="workout-done-count">0</span>
-              <span class="workout-stat-lbl">Tamamlanan</span>
-            </div>
-            <div class="workout-stat-sep">/</div>
-            <div class="workout-stat-item">
-              <span class="workout-stat-num" id="workout-total-count">21</span>
-              <span class="workout-stat-lbl">Toplam Hareket</span>
-            </div>
-            <div class="workout-stat-sep">•</div>
-            <div class="workout-stat-item">
-              <span class="workout-stat-num text-warning" id="workout-remaining-count">21</span>
-              <span class="workout-stat-lbl">Kalan Hareket</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Kas Grubu Filtreleme Butonları -->
+        <!-- Kas grubu filtresi -->
         <div class="workout-filter-bar">
           <div class="workout-filter-scroll">
-            <button type="button" class="workout-cat-btn active" data-cat="gogus">🫁 Göğüs (<span id="cat-count-gogus">0</span>)</button>
-            <button type="button" class="workout-cat-btn" data-cat="sirt">🦇 Sırt (<span id="cat-count-sirt">0</span>)</button>
-            <button type="button" class="workout-cat-btn" data-cat="omuz">🛡️ Omuz (<span id="cat-count-omuz">0</span>)</button>
-            <button type="button" class="workout-cat-btn" data-cat="biceps">💪 Biceps (<span id="cat-count-biceps">0</span>)</button>
-            <button type="button" class="workout-cat-btn" data-cat="triceps">🔱 Triceps (<span id="cat-count-triceps">0</span>)</button>
-            <button type="button" class="workout-cat-btn" data-cat="karin">🍫 Karın (<span id="cat-count-karin">0</span>)</button>
-            <button type="button" class="workout-cat-btn" data-cat="bacak">🦵 Bacak (<span id="cat-count-bacak">0</span>)</button>
-            <button type="button" class="workout-cat-btn" data-cat="onkol">🤜 Ön Kol (<span id="cat-count-onkol">0</span>)</button>
-            <button type="button" class="workout-cat-btn" data-cat="kardiyo">🏃 Kardiyo (<span id="cat-count-kardiyo">0</span>)</button>
-            <button type="button" class="workout-cat-btn" data-cat="all">⚡ Tümü (<span id="cat-count-all">0</span>)</button>
+            <button type="button" class="workout-cat-btn" data-cat="all">⚡ Tümü <span class="wcat-n" id="cat-count-all">0</span></button>
+            <button type="button" class="workout-cat-btn active" data-cat="gogus">🫁 Göğüs <span class="wcat-n" id="cat-count-gogus">0</span></button>
+            <button type="button" class="workout-cat-btn" data-cat="sirt">🦇 Sırt <span class="wcat-n" id="cat-count-sirt">0</span></button>
+            <button type="button" class="workout-cat-btn" data-cat="omuz">🛡️ Omuz <span class="wcat-n" id="cat-count-omuz">0</span></button>
+            <button type="button" class="workout-cat-btn" data-cat="biceps">💪 Biceps <span class="wcat-n" id="cat-count-biceps">0</span></button>
+            <button type="button" class="workout-cat-btn" data-cat="triceps">🔱 Triceps <span class="wcat-n" id="cat-count-triceps">0</span></button>
+            <button type="button" class="workout-cat-btn" data-cat="karin">🍫 Karın <span class="wcat-n" id="cat-count-karin">0</span></button>
+            <button type="button" class="workout-cat-btn" data-cat="bacak">🦵 Bacak <span class="wcat-n" id="cat-count-bacak">0</span></button>
+            <button type="button" class="workout-cat-btn" data-cat="onkol">🤜 Ön Kol <span class="wcat-n" id="cat-count-onkol">0</span></button>
+            <button type="button" class="workout-cat-btn" data-cat="kardiyo">🏃 Kardiyo <span class="wcat-n" id="cat-count-kardiyo">0</span></button>
           </div>
         </div>
 
-        <!-- Egzersiz Listesi Grid -->
+        <!-- Hareket listesi -->
         <div id="workout-exercise-list" class="workout-exercise-grid">
           <!-- JS ile doldurulacak -->
+        </div>
+
+        <!-- 🧰 Ek araçlar: varsayılan kapalı, kafa karıştırmasın -->
+        <details class="workout-tools glass-card" id="workout-vki-card">
+          <summary class="workout-tools-summary">
+            <span class="wtools-title">⚖️ Vücut Kitle İndeksi</span>
+            <span id="vki-summary" class="wtools-sub">VKİ —</span>
+            <span class="wtools-chevron" aria-hidden="true">▾</span>
+          </summary>
+          <div class="vki-body">
+            <div class="vki-inputs-row">
+              <div class="vki-input-group">
+                <label for="vki-height-input">📏 Boy</label>
+                <div class="vki-input-wrap">
+                  <input type="number" id="vki-height-input" min="100" max="250" step="1" placeholder="175" value="175">
+                  <span class="vki-unit">cm</span>
+                </div>
+              </div>
+              <div class="vki-input-group">
+                <label for="vki-weight-input">⚖️ Kilo</label>
+                <div class="vki-input-wrap">
+                  <input type="number" id="vki-weight-input" min="30" max="300" step="0.1" placeholder="70.0" value="70.0">
+                  <span class="vki-unit">kg</span>
+                </div>
+              </div>
+              <div class="vki-result-display">
+                <span class="vki-result-label">VKİ</span>
+                <span id="vki-score-num" class="vki-score-num">22.9</span>
+                <span id="vki-category-badge" class="badge badge-success">İdeal</span>
+              </div>
+            </div>
+
+            <div class="vki-visual-bar-wrap">
+              <div class="vki-needle-track" id="vki-needle-track">
+                <div class="vki-needle" id="vki-needle" style="left: 39.5%;">
+                  <div class="vki-needle-bubble" id="vki-needle-bubble">22.9</div>
+                  <div class="vki-needle-arrow"></div>
+                </div>
+              </div>
+              <div class="vki-bar">
+                <div class="vki-segment vki-underweight" title="Zayıf (< 18.5)"><span>Zayıf</span></div>
+                <div class="vki-segment vki-normal" title="İdeal (18.5 - 24.9)"><span>İdeal</span></div>
+                <div class="vki-segment vki-overweight" title="Fazla kilolu (25.0 - 29.9)"><span>Kilolu</span></div>
+                <div class="vki-segment vki-obese" title="Obez (≥ 30.0)"><span>Obez</span></div>
+              </div>
+              <div class="vki-bar-scale-labels">
+                <span>15</span><span>18.5</span><span>25</span><span>30</span><span>35+</span>
+              </div>
+            </div>
+
+            <div class="vki-info-footer">
+              <span id="vki-advice-text" class="vki-advice-text"></span>
+            </div>
+          </div>
+        </details>
+
+        <div class="workout-footer-actions">
+          <button type="button" id="reset-workout-exercises-btn" class="btn btn-ghost btn-sm" title="Silinen varsayılan hareketleri geri getir">↺ Varsayılan hareketleri geri yükle</button>
         </div>
       </section>
 
@@ -1903,65 +1845,58 @@
       <div class="focus-glow-2"></div>
     </div>
     
-    <div class="book-focus-container">
-      <!-- Üst Bar -->
+    <div class="book-focus-container" id="book-focus-container">
+      <!-- Üst: kitap + kapat -->
       <div class="book-focus-topbar">
-        <div class="book-focus-brand">
-          <span class="focus-icon">📖</span>
-          <span class="focus-brand-text">Odaklanarak Okuma Modu</span>
-        </div>
-        <button type="button" id="book-focus-exit-btn" class="book-focus-close-btn" title="Odak Modundan Çık">✕ Kapat</button>
-      </div>
-
-      <!-- Kitap Bilgi Kartı -->
-      <div class="book-focus-card glass-card">
-        <div class="book-focus-info-row">
-          <div class="book-focus-badge-icon" id="book-focus-cover-icon">📚</div>
-          <div class="book-focus-meta">
+        <div class="bf-book">
+          <div class="bf-cover" id="book-focus-cover" aria-hidden="true">📚</div>
+          <div class="bf-meta">
             <h2 id="book-focus-title" class="book-focus-title">Kitap Başlığı</h2>
             <p id="book-focus-author" class="book-focus-author">Yazar Adı</p>
-            <div class="book-focus-page-info">
-              <span class="badge badge-info" id="book-focus-current-page-tag">Başlangıç: Sayfa 0</span>
-              <span class="text-xs text-muted" id="book-focus-total-pages-tag">Toplam 300 sayfa</span>
-            </div>
+            <span class="bf-pages" id="book-focus-current-page-tag">Sayfa 0 / 0</span>
           </div>
         </div>
+        <button type="button" id="book-focus-exit-btn" class="bf-icon-btn" title="Odak modundan çık" aria-label="Kapat">✕</button>
+      </div>
 
-        <!-- Süre Önayarları -->
-        <div class="book-focus-presets" id="book-focus-presets">
-          <button type="button" class="focus-preset-btn" data-minutes="15">15 dk</button>
-          <button type="button" class="focus-preset-btn" data-minutes="25">25 dk</button>
-          <button type="button" class="focus-preset-btn active" data-minutes="30">30 dk (Varsayılan)</button>
-          <button type="button" class="focus-preset-btn" data-minutes="45">45 dk</button>
-          <button type="button" class="focus-preset-btn" data-minutes="60">60 dk</button>
-        </div>
+      <!-- Süre seçimi (yalnızca başlamadan önce görünür) -->
+      <div class="book-focus-presets" id="book-focus-presets" role="group" aria-label="Okuma süresi">
+        <button type="button" class="focus-preset-btn" data-minutes="15">15</button>
+        <button type="button" class="focus-preset-btn" data-minutes="25">25</button>
+        <button type="button" class="focus-preset-btn active" data-minutes="30">30</button>
+        <button type="button" class="focus-preset-btn" data-minutes="45">45</button>
+        <button type="button" class="focus-preset-btn" data-minutes="60">60</button>
+        <span class="bf-preset-unit">dk</span>
+      </div>
 
-        <!-- Geri Sayım Halkası & Göstergesi -->
-        <div class="book-focus-ring-wrap">
-          <svg class="book-focus-svg" viewBox="0 0 240 240">
-            <circle class="book-focus-bg-circle" cx="120" cy="120" r="105" />
-            <circle id="book-focus-circle-progress" class="book-focus-circle-progress" cx="120" cy="120" r="105" />
-          </svg>
-          <div class="book-focus-time-box">
-            <span id="book-focus-timer-display" class="book-focus-timer-display">30:00</span>
-            <span id="book-focus-status-text" class="book-focus-status-text">Odaklanmaya Hazır</span>
-          </div>
-        </div>
-
-        <!-- Kontrol Butonları -->
-        <div class="book-focus-controls">
-          <button type="button" id="book-focus-start-btn" class="btn btn-primary btn-lg">▶ Başlat</button>
-          <button type="button" id="book-focus-pause-btn" class="btn btn-secondary btn-lg hidden">⏸ Duraklat</button>
-          <button type="button" id="book-focus-resume-btn" class="btn btn-primary btn-lg hidden">▶ Devam Et</button>
-          <button type="button" id="book-focus-reset-btn" class="btn btn-ghost btn-lg">↺ Sıfırla</button>
-          <button type="button" id="book-focus-finish-early-btn" class="btn btn-success btn-lg">🏁 Bitir & Sayfayı Kaydet</button>
-        </div>
-
-        <!-- Motivasyon Sözü -->
-        <div class="book-focus-quote">
-          <p>"Okumak, zihni başka dünyalara açan en sessiz yolculuktur." ✨</p>
+      <!-- Geri sayım halkası -->
+      <div class="book-focus-ring-wrap">
+        <svg class="book-focus-svg" viewBox="0 0 240 240" aria-hidden="true">
+          <circle class="book-focus-bg-circle" cx="120" cy="120" r="105" />
+          <circle id="book-focus-circle-progress" class="book-focus-circle-progress" cx="120" cy="120" r="105" />
+        </svg>
+        <div class="book-focus-time-box">
+          <span id="book-focus-timer-display" class="book-focus-timer-display" aria-live="off">30:00</span>
+          <span id="book-focus-status-text" class="book-focus-status-text">Hazır</span>
+          <span id="book-focus-end-time" class="bf-end-time"></span>
         </div>
       </div>
+
+      <!-- Ana kontrol: tek büyük düğme -->
+      <div class="bf-main-ctrl">
+        <button type="button" id="book-focus-start-btn" class="bf-main-btn">▶ Başlat</button>
+        <button type="button" id="book-focus-pause-btn" class="bf-main-btn is-pause hidden">⏸ Duraklat</button>
+        <button type="button" id="book-focus-resume-btn" class="bf-main-btn hidden">▶ Devam Et</button>
+      </div>
+
+      <!-- İkincil kontroller -->
+      <div class="bf-sub-ctrl">
+        <button type="button" id="book-focus-reset-btn" class="bf-sub-btn" title="Sayacı baştan başlat">↺ Sıfırla</button>
+        <button type="button" id="book-focus-add5-btn" class="bf-sub-btn" title="Süreye 5 dakika ekle">+5 dk</button>
+        <button type="button" id="book-focus-finish-early-btn" class="bf-sub-btn is-finish" title="Oturumu bitir ve kaldığın sayfayı kaydet">🏁 Bitir & Kaydet</button>
+      </div>
+
+      <p class="book-focus-quote">"Okumak, zihni başka dünyalara açan en sessiz yolculuktur."</p>
     </div>
   </div>
 
@@ -2133,6 +2068,6 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
   <script src="firebase-config.js"></script>
-  <script src="auth.js?v=5.0"></script>
+  <script src="auth.js?v=5.2"></script>
 </body>
 </html>
