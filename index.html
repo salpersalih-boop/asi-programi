@@ -6,8 +6,14 @@
   <meta name="description" content="Planova ✨ — Kişisel Ajanda ve Üretkenlik Uygulaması. Görevler, dersler, hedefler, notlar ve odaklanma sayacı.">
   <title>Planova ✨ — Kişisel Ajanda</title>
   <link rel="icon" type="image/png" href="planova-icon.png">
-  <link rel="apple-touch-icon" href="planova-icon.png">
-  <link rel="stylesheet" href="style.css?v=5.3">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#0B0F19">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Planova">
+  <link rel="stylesheet" href="style.css?v=5.5">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -127,6 +133,40 @@
         <div class="page-header">
           <h2 id="dashboard-greeting">Merhaba! 👋</h2>
           <p id="dashboard-date" class="date-text"></p>
+        </div>
+
+        <!-- 📲 Kurulum önerisi (yalnızca kurulabilirken görünür) -->
+        <div id="pwa-install-banner" class="pwa-install-banner glass-card hidden">
+          <span class="pwa-banner-icon">📲</span>
+          <div class="pwa-banner-text">
+            <strong>Planova'yı telefonuna kur</strong>
+            <span>Ana ekrandan uygulama gibi açılır, internetsiz de çalışır.</span>
+          </div>
+          <button type="button" class="btn btn-primary btn-sm pwa-install-btn">Kur</button>
+          <button type="button" id="pwa-banner-close" class="pwa-banner-close" aria-label="Kapat">✕</button>
+        </div>
+
+        <!-- ☀️ Bugün -->
+        <div id="today-card" class="today-card glass-card">
+          <div class="today-head">
+            <h3>☀️ Bugün</h3>
+            <span id="today-sub" class="today-sub"></span>
+          </div>
+          <div id="today-grid" class="today-grid">
+            <!-- JS ile doldurulur -->
+          </div>
+        </div>
+
+        <!-- 📊 Haftalık özet -->
+        <div id="week-card" class="week-card glass-card">
+          <div class="today-head">
+            <h3 id="week-title">📊 Bu Hafta</h3>
+            <span id="week-sub" class="today-sub"></span>
+          </div>
+          <p id="week-headline" class="week-headline"></p>
+          <div id="week-grid" class="week-grid">
+            <!-- JS ile doldurulur -->
+          </div>
         </div>
 
         <!-- Motivasyon -->
@@ -409,8 +449,15 @@
       <section id="page-kanban" class="page">
         <div class="page-header">
           <h2>📋 Görev Panosu</h2>
-          <button type="button" id="add-task-btn" class="btn btn-primary">+ Yeni Görev</button>
+          <div class="kanban-head-actions">
+            <div class="seg-toggle" role="group" aria-label="Görünüm">
+              <button type="button" class="kanban-view-btn active" data-view="board">📋 Pano</button>
+              <button type="button" class="kanban-view-btn" data-view="calendar">📅 Takvim</button>
+            </div>
+            <button type="button" id="add-task-btn" class="btn btn-primary">+ Yeni Görev</button>
+          </div>
         </div>
+        <div id="kanban-calendar" class="kanban-calendar glass-card hidden"></div>
         <div class="kanban-board">
           <!-- ─── Not Defteri Kolonu (Tüm notlar bu başlık altında ayrı olarak listelenir) ─── -->
           <div class="kanban-column kanban-notes-column" data-status="notes">
@@ -452,6 +499,7 @@
             <p class="workout-subtitle">Seti bitirince numarasına dokun, dinlenme sayacı kendiliğinden başlar.</p>
           </div>
           <div class="workout-header-btns">
+            <button type="button" id="workout-plan-btn" class="btn btn-secondary btn-sm" title="Haftanın günlerine kas grubu ata">📅 Program</button>
             <button type="button" id="add-workout-exercise-btn" class="btn btn-primary btn-sm">+ Hareket</button>
             <button type="button" id="workout-history-btn" class="btn btn-secondary btn-sm" title="Antrenman geçmişi ve kullanılan ağırlıklar">📜 Geçmiş</button>
           </div>
@@ -485,6 +533,7 @@
         <!-- Kas grubu filtresi -->
         <div class="workout-filter-bar">
           <div class="workout-filter-scroll">
+            <button type="button" class="workout-cat-btn hidden" data-cat="today">📅 Bugün <span class="wcat-n" id="cat-count-today">0</span></button>
             <button type="button" class="workout-cat-btn" data-cat="all">⚡ Tümü <span class="wcat-n" id="cat-count-all">0</span></button>
             <button type="button" class="workout-cat-btn active" data-cat="gogus">🫁 Göğüs <span class="wcat-n" id="cat-count-gogus">0</span></button>
             <button type="button" class="workout-cat-btn" data-cat="sirt">🦇 Sırt <span class="wcat-n" id="cat-count-sirt">0</span></button>
@@ -506,7 +555,7 @@
         <!-- 🧰 Ek araçlar: varsayılan kapalı, kafa karıştırmasın -->
         <details class="workout-tools glass-card" id="workout-vki-card">
           <summary class="workout-tools-summary">
-            <span class="wtools-title">⚖️ Vücut Kitle İndeksi</span>
+            <span class="wtools-title">⚖️ Kilo & VKİ</span>
             <span id="vki-summary" class="wtools-sub">VKİ —</span>
             <span class="wtools-chevron" aria-hidden="true">▾</span>
           </summary>
@@ -554,6 +603,7 @@
             <div class="vki-info-footer">
               <span id="vki-advice-text" class="vki-advice-text"></span>
             </div>
+            <div id="vki-history" class="vki-history"></div>
           </div>
         </details>
 
@@ -575,6 +625,13 @@
           </div>
         </div>
 
+        <div class="att-tabs seg-toggle" role="tablist">
+          <button type="button" class="att-tab active" data-tab="absence">📊 Devamsızlık</button>
+          <button type="button" class="att-tab" data-tab="timetable">🗓️ Ders Programı</button>
+          <button type="button" class="att-tab" data-tab="exams">📝 Sınavlar</button>
+        </div>
+
+        <div id="att-tab-absence">
         <!-- Özet İstatistikleri -->
         <div class="stats-grid">
           <div class="stat-card glass-card">
@@ -657,6 +714,19 @@
               <tbody id="att-matrix-tbody"></tbody>
             </table>
           </div>
+        </div>
+        </div>
+
+        <div id="att-tab-timetable" class="hidden">
+          <div id="att-timetable" class="tt-grid"></div>
+        </div>
+
+        <div id="att-tab-exams" class="hidden">
+          <div class="exam-head">
+            <p>Vize, final ve quiz tarihlerini gir: geri sayım Bugün ekranında görünür, bir gün önce hatırlatıcı gelir.</p>
+            <button type="button" id="exam-add-btn" class="btn btn-primary btn-sm">+ Sınav Ekle</button>
+          </div>
+          <div id="att-exams-list"></div>
         </div>
       </section>
 
@@ -1153,6 +1223,20 @@
             </div>
           </div>
         </div>
+
+        <!-- 🕋 İbadet araçları -->
+        <div class="ibadet-card glass-card">
+          <div class="ibadet-tabs seg-toggle" role="tablist">
+            <button type="button" class="ibadet-tab active" data-tab="kaza">🕋 Kaza</button>
+            <button type="button" class="ibadet-tab" data-tab="quran">📖 Kur'an</button>
+            <button type="button" class="ibadet-tab" data-tab="zikir">📿 Zikirmatik</button>
+            <button type="button" class="ibadet-tab" data-tab="imsakiye">🌙 İmsakiye</button>
+          </div>
+          <div id="ibadet-kaza" class="ibadet-pane"></div>
+          <div id="ibadet-quran" class="ibadet-pane hidden"></div>
+          <div id="ibadet-zikir" class="ibadet-pane hidden"></div>
+          <div id="ibadet-imsakiye" class="ibadet-pane hidden"></div>
+        </div>
       </section>
 
       <!-- ════════ AYARLAR & TEMA ════════ -->
@@ -1161,6 +1245,73 @@
           <h2>⚙️ Ayarlar & Görünüm</h2>
         </div>
         <div class="settings-grid">
+          <!-- 📲 Telefona kur -->
+          <div class="settings-card glass-card" id="settings-install-card">
+            <div class="settings-card-head">
+              <h3>📲 Telefona Kur</h3>
+              <span id="pwa-install-state" class="settings-badge">Web</span>
+            </div>
+            <p>Planova'yı ana ekranına ekle: kendi ikonuyla, adres çubuğu olmadan açılır ve internet yokken de çalışır.</p>
+            <div class="pwa-install-actions">
+              <button type="button" class="btn btn-primary btn-sm pwa-install-btn hidden">📲 Uygulamayı Kur</button>
+            </div>
+            <div id="pwa-install-help" class="pwa-install-help">
+              <p><strong>Android (Chrome):</strong> sağ üstteki ⋮ menü → <em>Ana ekrana ekle</em> / <em>Uygulamayı yükle</em>.</p>
+              <p><strong>iPhone (Safari):</strong> alttaki Paylaş <span aria-hidden="true">⬆️</span> → <em>Ana Ekrana Ekle</em>.</p>
+              <p><strong>Bilgisayar (Chrome/Edge):</strong> adres çubuğunun sağındaki yükle simgesi.</p>
+            </div>
+          </div>
+
+          <!-- 🔔 Hatırlatıcılar -->
+          <div class="settings-card glass-card" id="settings-reminders-card">
+            <div class="settings-card-head">
+              <h3>🔔 Hatırlatıcılar</h3>
+              <span id="reminder-perm-state" class="settings-badge">Kapalı</span>
+            </div>
+            <p>Bildirimler bu cihaza özeldir. Planova açıkken ya da arka planda dururken çalışır; uygulama tamamen kapalıyken tarayıcılar bildirim göndermeye izin vermez.</p>
+            <div class="reminder-actions">
+              <button type="button" id="reminder-enable-btn" class="btn btn-primary btn-sm">🔔 Bildirimlere İzin Ver</button>
+              <button type="button" id="reminder-test-btn" class="btn btn-ghost btn-sm">Deneme bildirimi</button>
+            </div>
+
+            <div class="reminder-list">
+              <label class="reminder-row">
+                <span class="reminder-label"><strong>🕌 Namaz vakti</strong><small>Her vakitten önce haber ver</small></span>
+                <select id="rem-prayer-before" class="reminder-select" aria-label="Kaç dakika önce">
+                  <option value="0">Vakit girince</option>
+                  <option value="5">5 dk önce</option>
+                  <option value="10" selected>10 dk önce</option>
+                  <option value="15">15 dk önce</option>
+                  <option value="30">30 dk önce</option>
+                </select>
+                <input type="checkbox" id="rem-prayer-on" class="reminder-toggle">
+              </label>
+
+              <div class="reminder-row reminder-row-col">
+                <label class="reminder-row-inner">
+                  <span class="reminder-label"><strong>🏋️ Antrenman günü</strong><small>Seçtiğin günlerde, bu saatte</small></span>
+                  <input type="time" id="rem-workout-time" class="reminder-select" value="18:00" aria-label="Antrenman saati">
+                  <input type="checkbox" id="rem-workout-on" class="reminder-toggle">
+                </label>
+                <div class="reminder-days" id="rem-workout-days" role="group" aria-label="Antrenman günleri">
+                  <button type="button" data-day="1">Pzt</button><button type="button" data-day="2">Sal</button><button type="button" data-day="3">Çar</button><button type="button" data-day="4">Per</button><button type="button" data-day="5">Cum</button><button type="button" data-day="6">Cmt</button><button type="button" data-day="0">Paz</button>
+                </div>
+              </div>
+
+              <label class="reminder-row">
+                <span class="reminder-label"><strong>📋 Görevler & okul</strong><small>Geciken görevler, yarınki sınavlar, devamsızlık sınırı</small></span>
+                <input type="time" id="rem-tasks-time" class="reminder-select" value="09:00" aria-label="Görev hatırlatma saati">
+                <input type="checkbox" id="rem-tasks-on" class="reminder-toggle">
+              </label>
+
+              <label class="reminder-row">
+                <span class="reminder-label"><strong>📊 Haftalık özet</strong><small>Pazar akşamı 20:00</small></span>
+                <span></span>
+                <input type="checkbox" id="rem-week-on" class="reminder-toggle">
+              </label>
+            </div>
+          </div>
+
           <!-- Modüler Pano & Görünürlük Ayarları Kartı -->
           <div class="settings-card glass-card" id="settings-module-visibility-card">
             <div class="settings-card-head">
@@ -1437,6 +1588,30 @@
         <div class="form-group">
           <label for="task-desc">Açıklama (isteğe bağlı)</label>
           <textarea id="task-desc" rows="3" placeholder="Detaylar..."></textarea>
+        </div>
+        <div class="form-group">
+          <label for="task-due">Son tarih (isteğe bağlı)</label>
+          <input type="date" id="task-due">
+          <small class="text-muted">Tarih verirsen Bugün ekranında ve takvimde görünür, hatırlatıcı gelir.</small>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="task-priority">Öncelik</label>
+            <select id="task-priority">
+              <option value="normal">Normal</option>
+              <option value="high">🔴 Yüksek</option>
+              <option value="low">⚪ Düşük</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="task-repeat">Tekrar</label>
+            <select id="task-repeat">
+              <option value="none">Tekrar yok</option>
+              <option value="daily">🔁 Her gün</option>
+              <option value="weekly">🔁 Her hafta</option>
+              <option value="monthly">🔁 Her ay</option>
+            </select>
+          </div>
         </div>
         <div class="form-row">
           <div class="form-group">
@@ -1760,6 +1935,17 @@
   </div>
 
   <!-- Kitap Detay ve İstatistik Modalı -->
+  <!-- Genel amaçlı pencere (grafik, program, sınav, zikir…) -->
+  <div id="gen-modal" class="modal-overlay hidden">
+    <div class="modal glass-card modal-md">
+      <div class="modal-header">
+        <h3 id="gen-modal-title"></h3>
+        <button type="button" class="modal-close" data-modal="gen-modal">✕</button>
+      </div>
+      <div id="gen-modal-body" class="gen-modal-body"></div>
+    </div>
+  </div>
+
   <div id="book-detail-modal" class="modal-overlay hidden">
     <div class="modal glass-card modal-lg">
       <div class="modal-header">
@@ -2043,6 +2229,14 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
   <script src="firebase-config.js"></script>
-  <script src="auth.js?v=5.3"></script>
+  <script>
+    // PWA: service worker (yalnızca http/https üzerinde)
+    if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
+      window.addEventListener('load', function () {
+        navigator.serviceWorker.register('sw.js').catch(function (e) { console.warn('SW kaydı başarısız:', e); });
+      });
+    }
+  </script>
+  <script src="auth.js?v=5.5"></script>
 </body>
 </html>

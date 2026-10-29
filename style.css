@@ -9605,3 +9605,409 @@ body.no-scroll-focus { overflow: hidden; }
 [data-theme="dark"] .wc-rest-btn { background: rgba(255, 255, 255, 0.05); border-color: #334155; color: #E2E8F0; }
 [data-theme="dark"] .wc-rest-resume { background: #0284C7; color: #fff; }
 [data-theme="dark"] .wc-rest-mini { background: rgba(56, 189, 248, 0.08); border-color: rgba(56, 189, 248, 0.4); }
+
+/* ═══════════ ☀️ BUGÜN & 📊 HAFTALIK ÖZET ═══════════ */
+.today-card, .week-card { padding: 1rem 1.1rem; margin-bottom: 1rem; border-radius: var(--radius); }
+.today-card.hidden, .week-card.hidden { display: none; }
+.today-head { display: flex; align-items: baseline; justify-content: space-between; gap: 0.6rem; margin-bottom: 0.75rem; flex-wrap: wrap; }
+.today-head h3 { margin: 0; font-size: 1.05rem; font-weight: 800; color: var(--text-primary); }
+.today-sub { font-size: 0.8rem; color: var(--text-muted); font-weight: 600; }
+.today-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.65rem; }
+.today-tile {
+  position: relative;
+  display: flex; flex-direction: column; gap: 0.2rem;
+  padding: 0.75rem 0.8rem;
+  border-radius: 14px;
+  background: var(--bg-box);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+  min-width: 0;
+}
+.today-tile:hover { border-color: var(--accent-turquoise); }
+.today-tile:active { transform: scale(0.98); }
+.today-tile.is-ok { border-color: rgba(16, 185, 129, 0.45); background: rgba(16, 185, 129, 0.07); }
+.today-tile.is-warn { border-color: rgba(239, 68, 68, 0.45); background: rgba(239, 68, 68, 0.06); }
+.today-tile-top { display: flex; align-items: center; gap: 0.35rem; }
+.today-ico { font-size: 1rem; }
+.today-ttl { font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted); }
+.today-check { margin-left: auto; width: 20px; height: 20px; border-radius: 50%; background: #10B981; color: #fff; font-size: 0.7rem; font-weight: 900; display: inline-flex; align-items: center; justify-content: center; }
+.today-main { font-size: 1.1rem; font-weight: 800; color: var(--text-primary); line-height: 1.25; }
+.today-tsub { font-size: 0.78rem; color: var(--text-secondary); line-height: 1.3; }
+.today-tile.is-warn .today-tsub { color: #DC2626; font-weight: 700; }
+.today-bar { height: 5px; border-radius: 9999px; background: rgba(100, 116, 139, 0.2); overflow: hidden; margin-top: 0.35rem; }
+.today-bar > div { height: 100%; border-radius: inherit; background: var(--accent-gradient); }
+.today-tile.is-ok .today-bar > div { background: #10B981; }
+.today-list { list-style: none; margin: 0.35rem 0 0; padding: 0; display: flex; flex-direction: column; gap: 0.2rem; }
+.today-list li { font-size: 0.78rem; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-left: 0.7rem; position: relative; }
+.today-list li::before { content: ''; position: absolute; left: 0; top: 0.45em; width: 5px; height: 5px; border-radius: 50%; background: var(--accent-turquoise); }
+.today-list li.is-late::before { background: #EF4444; }
+.today-list li em { font-style: normal; color: var(--text-muted); font-size: 0.72rem; }
+.today-list li.is-late em { color: #DC2626; font-weight: 700; }
+.today-mini-btn {
+  margin-top: 0.45rem; align-self: flex-start;
+  border: 1px solid var(--border); background: var(--bg-card);
+  color: var(--text-primary); font-weight: 700; font-size: 0.78rem;
+  padding: 0.3rem 0.6rem; border-radius: 9999px; cursor: pointer;
+}
+.today-mini-btn:hover { border-color: var(--accent-orange); color: var(--accent-orange); }
+
+.week-headline { margin: -0.25rem 0 0.75rem; font-size: 0.92rem; font-weight: 600; color: var(--text-primary); }
+.week-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 0.5rem; }
+.week-row {
+  display: grid; grid-template-columns: auto 1fr auto auto; align-items: center; gap: 0.5rem;
+  padding: 0.55rem 0.7rem; border-radius: 12px;
+  background: var(--bg-box); border: 1px solid var(--border);
+}
+.week-ico { font-size: 1rem; }
+.week-lbl { font-size: 0.8rem; color: var(--text-secondary); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.week-val { font-size: 1.05rem; font-weight: 800; color: var(--text-primary); white-space: nowrap; }
+.week-val small { font-size: 0.72rem; font-weight: 700; color: var(--text-muted); }
+.week-delta { font-size: 0.72rem; font-weight: 800; padding: 0.12rem 0.4rem; border-radius: 9999px; white-space: nowrap; }
+.week-delta.up { color: #047857; background: rgba(16, 185, 129, 0.14); }
+.week-delta.down { color: #B91C1C; background: rgba(239, 68, 68, 0.12); }
+.week-delta.same { color: var(--text-muted); background: rgba(100, 116, 139, 0.12); }
+[data-theme="dark"] .week-delta.up { color: #6EE7B7; }
+[data-theme="dark"] .week-delta.down { color: #FCA5A5; }
+[data-theme="dark"] .today-tile.is-warn .today-tsub,
+[data-theme="dark"] .today-list li.is-late em { color: #FCA5A5; }
+
+/* Görev son tarihi rozeti */
+.task-due-badge {
+  display: inline-flex; align-items: center; gap: 0.2rem;
+  margin-top: 0.4rem;
+  font-size: 0.72rem; font-weight: 700;
+  padding: 0.12rem 0.5rem; border-radius: 9999px;
+  background: var(--bg-box); color: var(--text-secondary);
+  border: 1px solid var(--border);
+}
+.task-due-badge.is-soon { color: #B45309; border-color: rgba(245, 158, 11, 0.45); background: rgba(245, 158, 11, 0.1); }
+.task-due-badge.is-today { color: #0369A1; border-color: rgba(2, 132, 199, 0.45); background: rgba(2, 132, 199, 0.1); }
+.task-due-badge.is-late { color: #B91C1C; border-color: rgba(239, 68, 68, 0.5); background: rgba(239, 68, 68, 0.1); }
+[data-theme="dark"] .task-due-badge.is-soon { color: #FCD34D; }
+[data-theme="dark"] .task-due-badge.is-today { color: #7DD3FC; }
+[data-theme="dark"] .task-due-badge.is-late { color: #FCA5A5; }
+
+/* ═══════════ 📲 KURULUM & 🔔 HATIRLATICILAR ═══════════ */
+.pwa-install-banner {
+  display: flex; align-items: center; gap: 0.75rem;
+  padding: 0.75rem 0.9rem; margin-bottom: 1rem;
+  border-radius: var(--radius);
+  border: 1px solid rgba(6, 182, 212, 0.45);
+}
+.pwa-install-banner.hidden { display: none; }
+.pwa-banner-icon { font-size: 1.6rem; }
+.pwa-banner-text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.pwa-banner-text strong { font-size: 0.92rem; color: var(--text-primary); }
+.pwa-banner-text span { font-size: 0.78rem; color: var(--text-secondary); }
+.pwa-banner-close { border: 0; background: none; color: var(--text-muted); font-size: 1rem; cursor: pointer; padding: 0.3rem; }
+.pwa-install-actions { margin: 0.5rem 0; }
+.pwa-install-btn.hidden, .pwa-install-help.hidden, #reminder-enable-btn.hidden { display: none; }
+.pwa-install-help { font-size: 0.82rem; color: var(--text-secondary); display: flex; flex-direction: column; gap: 0.25rem; }
+.pwa-install-help p { margin: 0; }
+.settings-badge.is-on { background: rgba(16, 185, 129, 0.15); color: #059669; border-color: rgba(16, 185, 129, 0.4); }
+
+.reminder-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; margin: 0.6rem 0 0.8rem; }
+.reminder-list { display: flex; flex-direction: column; gap: 0.5rem; }
+.reminder-row, .reminder-row-inner {
+  display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 0.6rem;
+  cursor: pointer;
+}
+.reminder-row { padding: 0.65rem 0.75rem; border-radius: 12px; background: var(--bg-box); border: 1px solid var(--border); }
+.reminder-row-col { display: flex; flex-direction: column; align-items: stretch; gap: 0.55rem; }
+.reminder-label { display: flex; flex-direction: column; min-width: 0; }
+.reminder-label strong { font-size: 0.9rem; color: var(--text-primary); }
+.reminder-label small { font-size: 0.75rem; color: var(--text-muted); }
+.reminder-select {
+  height: 34px; padding: 0 0.5rem;
+  border-radius: 8px; border: 1px solid var(--border);
+  background: var(--bg-input); color: var(--text-primary);
+  font-size: 0.82rem; font-weight: 600;
+}
+.reminder-toggle { width: 42px; height: 24px; accent-color: var(--accent-turquoise); cursor: pointer; }
+.reminder-days { display: flex; gap: 0.3rem; flex-wrap: wrap; }
+.reminder-days button {
+  flex: 1; min-width: 38px; height: 32px;
+  border-radius: 8px; border: 1px solid var(--border);
+  background: var(--bg-card); color: var(--text-secondary);
+  font-size: 0.78rem; font-weight: 700; cursor: pointer;
+}
+.reminder-days button.active { background: var(--accent-turquoise); border-color: transparent; color: #fff; }
+
+@media (max-width: 700px) {
+  .today-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.5rem; }
+  .today-card, .week-card { padding: 0.85rem; }
+  .today-main { font-size: 1rem; }
+  .week-grid { grid-template-columns: 1fr; }
+  .reminder-row { grid-template-columns: 1fr auto; }
+  .reminder-row .reminder-select { grid-column: 1; grid-row: 2; justify-self: start; }
+  .reminder-row .reminder-toggle { grid-column: 2; grid-row: 1 / span 2; }
+  .reminder-row-inner { grid-template-columns: 1fr auto; }
+  .reminder-row-inner .reminder-select { grid-column: 1; grid-row: 2; justify-self: start; }
+  .reminder-row-inner .reminder-toggle { grid-column: 2; grid-row: 1 / span 2; }
+}
+/* Haftalık özet: geniş ekranda kutucuk düzeni (başlıklar kesilmesin) */
+@media (min-width: 701px) {
+  .week-grid { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+  .week-row { grid-template-columns: auto 1fr auto; grid-template-areas: "ico lbl lbl" "val val delta"; row-gap: 0.25rem; }
+  .week-ico { grid-area: ico; }
+  .week-lbl { grid-area: lbl; }
+  .week-val { grid-area: val; font-size: 1.25rem; }
+  .week-delta { grid-area: delta; justify-self: end; }
+}
+/* Hatırlatıcı anahtarları */
+.reminder-toggle {
+  appearance: none; -webkit-appearance: none;
+  position: relative; flex-shrink: 0;
+  width: 44px; height: 26px; margin: 0;
+  border-radius: 9999px;
+  background: rgba(100, 116, 139, 0.35);
+  transition: background 0.2s ease;
+}
+.reminder-toggle::after {
+  content: ''; position: absolute; top: 3px; left: 3px;
+  width: 20px; height: 20px; border-radius: 50%;
+  background: #fff; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  transition: transform 0.2s ease;
+}
+.reminder-toggle:checked { background: #10B981; }
+.reminder-toggle:checked::after { transform: translateX(18px); }
+.reminder-toggle:focus-visible { outline: 2px solid var(--accent-turquoise); outline-offset: 2px; }
+.reminder-days { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); }
+.reminder-days button { min-width: 0; padding: 0; }
+
+/* ═══════════ ORTAK: sekme seçici, pencere, grafik ═══════════ */
+.seg-toggle {
+  display: inline-flex; gap: 0.25rem; padding: 0.25rem;
+  border-radius: 12px; background: var(--bg-box); border: 1px solid var(--border);
+  max-width: 100%; overflow-x: auto; scrollbar-width: none;
+}
+.seg-toggle::-webkit-scrollbar { display: none; }
+.seg-toggle > button {
+  border: 0; background: transparent; color: var(--text-secondary);
+  font-weight: 700; font-size: 0.85rem; padding: 0.45rem 0.85rem;
+  border-radius: 9px; cursor: pointer; white-space: nowrap;
+}
+.seg-toggle > button.active { background: var(--bg-card); color: var(--text-primary); box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12); }
+[data-theme="dark"] .seg-toggle > button.active { background: rgba(255, 255, 255, 0.08); }
+.gen-modal-body { padding: 1rem 1.25rem 1.25rem; overflow-y: auto; max-height: calc(86vh - 70px); }
+.sheet-hint { font-size: 0.85rem; color: var(--text-secondary); margin: 0 0 0.9rem; }
+.line-chart { width: 100%; height: auto; display: block; margin: 0.4rem 0 0.6rem; }
+.line-chart .lc-grid { stroke: var(--border); stroke-dasharray: 3 4; }
+.line-chart .lc-axis { font-size: 10px; fill: var(--text-muted); font-weight: 600; }
+.line-chart .lc-last { font-size: 11px; fill: var(--text-primary); font-weight: 800; }
+.chart-empty { padding: 1.2rem; text-align: center; color: var(--text-muted); font-size: 0.85rem; background: var(--bg-box); border-radius: 12px; }
+.chart-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; margin-bottom: 0.4rem; }
+.chart-stats > div { background: var(--bg-box); border: 1px solid var(--border); border-radius: 12px; padding: 0.55rem; text-align: center; }
+.chart-stats span { display: block; font-size: 0.72rem; color: var(--text-muted); font-weight: 700; }
+.chart-stats strong { font-size: 1.1rem; color: var(--text-primary); }
+.chart-stats .up, .vki-hist-head .down { color: #059669; }
+.chart-stats .down, .vki-hist-head .up { color: #DC2626; }
+.chart-list-title { font-size: 0.78rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; margin: 0.4rem 0; }
+.chart-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.3rem; }
+.chart-list li { display: grid; grid-template-columns: 1fr 1fr auto; gap: 0.5rem; font-size: 0.84rem; padding: 0.45rem 0.6rem; border-radius: 8px; background: var(--bg-box); color: var(--text-secondary); }
+.chart-list strong { color: var(--text-primary); }
+
+/* ═══════════ SPOR: program, rekor, kilo geçmişi ═══════════ */
+.plan-days { display: flex; flex-direction: column; gap: 0.6rem; }
+.plan-day { padding: 0.6rem 0.7rem; border-radius: 12px; background: var(--bg-box); border: 1px solid var(--border); }
+.plan-day-name { font-weight: 800; font-size: 0.88rem; color: var(--text-primary); margin-bottom: 0.4rem; display: flex; align-items: center; gap: 0.4rem; }
+.plan-chips { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+.plan-chip { border: 1px solid var(--border); background: var(--bg-card); color: var(--text-secondary); border-radius: 9999px; padding: 0.28rem 0.6rem; font-size: 0.78rem; font-weight: 700; cursor: pointer; }
+.plan-chip.active { background: var(--accent-gradient); color: #fff; border-color: transparent; }
+.plan-sync { display: flex; align-items: center; gap: 0.45rem; font-size: 0.84rem; color: var(--text-secondary); margin: 0.8rem 0 0.2rem; }
+.wc-pr { color: #B45309; font-weight: 800; }
+[data-theme="dark"] .wc-pr { color: #FCD34D; }
+.vki-history { margin-top: 0.9rem; padding-top: 0.8rem; border-top: 1px dashed var(--border); }
+.vki-hist-head { display: flex; justify-content: space-between; align-items: baseline; gap: 0.5rem; font-size: 0.84rem; color: var(--text-secondary); flex-wrap: wrap; }
+.vki-hist-head strong { color: var(--text-primary); }
+.vki-hist-empty { font-size: 0.82rem; color: var(--text-muted); }
+
+/* ═══════════ OKUMA: alıntılar ═══════════ */
+.book-quotes { margin-top: 1.2rem; padding-top: 1rem; border-top: 1px solid var(--border); }
+.bq-head h4 { margin: 0 0 0.6rem; font-size: 1rem; color: var(--text-primary); }
+.bq-head small { font-size: 0.75rem; color: var(--text-muted); background: var(--bg-box); padding: 0.05rem 0.45rem; border-radius: 9999px; margin-left: 0.3rem; }
+.bq-form { display: flex; flex-direction: column; gap: 0.45rem; margin-bottom: 0.8rem; }
+.bq-text { width: 100%; resize: vertical; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-input); color: var(--text-primary); padding: 0.6rem 0.7rem; font: inherit; font-size: 0.9rem; }
+.bq-form-row { display: flex; align-items: center; gap: 0.5rem; }
+.bq-kind { display: flex; align-items: center; gap: 0.35rem; font-size: 0.82rem; color: var(--text-secondary); flex: 1; }
+.bq-page { width: 80px; height: 34px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-input); color: var(--text-primary); padding: 0 0.5rem; }
+.bq-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.5rem; }
+.bq-item { padding: 0.7rem 0.8rem; border-radius: 12px; background: var(--bg-box); border-left: 3px solid var(--accent-orange); }
+.bq-item.is-note { border-left-color: var(--accent-turquoise); }
+.bq-body { font-size: 0.92rem; color: var(--text-primary); line-height: 1.5; white-space: pre-wrap; }
+.bq-item:not(.is-note) .bq-body { font-style: italic; }
+.bq-mark { font-size: 1.4rem; line-height: 0; vertical-align: -0.35rem; color: var(--accent-orange); margin-right: 0.15rem; font-style: normal; }
+.bq-meta { display: flex; align-items: center; gap: 0.3rem; font-size: 0.74rem; color: var(--text-muted); margin-top: 0.35rem; }
+.bq-meta button { margin-left: auto; border: 0; background: none; cursor: pointer; font-size: 0.85rem; padding: 0.15rem 0.3rem; opacity: 0.7; }
+.bq-meta button + button { margin-left: 0; }
+.bq-empty { font-size: 0.84rem; color: var(--text-muted); }
+
+/* ═══════════ GÖREVLER: öncelik, tekrar, takvim ═══════════ */
+.kanban-head-actions { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
+.task-meta-row { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.4rem; }
+.task-meta-row .task-due-badge { margin-top: 0; }
+.task-prio, .task-repeat { font-size: 0.72rem; font-weight: 700; padding: 0.12rem 0.5rem; border-radius: 9999px; border: 1px solid var(--border); background: var(--bg-box); color: var(--text-secondary); }
+.task-prio.is-high { color: #B91C1C; border-color: rgba(239, 68, 68, 0.45); background: rgba(239, 68, 68, 0.08); }
+[data-theme="dark"] .task-prio.is-high { color: #FCA5A5; }
+.kanban-calendar { padding: 1rem; border-radius: var(--radius); }
+.cal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.7rem; }
+.cal-head strong { font-size: 1.05rem; color: var(--text-primary); text-transform: capitalize; }
+.cal-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 0.3rem; }
+.cal-dow { text-align: center; font-size: 0.72rem; font-weight: 800; color: var(--text-muted); padding: 0.2rem 0; }
+.cal-cell {
+  min-height: 74px; padding: 0.35rem; border-radius: 10px;
+  border: 1px solid var(--border); background: var(--bg-box);
+  display: flex; flex-direction: column; align-items: flex-start; gap: 0.15rem;
+  cursor: pointer; text-align: left; font: inherit; color: var(--text-primary); min-width: 0;
+}
+.cal-cell.is-pad { background: transparent; border-color: transparent; cursor: default; }
+.cal-cell.is-today { border-color: var(--accent-turquoise); }
+.cal-cell.is-today .cal-num { background: var(--accent-turquoise); color: #fff; }
+.cal-cell.is-selected { box-shadow: 0 0 0 2px var(--accent-orange); }
+.cal-cell.is-late { background: rgba(239, 68, 68, 0.06); }
+.cal-num { font-size: 0.78rem; font-weight: 800; width: 22px; height: 22px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; }
+.cal-dots { display: flex; gap: 2px; }
+.cal-dots i { width: 6px; height: 6px; border-radius: 50%; background: var(--accent-turquoise); }
+.cal-dots i.is-exam { background: #8B5CF6; }
+.cal-dots i.is-high { background: #EF4444; }
+.cal-label { font-size: 0.68rem; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; }
+.cal-day-panel { margin-top: 0.9rem; padding-top: 0.8rem; border-top: 1px solid var(--border); }
+.cal-day-head { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; margin-bottom: 0.5rem; flex-wrap: wrap; }
+.cal-day-head strong { color: var(--text-primary); }
+.cal-day-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.35rem; }
+.cal-day-list li { display: flex; align-items: center; gap: 0.5rem; padding: 0.55rem 0.7rem; border-radius: 10px; background: var(--bg-box); cursor: pointer; font-size: 0.88rem; color: var(--text-primary); }
+.cal-day-list li span { flex: 1; min-width: 0; }
+.cal-day-list li em { font-style: normal; color: var(--text-muted); font-size: 0.78rem; }
+.cal-day-list li.is-done span { text-decoration: line-through; color: var(--text-muted); }
+.cal-day-list li.is-exam { cursor: default; border-left: 3px solid #8B5CF6; }
+.cal-empty { font-size: 0.85rem; color: var(--text-muted); padding: 0.8rem; text-align: center; }
+
+/* ═══════════ OKUL: sekmeler, ders programı, sınavlar ═══════════ */
+.att-tabs { margin-bottom: 1rem; }
+.tt-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 0.6rem; }
+.tt-day { padding: 0.7rem; border-radius: 14px; background: var(--bg-card); border: 1px solid var(--border); display: flex; flex-direction: column; gap: 0.45rem; }
+.tt-day.is-today { border-color: var(--accent-turquoise); box-shadow: 0 0 0 1px var(--accent-turquoise) inset; }
+.tt-day-name { font-weight: 800; color: var(--text-primary); font-size: 0.9rem; display: flex; align-items: center; gap: 0.4rem; }
+.tt-course { padding: 0.5rem 0.6rem; border-radius: 10px; background: var(--bg-box); border-left: 3px solid #10B981; }
+.tt-course.is-warn { border-left-color: #F59E0B; }
+.tt-course.is-over { border-left-color: #EF4444; }
+.tt-time { font-size: 0.74rem; font-weight: 800; color: var(--accent-turquoise-dark); }
+[data-theme="dark"] .tt-time { color: var(--accent-turquoise); }
+.tt-name { font-size: 0.86rem; font-weight: 700; color: var(--text-primary); line-height: 1.3; }
+.tt-meta { display: flex; justify-content: space-between; gap: 0.4rem; font-size: 0.72rem; color: var(--text-muted); margin-top: 0.15rem; }
+.tt-left { font-weight: 700; white-space: nowrap; }
+.tt-course.is-warn .tt-left { color: #B45309; }
+.tt-course.is-over .tt-left { color: #DC2626; }
+.tt-free { font-size: 0.8rem; color: var(--text-muted); }
+.exam-head { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; margin-bottom: 0.8rem; flex-wrap: wrap; }
+.exam-head p { margin: 0; font-size: 0.85rem; color: var(--text-secondary); flex: 1; min-width: 220px; }
+.exam-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.5rem; }
+.exam-item { display: flex; align-items: center; gap: 0.8rem; padding: 0.7rem 0.8rem; border-radius: 14px; background: var(--bg-card); border: 1px solid var(--border); }
+.exam-item.is-soon { border-color: rgba(239, 68, 68, 0.5); }
+.exam-item.is-past { opacity: 0.6; }
+.exam-count { width: 56px; height: 56px; flex-shrink: 0; border-radius: 12px; background: var(--bg-box); display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: 800; font-size: 0.8rem; color: var(--text-primary); line-height: 1.1; }
+.exam-count strong { font-size: 1.35rem; }
+.exam-count small { font-size: 0.66rem; color: var(--text-muted); }
+.exam-item.is-soon .exam-count { background: rgba(239, 68, 68, 0.12); color: #DC2626; }
+.exam-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.1rem; }
+.exam-info strong { font-size: 0.95rem; color: var(--text-primary); }
+.exam-info span { font-size: 0.8rem; color: var(--text-secondary); }
+.exam-info em { font-size: 0.78rem; color: var(--text-muted); font-style: normal; }
+.exam-actions { display: flex; gap: 0.1rem; }
+.exam-actions .workout-action-btn { border: 0; background: transparent; }
+.exam-past { margin-top: 0.8rem; }
+.exam-past summary { cursor: pointer; font-size: 0.85rem; font-weight: 700; color: var(--text-secondary); margin-bottom: 0.5rem; }
+
+/* ═══════════ İBADET ARAÇLARI ═══════════ */
+.ibadet-card { margin-top: 1rem; padding: 1rem; border-radius: var(--radius); }
+.ibadet-tabs { margin-bottom: 0.9rem; }
+.ib-summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; margin-bottom: 0.8rem; }
+.ib-summary > div { text-align: center; padding: 0.6rem; border-radius: 12px; background: var(--bg-box); border: 1px solid var(--border); }
+.ib-summary span { display: block; font-size: 0.72rem; font-weight: 700; color: var(--text-muted); }
+.ib-summary strong { font-size: 1.3rem; color: var(--text-primary); }
+.ib-note { font-size: 0.78rem; color: var(--text-muted); margin: 0.7rem 0 0; }
+.kaza-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.4rem; }
+.kaza-row { display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 0.6rem; padding: 0.5rem 0.6rem; border-radius: 12px; background: var(--bg-box); }
+.kaza-name { font-weight: 800; color: var(--text-primary); }
+.kaza-debt { display: flex; align-items: center; gap: 0.25rem; }
+.kaza-step { width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-primary); font-size: 1.05rem; font-weight: 800; cursor: pointer; }
+.kaza-input { width: 64px; height: 32px; text-align: center; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-input); color: var(--text-primary); font-weight: 800; }
+.kaza-done-btn { height: 34px; padding: 0 0.8rem; border-radius: 9px; border: 0; background: #10B981; color: #fff; font-weight: 800; cursor: pointer; white-space: nowrap; }
+.kaza-done-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+.kaza-years { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.8rem; font-size: 0.82rem; color: var(--text-secondary); flex-wrap: wrap; }
+.kaza-years input { width: 70px; height: 32px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-input); color: var(--text-primary); padding: 0 0.5rem; }
+.quran-top { display: flex; align-items: center; gap: 1rem; }
+.quran-ring {
+  --p: 0; width: 110px; height: 110px; flex-shrink: 0; border-radius: 50%;
+  background: conic-gradient(#10B981 calc(var(--p) * 1%), rgba(100, 116, 139, 0.2) 0);
+  display: flex; align-items: center; justify-content: center;
+}
+.quran-ring > div { width: 86px; height: 86px; border-radius: 50%; background: var(--bg-card); display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.quran-ring strong { font-size: 1.3rem; color: var(--text-primary); }
+.quran-ring small { font-size: 0.62rem; color: var(--text-muted); text-align: center; }
+.quran-info { display: flex; flex-direction: column; gap: 0.2rem; font-size: 0.85rem; color: var(--text-secondary); }
+.quran-page { font-size: 1rem; color: var(--text-primary); }
+.quran-today.is-ok { color: #059669; font-weight: 800; }
+.quran-btns { display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 0.4rem; margin: 0.9rem 0 0.7rem; }
+.quran-set { display: flex; gap: 0.8rem; flex-wrap: wrap; font-size: 0.82rem; color: var(--text-secondary); }
+.quran-set label { display: flex; align-items: center; gap: 0.4rem; }
+.quran-set input, .quran-set select { height: 32px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-input); color: var(--text-primary); padding: 0 0.45rem; }
+.quran-set input { width: 76px; }
+.zikir-chips { display: flex; gap: 0.35rem; overflow-x: auto; padding-bottom: 0.3rem; scrollbar-width: none; }
+.zikir-chips::-webkit-scrollbar { display: none; }
+.zikir-chip { flex-shrink: 0; border: 1px solid var(--border); background: var(--bg-box); color: var(--text-secondary); border-radius: 9999px; padding: 0.35rem 0.75rem; font-size: 0.82rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 0.35rem; }
+.zikir-chip small { font-size: 0.68rem; opacity: 0.7; }
+.zikir-chip.active { background: var(--accent-gradient); color: #fff; border-color: transparent; }
+.zikir-chip.is-add { border-style: dashed; }
+.zikir-btn {
+  --p: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  width: min(62vw, 230px); height: min(62vw, 230px); margin: 1rem auto 0.6rem; border-radius: 50%;
+  border: 0; cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent;
+  background:
+    radial-gradient(circle at center, var(--bg-card) 62%, transparent 63%),
+    conic-gradient(var(--accent-turquoise) calc(var(--p) * 1%), rgba(100, 116, 139, 0.18) 0);
+  box-shadow: 0 10px 30px rgba(6, 182, 212, 0.18);
+  transition: transform 0.08s ease;
+}
+.zikir-btn:active { transform: scale(0.96); }
+.zikir-count { font-size: clamp(3rem, 15vw, 4.2rem); font-weight: 900; color: var(--text-primary); line-height: 1; font-variant-numeric: tabular-nums; }
+.zikir-sub { font-size: 0.85rem; color: var(--text-muted); font-weight: 700; margin-top: 0.3rem; }
+.zikir-today { text-align: center; font-size: 0.82rem; color: var(--text-secondary); font-weight: 600; }
+.zikir-actions { display: flex; justify-content: center; gap: 0.5rem; margin-top: 0.4rem; }
+.ims-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 0.6rem; margin-bottom: 0.7rem; }
+.ims-head strong { display: block; color: var(--text-primary); }
+.ims-head span { font-size: 0.84rem; color: var(--text-secondary); }
+.ims-table-wrap { overflow-x: auto; max-height: 420px; overflow-y: auto; border-radius: 12px; border: 1px solid var(--border); }
+.ims-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; font-variant-numeric: tabular-nums; }
+.ims-table th { position: sticky; top: 0; background: var(--bg-box); color: var(--text-muted); font-size: 0.72rem; font-weight: 800; text-transform: uppercase; padding: 0.5rem 0.45rem; text-align: center; }
+.ims-table td { padding: 0.45rem; text-align: center; color: var(--text-secondary); border-top: 1px solid var(--border); white-space: nowrap; }
+.ims-table td b { color: var(--text-primary); }
+.ims-table tr.is-today td { background: rgba(6, 182, 212, 0.12); color: var(--text-primary); font-weight: 700; }
+.ims-table tr.is-past td { opacity: 0.55; }
+
+@media (max-width: 700px) {
+  #page-kanban .page-header { flex-wrap: wrap; gap: 0.6rem; }
+  .kanban-head-actions { width: 100%; justify-content: space-between; }
+  .cal-cell { min-height: 52px; padding: 0.25rem; }
+  .cal-label { display: none; }
+  .cal-grid { gap: 0.2rem; }
+  .tt-grid { grid-template-columns: 1fr; }
+  .kaza-row { grid-template-columns: 1fr auto; }
+  .kaza-done-btn { grid-column: 1 / -1; }
+  .quran-btns { grid-template-columns: 1fr 1fr 1fr auto; }
+  .ibadet-tabs > button, .att-tabs > button { padding: 0.45rem 0.6rem; font-size: 0.8rem; }
+  .bq-form-row { flex-wrap: wrap; }
+}
+@media (max-width: 700px) {
+  .kaza-row { grid-template-columns: 1fr auto auto; gap: 0.4rem; }
+  .kaza-done-btn { grid-column: auto; padding: 0 0.6rem; font-size: 0.8rem; }
+  .kaza-input { width: 52px; }
+  .kaza-step { width: 30px; }
+  .ims-table th:nth-child(4), .ims-table td:nth-child(4),
+  .ims-table th:nth-child(5), .ims-table td:nth-child(5),
+  .ims-table th:nth-child(6), .ims-table td:nth-child(6) { display: none; }
+  #page-schedule .workout-header { flex-direction: column; align-items: stretch; }
+  #page-schedule .workout-header-btns { flex-direction: row; flex-wrap: wrap; }
+  #page-schedule .workout-header-btns .btn { flex: 1; }
+}

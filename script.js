@@ -181,7 +181,7 @@
 
   // ─── Güvenli LocalStorage Yardımcısı (Kota Kontrollü & Hata Yakalamalı) ───
   // Değişince rozet kontrolü tetikleyen veri anahtarları
-  const BADGE_WATCH = /^asi_(tasks|goals|notes|quicknotes|books|reading_sessions|workouts|workout_history|prayer_checks_|attendance_|user_vki_data|pomodoro_stats)/;
+  const BADGE_WATCH = /^asi_(tasks|goals|notes|quicknotes|books|reading_sessions|workouts|workout_history|prayer_checks_|attendance_|user_vki_data|pomodoro_stats|book_quotes|kaza|quran|zikir|exams|workout_plan)/;
 
   const Storage = {
     get(key, fallback) {
@@ -253,8 +253,12 @@
             desc: body?.desc || '',
             color: body?.color || '#7c5cfc',
             status: body?.status || 'todo',
+            due: body?.due || '',
+            priority: body?.priority || 'normal',
+            repeat: body?.repeat || 'none',
             created: body?.created || Date.now()
           };
+          if (newTask.status === 'done') newTask.completedAt = Date.now();
           tasks.unshift(newTask);
           Storage.set('asi_tasks', tasks);
           return newTask;
@@ -268,7 +272,21 @@
         if (method === 'PUT') {
           const idx = tasks.findIndex(t => t.id === id);
           if (idx !== -1) {
+            const wasDone = tasks[idx].status === 'done';
             tasks[idx] = { ...tasks[idx], ...body, id };
+            // Haftalık özet için: göreve "bitti" denildiği an
+            if (tasks[idx].status === 'done' && !wasDone) tasks[idx].completedAt = Date.now();
+            if (tasks[idx].status !== 'done') delete tasks[idx].completedAt;
+            // Tekrarlayan görev bitince bir sonrakini oluştur (bir kez)
+            const t = tasks[idx];
+            if (t.status === 'done' && !wasDone && t.repeat && t.repeat !== 'none' && !t.repeatSpawned) {
+              t.repeatSpawned = true;
+              tasks.unshift({
+                id: 't-' + Date.now().toString(36) + Math.random().toString(36).substr(2, 4),
+                title: t.title, desc: t.desc || '', color: t.color, priority: t.priority || 'normal',
+                repeat: t.repeat, status: 'todo', due: nextRepeatDate(t.due, t.repeat), created: Date.now()
+              });
+            }
           } else {
             tasks.unshift({ ...body, id });
           }
@@ -1008,6 +1026,48 @@
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   }
 
+  // "2026-10-29" → bugüne göre gün farkı (geçmiş negatif)
+  function daysFromToday(ymd) {
+    if (!ymd) return null;
+    const [y, m, d] = ymd.split('-').map(Number);
+    const t = new Date(); t.setHours(0, 0, 0, 0);
+    return Math.round((new Date(y, m - 1, d) - t) / 86400000);
+  }
+
+  function dueLabel(ymd) {
+    const n = daysFromToday(ymd);
+    if (n === null) return '';
+    if (n < 0) return `${-n} gün gecikti`;
+    if (n === 0) return 'Bugün';
+    if (n === 1) return 'Yarın';
+    if (n < 7) return `${n} gün kaldı`;
+    const [y, m, d] = ymd.split('-').map(Number);
+    return new Date(y, m - 1, d).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' });
+  }
+
+  function dueBadgeHtml(ymd) {
+    const n = daysFromToday(ymd);
+    const cls = n < 0 ? 'is-late' : n === 0 ? 'is-today' : n === 1 ? 'is-soon' : '';
+    return `<span class="task-due-badge ${cls}">📅 ${dueLabel(ymd)}</span>`;
+  }
+
+  const REPEAT_LABELS = { daily: 'Her gün', weekly: 'Her hafta', monthly: 'Her ay' };
+
+  // Tekrarlayan görevin bir sonraki tarihi (geçmişte kaldıysa bugünden ileri taşınır)
+  function nextRepeatDate(ymd, repeat) {
+    const base = ymd ? new Date(ymd + 'T00:00:00') : new Date();
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const step = (d) => {
+      if (repeat === 'daily') d.setDate(d.getDate() + 1);
+      else if (repeat === 'weekly') d.setDate(d.getDate() + 7);
+      else d.setMonth(d.getMonth() + 1);
+    };
+    const d = new Date(base);
+    step(d);
+    while (d < today) step(d);
+    return formatDateShort(d);
+  }
+
   function getMonday(d) {
     const day = d.getDay();
     const diff = d.getDate() - day + (day === 0 ? -6 : 1);
@@ -1285,6 +1345,7 @@
       const now = new Date();
       $('#dashboard-date').textContent = formatDate(now);
       this.showQuote();
+      try { TodayPanel.render(); WeekSummary.render(); } catch (e) { console.warn('Bugün/Hafta paneli:', e); }
       $('#dash-pomo-display').textContent = Pomodoro.getDisplayTime();
 
       // İstatistikler (API'den paralel çek)
@@ -1393,9 +1454,14 @@
           list.innerHTML = '<div class="empty-state" style="padding:2rem 1rem;text-align:center;color:var(--text-muted);font-size:0.85rem;">Görev yok</div>';
           continue;
         }
+        const pr = { high: 0, normal: 1, low: 2 };
+        items.sort((a, b) => (pr[a.priority] ?? 1) - (pr[b.priority] ?? 1)
+          || (a.due || '9999').localeCompare(b.due || '9999')
+          || (b.created || 0) - (a.created || 0));
         list.innerHTML = items.map(t => this.cardHTML(t)).join('');
       }
       this.bindCardEvents();
+      try { TaskCalendar.render(); } catch (_) {}
     },
 
     noteCardHTML(n) {
@@ -1453,6 +1519,11 @@
           ` : ''}
           <div class="task-card-title">${esc(t.title)}</div>
           ${cleanDesc ? `<div class="task-card-desc">${esc(cleanDesc)}</div>` : ''}
+          ${(t.priority === 'high' || t.priority === 'low' || (t.due && t.status !== 'done') || (t.repeat && t.repeat !== 'none')) ? `<div class="task-meta-row">
+            ${t.priority === 'high' ? '<span class="task-prio is-high">🔴 Yüksek</span>' : t.priority === 'low' ? '<span class="task-prio is-low">⚪ Düşük</span>' : ''}
+            ${t.due && t.status !== 'done' ? dueBadgeHtml(t.due) : ''}
+            ${t.repeat && t.repeat !== 'none' ? `<span class="task-repeat">🔁 ${REPEAT_LABELS[t.repeat] || ''}</span>` : ''}
+          </div>` : ''}
           <div class="task-card-actions">
             <div class="move-btns">${moveButtons}</div>
             <button type="button" class="edit-task-btn" data-id="${t.id}">✏️</button>
@@ -1567,11 +1638,18 @@
         $('#task-id').value = task.id;
         $('#task-title').value = task.title;
         $('#task-desc').value = task.desc || '';
+        if ($('#task-due')) $('#task-due').value = task.due || '';
+        if ($('#task-priority')) $('#task-priority').value = task.priority || 'normal';
+        if ($('#task-repeat')) $('#task-repeat').value = task.repeat || 'none';
         const colorInput = $(`input[name="task-color"][value="${task.color}"]`);
         if (colorInput) colorInput.checked = true;
       } else {
         $('#task-modal-title').textContent = 'Yeni Görev';
         $('#task-id').value = '';
+        if ($('#task-priority')) $('#task-priority').value = 'normal';
+        if ($('#task-repeat')) $('#task-repeat').value = 'none';
+        if (this._prefillDue && $('#task-due')) { $('#task-due').value = this._prefillDue; }
+        this._prefillDue = null;
       }
       openModal('task-modal');
     },
@@ -1582,12 +1660,19 @@
       if (!title) return;
       const color = $('input[name="task-color"]:checked')?.value || '#7c5cfc';
       const desc = $('#task-desc').value.trim();
+      const due = $('#task-due')?.value || '';
+      const priority = $('#task-priority')?.value || 'normal';
+      const repeat = $('#task-repeat')?.value || 'none';
+      if (repeat !== 'none' && !due) {
+        showToast('Tekrarlayan görev için bir son tarih seç (ilk tekrar o gün olur).', 'warning');
+        return;
+      }
 
       if (id) {
         const task = this._tasks.find(t => t.id === id);
-        if (task) await apiFetch(`/tasks/${id}`, 'PUT', { ...task, title, desc, color });
+        if (task) await apiFetch(`/tasks/${id}`, 'PUT', { ...task, title, desc, color, due, priority, repeat, repeatSpawned: task.repeat === repeat ? task.repeatSpawned : false });
       } else {
-        await apiFetch('/tasks', 'POST', { title, desc, color, status: 'todo' });
+        await apiFetch('/tasks', 'POST', { title, desc, color, due, priority, repeat, status: 'todo' });
       }
       closeModal('task-modal');
       await this.render();
@@ -1793,6 +1878,8 @@
 
       // Kas Grubu Filtre Butonları
       const catBtns = $$('.workout-cat-btn');
+      if (WorkoutPlan.todayCats().length) this.selectedCategory = 'today';
+      else if (this.selectedCategory === 'today') this.selectedCategory = 'gogus';
       if (!catBtns.some(b => b.dataset.cat === this.selectedCategory)) this.selectedCategory = 'gogus';
       catBtns.forEach(b => b.classList.toggle('active', b.dataset.cat === this.selectedCategory));
       catBtns.forEach(btn => {
@@ -1838,6 +1925,7 @@
       }
 
       const isLast = (setNum >= totalSets);
+      if (setNum === 1) { try { WorkoutStats.checkPR(ex, this.selectedDate); } catch (_) {} }
       const settings = Storage.get('asi_workout_settings', DEFAULT_WORKOUT_SETTINGS);
       const duration = isLast ? (settings.lastRestSec || 300) : (settings.normalRestSec || 120);
       const endTime = Date.now() + duration * 1000;
@@ -2070,7 +2158,8 @@
       // İlerleme seçili kas grubuna göre (Göğüs günü → 4 göğüs hareketinden kaçı bitti)
       const CAT_NAMES = { all: 'Tümü', gogus: 'Göğüs', sirt: 'Sırt', omuz: 'Omuz', biceps: 'Biceps', triceps: 'Triceps', karin: 'Karın', bacak: 'Bacak', onkol: 'Ön Kol', kardiyo: 'Kardiyo' };
       const cat = this.selectedCategory || 'all';
-      const scope = cat === 'all' ? this._exercises : this._exercises.filter(e => e.category === cat);
+      if (cat === 'today' && WorkoutPlan.todayCats().length === 0) { this.selectedCategory = 'all'; return this.updateProgressUI(); }
+      const scope = this.scopeList(cat);
       const completedIds = new Set(this._logs.filter(l => l.completed).map(l => l.exerciseId));
       const total = scope.length;
       const done = scope.filter(e => completedIds.has(e.id)).length;
@@ -2094,7 +2183,7 @@
       if (remainEl) remainEl.textContent = remaining;
 
       const scopeEl = $('#workout-scope-label');
-      if (scopeEl) scopeEl.textContent = cat === 'all' ? 'hareket' : `${CAT_NAMES[cat] || ''} hareketi`;
+      if (scopeEl) scopeEl.textContent = cat === 'all' ? 'hareket' : cat === 'today' ? 'program hareketi' : `${CAT_NAMES[cat] || ''} hareketi`;
 
       const setsEl = $('#workout-sets-today');
       if (setsEl) setsEl.textContent = setsToday;
@@ -2102,7 +2191,7 @@
       const descEl = $('#workout-progress-status-desc');
       if (descEl) {
         if (pct === 100 && total > 0) {
-          descEl.textContent = cat === 'all' ? '🔥 Harika! Tüm hareketleri bitirdin!' : `🔥 Harika! ${CAT_NAMES[cat]} antrenmanı tamam.`;
+          descEl.textContent = cat === 'all' ? '🔥 Harika! Tüm hareketleri bitirdin!' : cat === 'today' ? '🔥 Harika! Bugünkü program tamam.' : `🔥 Harika! ${CAT_NAMES[cat]} antrenmanı tamam.`;
         } else if (done > 0) {
           descEl.textContent = `💪 Harika gidiyorsun, ${remaining} hareket kaldı.`;
         } else {
@@ -2112,7 +2201,25 @@
       }
     },
 
+    // Seçili filtreye göre hareketler ("today" = haftalık programdaki bugünün kas grupları)
+    scopeList(cat) {
+      if (cat === 'all') return this._exercises;
+      if (cat === 'today') {
+        const cats = WorkoutPlan.todayCats();
+        return this._exercises.filter(e => cats.includes(e.category));
+      }
+      return this._exercises.filter(e => e.category === cat);
+    },
+
     updateCategoryCounts() {
+      const todayCats = WorkoutPlan.todayCats();
+      const todayBtn = $('.workout-cat-btn[data-cat="today"]');
+      if (todayBtn) {
+        todayBtn.classList.toggle('hidden', todayCats.length === 0);
+        todayBtn.title = todayCats.length ? 'Bugün: ' + todayCats.map(c => WorkoutPlan.CATS[c]?.name || c).join(' + ') : '';
+      }
+      const tc = $('#cat-count-today');
+      if (tc) tc.textContent = this.scopeList('today').length;
       const cats = ['all', 'gogus', 'sirt', 'omuz', 'biceps', 'triceps', 'karin', 'bacak', 'onkol', 'kardiyo'];
       cats.forEach(c => {
         const countEl = $(`#cat-count-${c}`);
@@ -2127,9 +2234,7 @@
       const container = $('#workout-exercise-list');
       if (!container) return;
 
-      const list = this.selectedCategory === 'all'
-        ? this._exercises
-        : this._exercises.filter(e => e.category === this.selectedCategory);
+      const list = this.scopeList(this.selectedCategory);
 
       if (list.length === 0) {
         container.innerHTML = `
@@ -2159,9 +2264,13 @@
       const esc = Dashboard.escapeHtml;
 
       // Önceki ağırlık haritası (tarih !== selectedDate olan en son kayıt)
+      // Seçili günden önceki EN SON antrenmandaki ağırlık (sıralamadan bağımsız)
       const prevWeightMap = new Map();
+      const prevDateMap = new Map();
       this._history.forEach(h => {
-        if (h.date !== this.selectedDate && !prevWeightMap.has(h.exerciseId) && h.weight) {
+        if (!h.weight || !h.date || h.date >= this.selectedDate) return;
+        if (!prevDateMap.has(h.exerciseId) || h.date > prevDateMap.get(h.exerciseId)) {
+          prevDateMap.set(h.exerciseId, h.date);
           prevWeightMap.set(h.exerciseId, h.weight);
         }
       });
@@ -2205,7 +2314,8 @@
         }).join('');
 
         const weightText = weight && weight !== 'Vücut Ağırlığı' ? esc(weight) : 'Vücut ağırlığı';
-        const showTag = this.selectedCategory === 'all';
+        const showTag = this.selectedCategory === 'all' || this.selectedCategory === 'today';
+        const best = WorkoutStats.best(ex.id);
 
         return `
           <div class="workout-card ${isCompleted ? 'is-completed' : ''}" data-id="${ex.id}" data-cat="${ex.category}">
@@ -2213,9 +2323,10 @@
               <button type="button" class="workout-check-btn" data-id="${ex.id}" title="${isCompleted ? 'Tamamlanmadı yap' : 'Tüm setleri bitti olarak işaretle'}" aria-label="Hareketi tamamla">✓</button>
               <div class="wc-title-box">
                 <span class="workout-card-title">${esc(ex.name)}</span>
-                <span class="wc-specs">${totalSets} set × ${reps} tekrar · ${weightText}${prevWeight && prevWeight !== weight ? ` <span class="wc-prev" title="Önceki antrenmandaki ağırlık">(önceki ${esc(prevWeight)})</span>` : ''}${showTag ? ` · <span class="wc-cat cat-${ex.category}">${catNames[ex.category] || ex.category}</span>` : ''}</span>
+                <span class="wc-specs">${best ? `<span class="wc-pr" title="Kişisel rekor">🏆 ${best.value} kg</span> ` : ''}${totalSets} set × ${reps} tekrar · ${weightText}${prevWeight && prevWeight !== weight ? ` <span class="wc-prev" title="Önceki antrenmandaki ağırlık">(önceki ${esc(prevWeight)})</span>` : ''}${showTag ? ` · <span class="wc-cat cat-${ex.category}">${catNames[ex.category] || ex.category}</span>` : ''}</span>
               </div>
               <div class="workout-card-actions">
+                <button type="button" class="workout-action-btn chart-btn" data-id="${ex.id}" title="Gelişim grafiği" aria-label="Gelişim grafiği">📈</button>
                 <button type="button" class="workout-action-btn edit-btn" data-id="${ex.id}" title="Düzenle" aria-label="Düzenle">✏️</button>
                 <button type="button" class="workout-action-btn del-btn" data-id="${ex.id}" title="Sil" aria-label="Sil">🗑️</button>
               </div>
@@ -2259,6 +2370,7 @@
     },
 
     bindListEvents() {
+      $$('.workout-action-btn.chart-btn').forEach(b => b.addEventListener('click', (e) => { e.stopPropagation(); WorkoutStats.openChart(b.dataset.id); }));
       $$('.wc-rest-pause').forEach(b => b.addEventListener('click', (e) => { e.stopPropagation(); this.pauseRestTimer(); }));
       $$('.wc-rest-resume').forEach(b => b.addEventListener('click', (e) => { e.stopPropagation(); this.resumeRestTimer(); }));
       $$('.wc-rest-skip').forEach(b => b.addEventListener('click', (e) => { e.stopPropagation(); this.skipRestTimer(); }));
@@ -4560,6 +4672,7 @@
       `;
 
       // Detay modalı içindeki butonların dinleyicileri
+      try { BookQuotes.mount(bodyEl, bookId); } catch (e) { console.warn('Alıntılar:', e); }
       bodyEl.querySelector('.detail-start-reading-btn')?.addEventListener('click', async () => {
         await this.startReading(book.id);
         this.openDetailModal(book.id);
@@ -6523,6 +6636,7 @@
       document.querySelectorAll('.prayer-approx-note').forEach(el => el.classList.toggle('hidden', !this.isApprox));
       this.renderWidget();
       this.renderPage();
+      if (typeof TodayPanel !== 'undefined') TodayPanel.render();
     },
 
     async fetchTimings(force = false) {
@@ -6878,6 +6992,16 @@
       { id: 'present-100',   group: 'school',  emoji: '🏫', title: 'Sınıf Birincisi',    metric: 'attendancePresent', target: 100, unit: 'ders',   desc: '100 kez derste "Katıldım" işaretle.' },
 
       // ─── Genel ───
+      { id: 'pr-1',          group: 'workout', emoji: '🏆', title: 'İlk Rekor',          metric: 'prCount',          target: 1,    unit: 'rekor',  desc: 'Bir harekette önceki en yüksek ağırlığını geç.' },
+      { id: 'pr-10',         group: 'workout', emoji: '🥇', title: 'Rekor Avcısı',       metric: 'prCount',          target: 10,   unit: 'rekor',  desc: '10 kez kişisel rekor kır.' },
+      { id: 'quote-1',       group: 'reading', emoji: '💬', title: 'Altını Çizdim',      metric: 'quotesCount',      target: 1,    unit: 'alıntı', desc: 'Bir kitaptan ilk alıntını kaydet.' },
+      { id: 'quote-25',      group: 'reading', emoji: '🖋️', title: 'Alıntı Defteri',     metric: 'quotesCount',      target: 25,   unit: 'alıntı', desc: '25 alıntı ya da not biriktir.' },
+      { id: 'kaza-10',       group: 'prayer',  emoji: '🕋', title: 'Borç Kapatıyorum',   metric: 'kazaDone',         target: 10,   unit: 'vakit',  desc: '10 vakit kaza namazı kıl.' },
+      { id: 'kaza-100',      group: 'prayer',  emoji: '🤲', title: 'Sabırlı Kul',        metric: 'kazaDone',         target: 100,  unit: 'vakit',  desc: '100 vakit kaza namazı kıl.' },
+      { id: 'quran-100',     group: 'prayer',  emoji: '📖', title: 'Kur\'an Dostu',      metric: 'quranPages',       target: 100,  unit: 'sayfa',  desc: '100 sayfa Kur\'an-ı Kerim oku.' },
+      { id: 'hatim-1',       group: 'prayer',  emoji: '🌟', title: 'İlk Hatim',          metric: 'hatims',           target: 1,    unit: 'hatim',  desc: 'Kur\'an-ı Kerim\'i baştan sona bir kez hatmet.' },
+      { id: 'zikir-1000',    group: 'prayer',  emoji: '📿', title: 'Zikir Ehli',         metric: 'zikirTotal',       target: 1000, unit: 'zikir',  desc: 'Zikirmatik ile toplam 1000 zikir çek.' },
+      { id: 'exam-planner',  group: 'school',  emoji: '🗓️', title: 'Planlı Öğrenci',     metric: 'examsAdded',       target: 1,    unit: 'sınav',  desc: 'Sınav takvimine ilk sınavını ekle.' },
       { id: 'profile-done',  group: 'general', emoji: '🪪', title: 'Ben Buradayım',      metric: 'profileComplete',  target: 1,    unit: '',       desc: 'Profiline adını ve bir fotoğraf ya da emoji ekle.' },
       { id: 'active-3',      group: 'general', emoji: '🌱', title: 'Filizlenme',         metric: 'activeStreak',     target: 3,    unit: 'gün',    desc: '3 gün üst üste okuma, spor veya ibadet kaydı yap.' },
       { id: 'productivity-beast', group: 'general', emoji: '🚀', title: 'Üretkenlik Canavarı', metric: 'activeStreak', target: 7,  unit: 'gün',    desc: '7 gün boyunca Planova\'yı aktif kullan.' },
@@ -6998,6 +7122,13 @@
         attendancePresent: arr(records).filter(r => r.status === 'present').length,
         profileComplete: hasName && hasPic ? 1 : 0,
         activeStreak: this.calculateStreak(new Set([...rDates, ...wDates, ...prayer.dates])),
+        prCount: (() => { try { return WorkoutStats.prCount(); } catch (_) { return 0; } })(),
+        quotesCount: Object.values(Storage.get('asi_book_quotes', {}) || {}).reduce((t, l) => t + (Array.isArray(l) ? l.length : 0), 0),
+        kazaDone: (() => { const k = Storage.get('asi_kaza', null); return k && k.done ? Object.values(k.done).reduce((a, b) => a + (Number(b) || 0), 0) : 0; })(),
+        quranPages: (() => { const q = Storage.get('asi_quran', null); return q && q.log ? Object.values(q.log).reduce((a, b) => a + (Number(b) || 0), 0) : 0; })(),
+        hatims: Number((Storage.get('asi_quran', null) || {}).hatims) || 0,
+        zikirTotal: Number((Storage.get('asi_zikir', null) || {}).lifetime) || 0,
+        examsAdded: (Storage.get('asi_exams', []) || []).length,
         badgesEarned: 0
       };
     },
@@ -7305,6 +7436,7 @@
     clearTimeout(badgeCheckTimer);
     badgeCheckTimer = setTimeout(() => {
       try { StreakManager.updateStreaksAndBadges(); } catch (e) { console.warn('Rozet kontrolü başarısız:', e); }
+      try { TodayPanel.render(); WeekSummary.render(); } catch (_) {}
     }, 700);
   }
 
@@ -7347,6 +7479,8 @@
         weight: this.weight,
         updatedAt: Date.now()
       });
+      clearTimeout(this._histTimer);
+      this._histTimer = setTimeout(() => { try { VkiHistory.record(this.height, this.weight); } catch (_) {} }, 1200);
     },
 
     onInputChange() {
@@ -7871,6 +8005,1395 @@
     }
   };
 
+
+  // ═══════════════════════════════════════════════════════
+  // ☀️ BUGÜN PANELİ — namaz, görev, spor, okuma tek bakışta
+  // ═══════════════════════════════════════════════════════
+
+  const PRAYER_IDS = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'];
+
+  const TodayPanel = {
+    render() {
+      const grid = $('#today-grid');
+      if (!grid) return;
+      const today = formatDateShort(new Date());
+      const tiles = [];
+      const vis = (id) => ModuleManager.isModuleVisible(id);
+
+      // 🕌 Namaz
+      if (vis('prayer')) {
+        const checks = Storage.get(`asi_prayer_checks_${today}`, {}) || {};
+        const done = PRAYER_IDS.filter(p => checks[p] === true).length;
+        const next = PrayerManager.timings ? PrayerManager.getNextPrayer() : null;
+        const nextName = next ? (next.prayer || next.name) : '';
+        tiles.push({
+          page: 'prayer', icon: '🕌', title: 'Namaz',
+          main: `${done}/5 vakit`,
+          sub: (() => {
+            const ims = Imsakiye.todayEntry();
+            if (ims) return `🌙 İftar ${ims.iftar} · Sahur ${ims.imsak}`;
+            return next ? `Sıradaki: ${nextName} ${next.time}${/Yarın/.test(next.remainingText || '') ? ' (yarın)' : ''}` : 'Vakitler yükleniyor…';
+          })(),
+          pct: done / 5 * 100,
+          ok: done === 5
+        });
+      }
+
+      // 📋 Görevler: geciken + bugün + devam eden
+      if (vis('kanban')) {
+        const tasks = (Storage.get('asi_tasks', []) || []).filter(t => t && t.status !== 'done');
+        const late = tasks.filter(t => t.due && daysFromToday(t.due) < 0);
+        const dueToday = tasks.filter(t => t.due && daysFromToday(t.due) === 0);
+        const doing = tasks.filter(t => t.status === 'doing' && !late.includes(t) && !dueToday.includes(t));
+        const focus = [...late, ...dueToday, ...doing].slice(0, 3);
+        const esc = Dashboard.escapeHtml;
+        tiles.push({
+          page: 'kanban', icon: '📋', title: 'Görevler',
+          main: focus.length ? `${late.length + dueToday.length + doing.length} iş` : 'Boş gün',
+          sub: late.length ? `${late.length} görev gecikti` : dueToday.length ? `${dueToday.length} görevin son günü bugün` : (doing.length ? 'Devam eden işlerin var' : 'Bugüne tarihli görev yok'),
+          warn: late.length > 0,
+          list: focus.map(t => `<li class="${t.due && daysFromToday(t.due) < 0 ? 'is-late' : ''}">${esc(t.title)}${t.due ? ` <em>${dueLabel(t.due)}</em>` : ''}</li>`).join('')
+        });
+      }
+
+      // 🏋️ Spor
+      if (vis('schedule')) {
+        const logs = [...(Storage.get('asi_workouts', []) || []), ...(Storage.get('asi_workout_history', []) || [])]
+          .filter(l => l && l.date === today);
+        const byEx = new Map();
+        logs.forEach(l => {
+          const n = Array.isArray(l.completedSets) ? l.completedSets.length : (l.completed ? (l.sets || 0) : 0);
+          byEx.set(l.exerciseId, Math.max(byEx.get(l.exerciseId) || 0, n));
+        });
+        const sets = [...byEx.values()].reduce((a, b) => a + b, 0);
+        const moves = [...byEx.values()].filter(n => n > 0).length;
+        const plan = Reminders.get().workout;
+        const planCats = WorkoutPlan.todayCats();
+        const isDay = planCats.length > 0 || (Array.isArray(plan.days) && plan.days.includes(new Date().getDay()));
+        const planText = planCats.map(c => WorkoutPlan.CATS[c]?.name || c).join(' + ');
+        tiles.push({
+          page: 'schedule', icon: '🏋️', title: 'Spor',
+          main: sets ? `${moves} hareket · ${sets} set` : (planText || (isDay ? 'Antrenman günü' : 'Henüz yok')),
+          sub: sets ? (planText ? `Program: ${planText}` : 'Bugün antrenman yaptın 💪') : (isDay ? `Antrenman günü · ${plan.time}` : 'Dinlenme günü ya da plan yok'),
+          ok: sets > 0
+        });
+      }
+
+      // 🎓 Okul: bugünün dersleri + yaklaşan sınav
+      if (vis('attendance')) {
+        const t = School.todayInfo();
+        if (t.courses.length || t.nextExam) {
+          const esc = Dashboard.escapeHtml;
+          const risky = t.courses.filter(c => c.left <= 1);
+          tiles.push({
+            page: 'attendance', icon: '🎓', title: 'Okul',
+            main: t.courses.length ? `${t.courses.length} ders` : (t.nextExam ? `Sınava ${t.nextExam.days} gün` : ''),
+            sub: risky.length ? `⚠️ ${esc(risky[0].name)}: ${risky[0].left === 0 ? 'hakkın bitti' : '1 hakkın kaldı'}` : t.nextExam ? `${esc(t.nextExam.title)} · ${t.nextExam.days === 0 ? 'bugün' : t.nextExam.days === 1 ? 'yarın' : t.nextExam.days + ' gün'}` : 'Bugün sınav yok',
+            warn: risky.length > 0 || (t.nextExam && t.nextExam.days <= 1),
+            list: t.courses.slice(0, 3).map(c => `<li class="${c.left <= 1 ? 'is-late' : ''}">${esc(c.name)} <em>${esc(c.time || '')}</em></li>`).join('')
+          });
+        }
+      }
+
+      // 📚 Okuma
+      if (vis('books')) {
+        const pages = (Storage.get('asi_reading_sessions', []) || [])
+          .filter(x => x && x.date === today)
+          .reduce((t, x) => t + (Number(x.pagesRead) || 0), 0);
+        const goal = Number((Storage.get('asi_reading_goals', DEFAULT_READING_GOALS) || {}).dailyPages) || 20;
+        tiles.push({
+          page: 'books', icon: '📚', title: 'Okuma',
+          main: `${pages} / ${goal} sayfa`,
+          sub: pages >= goal ? 'Günlük hedef tamam ✓' : `${goal - pages} sayfa kaldı`,
+          pct: Math.min(100, pages / goal * 100),
+          ok: pages >= goal,
+          action: '<button type="button" class="today-mini-btn" data-act="read">📖 Okumaya başla</button>'
+        });
+      }
+
+      $('#today-card')?.classList.toggle('hidden', tiles.length === 0);
+      grid.innerHTML = tiles.map(t => `
+        <div class="today-tile ${t.ok ? 'is-ok' : ''} ${t.warn ? 'is-warn' : ''}" data-page="${t.page}" role="button" tabindex="0">
+          <div class="today-tile-top"><span class="today-ico">${t.icon}</span><span class="today-ttl">${t.title}</span>${t.ok ? '<span class="today-check">✓</span>' : ''}</div>
+          <div class="today-main">${t.main}</div>
+          <div class="today-tsub">${t.sub}</div>
+          ${typeof t.pct === 'number' ? `<div class="today-bar"><div style="width:${Math.round(t.pct)}%"></div></div>` : ''}
+          ${t.list ? `<ul class="today-list">${t.list}</ul>` : ''}
+          ${t.action || ''}
+        </div>`).join('');
+
+      const sub = $('#today-sub');
+      if (sub) sub.textContent = new Date().toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', weekday: 'long' });
+
+      grid.querySelectorAll('.today-tile').forEach(el => {
+        const go = (e) => {
+          if (e.target.closest('[data-act="read"]')) { BookFocusManager.startFocusFlow(); return; }
+          Nav.goTo(el.dataset.page);
+        };
+        el.addEventListener('click', go);
+        el.addEventListener('keydown', (e) => { if (e.key === 'Enter') go(e); });
+      });
+    }
+  };
+
+  // ═══════════════════════════════════════════════════════
+  // 📊 HAFTALIK ÖZET — bu hafta vs geçen haftanın aynı günleri
+  // ═══════════════════════════════════════════════════════
+
+  const WeekSummary = {
+    // Pazartesi 00:00'dan başlayan hafta; offset = -1 geçen hafta
+    range(offsetWeeks = 0) {
+      const now = new Date();
+      const monday = getMonday(new Date(now));
+      monday.setHours(0, 0, 0, 0);
+      monday.setDate(monday.getDate() + offsetWeeks * 7);
+      const daysSoFar = ((now.getDay() + 6) % 7) + 1; // Pzt=1 … Paz=7
+      const days = [];
+      for (let i = 0; i < daysSoFar; i++) {
+        const d = new Date(monday); d.setDate(monday.getDate() + i);
+        days.push(formatDateShort(d));
+      }
+      const start = monday.getTime();
+      const end = new Date(monday).setDate(monday.getDate() + daysSoFar);
+      return { days: new Set(days), start, end, count: daysSoFar };
+    },
+
+    metrics(r) {
+      const inR = (ymd) => r.days.has(ymd);
+      const sessions = (Storage.get('asi_reading_sessions', []) || []).filter(x => x && inR(x.date));
+      const workoutDays = [...StreakManager.workoutDates()].filter(inR).length;
+      let prayers = 0;
+      r.days.forEach(d => {
+        const c = Storage.get(`asi_prayer_checks_${d}`, null);
+        if (c) prayers += PRAYER_IDS.filter(p => c[p] === true).length;
+      });
+      const tasksDone = (Storage.get('asi_tasks', []) || [])
+        .filter(t => t && t.status === 'done' && t.completedAt >= r.start && t.completedAt < r.end).length;
+      return {
+        pages: sessions.reduce((t, x) => t + (Number(x.pagesRead) || 0), 0),
+        minutes: sessions.reduce((t, x) => t + (Number(x.duration) || 0), 0),
+        workoutDays,
+        prayers,
+        tasksDone
+      };
+    },
+
+    render() {
+      const grid = $('#week-grid');
+      if (!grid) return;
+      const cur = this.range(0), prev = this.range(-1);
+      const a = this.metrics(cur), b = this.metrics(prev);
+      const vis = (id) => ModuleManager.isModuleVisible(id);
+      const now = new Date();
+      const isSundayEvening = now.getDay() === 0 && now.getHours() >= 18;
+
+      const rows = [
+        vis('books') && { icon: '📚', label: 'Okunan sayfa', v: a.pages, p: b.pages },
+        vis('books') && { icon: '⏱️', label: 'Okuma süresi', v: a.minutes, p: b.minutes, unit: 'dk' },
+        vis('schedule') && { icon: '🏋️', label: 'Antrenman günü', v: a.workoutDays, p: b.workoutDays },
+        vis('prayer') && { icon: '🕌', label: 'Kılınan vakit', v: a.prayers, p: b.prayers, of: cur.count * 5 },
+        vis('kanban') && { icon: '✅', label: 'Biten görev', v: a.tasksDone, p: b.tasksDone }
+      ].filter(Boolean);
+
+      $('#week-card')?.classList.toggle('hidden', rows.length === 0);
+      const title = $('#week-title');
+      if (title) title.textContent = isSundayEvening ? '📊 Haftanın Özeti' : '📊 Bu Hafta';
+      const sub = $('#week-sub');
+      if (sub) sub.textContent = cur.count === 7 ? 'Geçen haftayla karşılaştırma' : `Pzt–${['', 'Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'][cur.count]} · geçen haftanın aynı günleriyle`;
+
+      // Tek cümlelik özet
+      const parts = [];
+      if (vis('books') && a.pages) parts.push(`${a.pages} sayfa okudun`);
+      if (vis('schedule') && a.workoutDays) parts.push(`${a.workoutDays} gün antrenman yaptın`);
+      if (vis('prayer') && a.prayers) parts.push(`${a.prayers}/${cur.count * 5} vakit kıldın`);
+      if (vis('kanban') && a.tasksDone) parts.push(`${a.tasksDone} görev bitirdin`);
+      const head = $('#week-headline');
+      if (head) {
+        head.textContent = parts.length
+          ? `Bu hafta ${parts.length > 1 ? parts.slice(0, -1).join(', ') + ' ve ' + parts[parts.length - 1] : parts[0]}.`
+          : 'Bu hafta henüz kayıt yok — bugün küçük bir adımla başla. 🌱';
+      }
+
+      grid.innerHTML = rows.map(r => {
+        const d = r.v - r.p;
+        const cls = d > 0 ? 'up' : d < 0 ? 'down' : 'same';
+        const arrow = d > 0 ? `▲ ${d}` : d < 0 ? `▼ ${-d}` : '=';
+        return `
+          <div class="week-row">
+            <span class="week-ico">${r.icon}</span>
+            <span class="week-lbl">${r.label}</span>
+            <span class="week-val">${r.v}${r.of ? `<small>/${r.of}</small>` : ''}${r.unit ? `<small> ${r.unit}</small>` : ''}</span>
+            <span class="week-delta ${cls}" title="Geçen hafta: ${r.p}">${arrow}</span>
+          </div>`;
+      }).join('');
+    },
+
+    headline() {
+      return $('#week-headline')?.textContent || '';
+    }
+  };
+
+  // ═══════════════════════════════════════════════════════
+  // 🔔 HATIRLATICILAR — namaz, antrenman, görev, haftalık özet
+  // Tarayıcı kısıtı: yalnızca uygulama açık / arka plandayken çalışır.
+  // ═══════════════════════════════════════════════════════
+
+  const Reminders = {
+    KEY: 'planova_reminders',       // cihaza özel (bildirim izni de cihaza özel)
+    FIRED_KEY: 'planova_reminders_fired',
+    DEFAULTS: {
+      prayer: { on: false, before: 10 },
+      workout: { on: false, days: [1, 3, 5], time: '18:00' },
+      tasks: { on: false, time: '09:00' },
+      week: { on: false }
+    },
+    _loop: null,
+
+    get() {
+      let saved = {};
+      try { saved = JSON.parse(localStorage.getItem(this.KEY) || '{}') || {}; } catch (_) {}
+      const d = this.DEFAULTS;
+      return {
+        prayer: { ...d.prayer, ...(saved.prayer || {}) },
+        workout: { ...d.workout, ...(saved.workout || {}) },
+        tasks: { ...d.tasks, ...(saved.tasks || {}) },
+        week: { ...d.week, ...(saved.week || {}) }
+      };
+    },
+    save(cfg) {
+      try { localStorage.setItem(this.KEY, JSON.stringify(cfg)); } catch (_) {}
+      this.updateUi();
+      try { TodayPanel.render(); } catch (_) {}
+    },
+
+    supported() { return typeof window !== 'undefined' && 'Notification' in window; },
+    permission() { return this.supported() ? Notification.permission : 'unsupported'; },
+
+    init() {
+      const cfg = this.get();
+      const bind = (id, fn) => $(id)?.addEventListener('change', fn);
+
+      $('#rem-prayer-on') && ($('#rem-prayer-on').checked = cfg.prayer.on);
+      $('#rem-prayer-before') && ($('#rem-prayer-before').value = String(cfg.prayer.before));
+      $('#rem-workout-on') && ($('#rem-workout-on').checked = cfg.workout.on);
+      $('#rem-workout-time') && ($('#rem-workout-time').value = cfg.workout.time);
+      $('#rem-tasks-on') && ($('#rem-tasks-on').checked = cfg.tasks.on);
+      $('#rem-tasks-time') && ($('#rem-tasks-time').value = cfg.tasks.time);
+      $('#rem-week-on') && ($('#rem-week-on').checked = cfg.week.on);
+
+      const onToggle = async (e) => {
+        if (e.target.checked && this.permission() !== 'granted') {
+          const ok = await this.requestPermission();
+          if (!ok) { e.target.checked = false; }
+        }
+        this.collect();
+      };
+      ['#rem-prayer-on', '#rem-workout-on', '#rem-tasks-on', '#rem-week-on'].forEach(id => bind(id, onToggle));
+      ['#rem-prayer-before', '#rem-workout-time', '#rem-tasks-time'].forEach(id => bind(id, () => this.collect()));
+
+      $$('#rem-workout-days button').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const c = this.get();
+          const day = Number(btn.dataset.day);
+          const set = new Set(c.workout.days);
+          set.has(day) ? set.delete(day) : set.add(day);
+          c.workout.days = [...set].sort();
+          this.save(c);
+        });
+      });
+
+      $('#reminder-enable-btn')?.addEventListener('click', () => this.requestPermission());
+      $('#reminder-test-btn')?.addEventListener('click', async () => {
+        if (this.permission() !== 'granted' && !(await this.requestPermission())) return;
+        this.notify('🔔 Planova', 'Bildirimler çalışıyor! Hatırlatıcıların bu cihaza gelecek.', 'settings', 'test');
+      });
+
+      this.updateUi();
+      this.check();
+      this._loop = setInterval(() => this.check(), 30000);
+      document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') this.check(); });
+    },
+
+    collect() {
+      const c = this.get();
+      c.prayer.on = !!$('#rem-prayer-on')?.checked;
+      c.prayer.before = Number($('#rem-prayer-before')?.value || 10);
+      c.workout.on = !!$('#rem-workout-on')?.checked;
+      c.workout.time = $('#rem-workout-time')?.value || '18:00';
+      c.tasks.on = !!$('#rem-tasks-on')?.checked;
+      c.tasks.time = $('#rem-tasks-time')?.value || '09:00';
+      c.week.on = !!$('#rem-week-on')?.checked;
+      this.save(c);
+      this.check();
+    },
+
+    async requestPermission() {
+      if (!this.supported()) {
+        showToast('Bu tarayıcı bildirimleri desteklemiyor. iPhone\'da önce Planova\'yı ana ekrana kurman gerekiyor.', 'warning');
+        return false;
+      }
+      if (Notification.permission === 'granted') { this.updateUi(); return true; }
+      if (Notification.permission === 'denied') {
+        showToast('Bildirimler engellenmiş. Tarayıcının site ayarlarından Planova için bildirimlere izin ver.', 'warning');
+        this.updateUi();
+        return false;
+      }
+      let res = 'default';
+      try { res = await Notification.requestPermission(); } catch (_) {}
+      this.updateUi();
+      if (res === 'granted') showToast('🔔 Bildirimler açıldı', 'success');
+      return res === 'granted';
+    },
+
+    updateUi() {
+      const perm = this.permission();
+      const badge = $('#reminder-perm-state');
+      const cfg = this.get();
+      const anyOn = cfg.prayer.on || cfg.workout.on || cfg.tasks.on || cfg.week.on;
+      if (badge) {
+        badge.textContent = perm === 'unsupported' ? 'Desteklenmiyor' : perm === 'denied' ? 'Engellendi' : perm === 'granted' ? (anyOn ? 'Açık' : 'İzin var') : 'Kapalı';
+        badge.classList.toggle('is-on', perm === 'granted' && anyOn);
+      }
+      $('#reminder-enable-btn')?.classList.toggle('hidden', perm === 'granted' || perm === 'unsupported');
+      $$('#rem-workout-days button').forEach(b => b.classList.toggle('active', cfg.workout.days.includes(Number(b.dataset.day))));
+    },
+
+    firedMap() {
+      try { return JSON.parse(localStorage.getItem(this.FIRED_KEY) || '{}') || {}; } catch (_) { return {}; }
+    },
+    markFired(id) {
+      const map = this.firedMap();
+      map[id] = Date.now();
+      // 3 günden eski kayıtları temizle
+      const cutoff = Date.now() - 3 * 86400000;
+      Object.keys(map).forEach(k => { if (map[k] < cutoff) delete map[k]; });
+      try { localStorage.setItem(this.FIRED_KEY, JSON.stringify(map)); } catch (_) {}
+    },
+
+    // Bugünün tüm hatırlatma anları
+    events() {
+      const cfg = this.get();
+      const now = new Date();
+      const today = formatDateShort(now);
+      const at = (hhmm) => {
+        const [h, m] = String(hhmm || '00:00').split(':').map(Number);
+        const d = new Date(now); d.setHours(h || 0, m || 0, 0, 0);
+        return d.getTime();
+      };
+      const list = [];
+
+      if (cfg.prayer.on && ModuleManager.isModuleVisible('prayer') && PrayerManager.timings && PrayerManager.cachedDate === today) {
+        const checks = Storage.get(`asi_prayer_checks_${today}`, {}) || {};
+        PRAYER_IDS.forEach(id => {
+          const meta = PrayerManager.PRAYER_KEYS.find(p => p.id === id);
+          if (!meta || checks[id] === true) return;
+          const time = PrayerManager.cleanTime(PrayerManager.timings[meta.aladhanKey]);
+          const name = meta.prayer || meta.name;
+          const before = Number(cfg.prayer.before) || 0;
+          list.push({
+            id: `prayer-${today}-${id}-${before}`,
+            at: at(time) - before * 60000,
+            title: before ? `🕌 ${name} vaktine ${before} dk kaldı` : `🕌 ${name} vakti girdi`,
+            body: `${name}: ${time}`,
+            page: 'prayer'
+          });
+        });
+      }
+
+      if (cfg.workout.on && ModuleManager.isModuleVisible('schedule') && cfg.workout.days.includes(now.getDay())) {
+        const doneToday = StreakManager.workoutDates().has(today);
+        if (!doneToday) {
+          list.push({ id: `workout-${today}`, at: at(cfg.workout.time), title: '🏋️ Bugün antrenman günü!', body: 'Programın seni bekliyor. Hadi başlayalım 💪', page: 'schedule' });
+        }
+      }
+
+      if (cfg.tasks.on && ModuleManager.isModuleVisible('kanban')) {
+        const open = (Storage.get('asi_tasks', []) || []).filter(t => t && t.status !== 'done' && t.due && daysFromToday(t.due) <= 0);
+        if (open.length) {
+          const late = open.filter(t => daysFromToday(t.due) < 0).length;
+          list.push({
+            id: `tasks-${today}`,
+            at: at(cfg.tasks.time),
+            title: late ? `📋 ${late} görevin gecikti` : `📋 Bugün ${open.length} görevin son günü`,
+            body: open.slice(0, 3).map(t => '• ' + t.title).join('\n'),
+            page: 'kanban'
+          });
+        }
+      }
+
+      if (cfg.tasks.on && ModuleManager.isModuleVisible('attendance')) {
+        const t = School.todayInfo();
+        const soon = (Storage.get('asi_exams', []) || []).filter(e => { const n = daysFromToday(e.date); return n === 0 || n === 1; });
+        if (soon.length) {
+          list.push({
+            id: `exams-${today}`, at: at(cfg.tasks.time), page: 'attendance',
+            title: soon.some(e => daysFromToday(e.date) === 0) ? '📝 Bugün sınavın var!' : '📝 Yarın sınavın var',
+            body: soon.map(e => `• ${School.examTitle(e)}${e.time ? ' ' + e.time : ''}`).join('\n')
+          });
+        }
+        const risky = t.courses.filter(c => c.left <= 1);
+        if (risky.length) {
+          list.push({
+            id: `absence-${today}`, at: at(cfg.tasks.time), page: 'attendance',
+            title: '🎓 Devamsızlık sınırındasın',
+            body: risky.map(c => `• ${c.name}: ${c.left === 0 ? 'hakkın bitti' : '1 hakkın kaldı'}`).join('\n')
+          });
+        }
+      }
+
+      if (cfg.week.on && now.getDay() === 0) {
+        list.push({ id: `week-${today}`, at: at('20:00'), title: '📊 Haftalık özetin hazır', body: '', page: 'dashboard', dynamicBody: true });
+      }
+      return list;
+    },
+
+    // Her 30 sn: zamanı gelmiş (son 15 dk içinde) ve henüz gönderilmemiş olanları gönder
+    check() {
+      if (this.permission() !== 'granted') return;
+      const now = Date.now();
+      const fired = this.firedMap();
+      this.events().forEach(ev => {
+        if (fired[ev.id]) return;
+        if (ev.at <= now && now - ev.at < 15 * 60000) {
+          let body = ev.body;
+          if (ev.dynamicBody) { try { WeekSummary.render(); body = WeekSummary.headline(); } catch (_) {} }
+          this.notify(ev.title, body, ev.page, ev.id);
+          this.markFired(ev.id);
+        }
+      });
+    },
+
+    async notify(title, body, page, tag) {
+      const opts = { body, tag, icon: 'icons/icon-192.png', badge: 'icons/icon-192.png', data: { page }, renotify: false };
+      try {
+        const reg = navigator.serviceWorker && await navigator.serviceWorker.getRegistration();
+        if (reg && reg.showNotification) { await reg.showNotification(title, opts); return; }
+      } catch (_) {}
+      try {
+        const n = new Notification(title, opts);
+        n.onclick = () => { window.focus(); if (page) Nav.goTo(page); n.close(); };
+      } catch (_) {
+        showToast(`${title}${body ? ' — ' + body : ''}`, 'info');
+      }
+    }
+  };
+
+  // ═══════════════════════════════════════════════════════
+  // 📲 PWA KURULUMU
+  // ═══════════════════════════════════════════════════════
+
+  const PwaInstall = {
+    deferred: null,
+    DISMISS_KEY: 'planova_install_dismissed',
+
+    isStandalone() {
+      return window.matchMedia?.('(display-mode: standalone)').matches || window.navigator.standalone === true;
+    },
+
+    init() {
+      window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        this.deferred = e;
+        this.updateUi();
+      });
+      window.addEventListener('appinstalled', () => {
+        this.deferred = null;
+        showToast('📲 Planova ana ekranına kuruldu!', 'success');
+        this.updateUi();
+      });
+      $$('.pwa-install-btn').forEach(b => b.addEventListener('click', () => this.prompt()));
+      $('#pwa-banner-close')?.addEventListener('click', () => {
+        try { localStorage.setItem(this.DISMISS_KEY, String(Date.now())); } catch (_) {}
+        $('#pwa-install-banner')?.classList.add('hidden');
+      });
+
+      // Bildirime dokununca ilgili sayfayı aç
+      navigator.serviceWorker?.addEventListener?.('message', (e) => {
+        if (e.data && e.data.type === 'open-page' && e.data.page) Nav.goTo(e.data.page);
+      });
+      this.updateUi();
+    },
+
+    async prompt() {
+      if (!this.deferred) {
+        Nav.goTo('settings');
+        $('#settings-install-card')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+      }
+      this.deferred.prompt();
+      try { await this.deferred.userChoice; } catch (_) {}
+      this.deferred = null;
+      this.updateUi();
+    },
+
+    updateUi() {
+      const installed = this.isStandalone();
+      const can = !!this.deferred;
+      const state = $('#pwa-install-state');
+      if (state) {
+        state.textContent = installed ? 'Kurulu ✓' : can ? 'Kurulabilir' : 'Web';
+        state.classList.toggle('is-on', installed);
+      }
+      $$('#settings-install-card .pwa-install-btn').forEach(b => b.classList.toggle('hidden', !can || installed));
+      $('#pwa-install-help')?.classList.toggle('hidden', installed);
+
+      let dismissed = 0;
+      try { dismissed = Number(localStorage.getItem(this.DISMISS_KEY) || 0); } catch (_) {}
+      const recentlyDismissed = Date.now() - dismissed < 14 * 86400000;
+      $('#pwa-install-banner')?.classList.toggle('hidden', !can || installed || recentlyDismissed);
+    }
+  };
+
+
+  // ═══════════════════════════════════════════════════════
+  // ORTAK: açılır pencere + basit çizgi grafik
+  // ═══════════════════════════════════════════════════════
+
+  function openSheet(title, html, size = 'md') {
+    const m = $('#gen-modal');
+    if (!m) return null;
+    $('#gen-modal-title').textContent = title;
+    const box = m.querySelector('.modal');
+    box.classList.remove('modal-md', 'modal-lg');
+    box.classList.add(size === 'lg' ? 'modal-lg' : 'modal-md');
+    const body = $('#gen-modal-body');
+    body.innerHTML = html;
+    openModal('gen-modal');
+    return body;
+  }
+  function closeSheet() { closeModal('gen-modal'); }
+
+  // points: [{ x: 'etiket', y: sayı }]
+  function lineChartSvg(points, { unit = '', color = '#06B6D4', height = 170 } = {}) {
+    if (!points.length) return '<div class="chart-empty">Henüz veri yok.</div>';
+    const W = 340, H = height, pl = 34, pr = 12, pt = 16, pb = 26;
+    const ys = points.map(p => p.y);
+    let min = Math.min(...ys), max = Math.max(...ys);
+    if (min === max) { min -= 1; max += 1; }
+    const pad = (max - min) * 0.12; min -= pad; max += pad;
+    const X = (i) => pl + (points.length === 1 ? (W - pl - pr) / 2 : i * (W - pl - pr) / (points.length - 1));
+    const Y = (v) => pt + (1 - (v - min) / (max - min)) * (H - pt - pb);
+    const path = points.map((p, i) => `${i ? 'L' : 'M'}${X(i).toFixed(1)},${Y(p.y).toFixed(1)}`).join(' ');
+    const area = `${path} L${X(points.length - 1).toFixed(1)},${H - pb} L${X(0).toFixed(1)},${H - pb} Z`;
+    const fmt = (v) => (Math.round(v * 10) / 10).toString().replace('.', ',');
+    const step = Math.max(1, Math.ceil(points.length / 6));
+    const gid = 'g' + Math.random().toString(36).slice(2, 7);
+    return `
+      <svg class="line-chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Grafik">
+        <defs><linearGradient id="${gid}" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="${color}" stop-opacity="0.28"/><stop offset="1" stop-color="${color}" stop-opacity="0"/></linearGradient></defs>
+        <line x1="${pl}" x2="${W - pr}" y1="${Y(max - pad)}" y2="${Y(max - pad)}" class="lc-grid"/>
+        <line x1="${pl}" x2="${W - pr}" y1="${Y(min + pad)}" y2="${Y(min + pad)}" class="lc-grid"/>
+        <text x="${pl - 6}" y="${Y(max - pad) + 4}" class="lc-axis" text-anchor="end">${fmt(max - pad)}</text>
+        <text x="${pl - 6}" y="${Y(min + pad) + 4}" class="lc-axis" text-anchor="end">${fmt(min + pad)}</text>
+        <path d="${area}" fill="url(#${gid})"/>
+        <path d="${path}" fill="none" stroke="${color}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+        ${points.map((p, i) => `<circle cx="${X(i).toFixed(1)}" cy="${Y(p.y).toFixed(1)}" r="${i === points.length - 1 ? 4.5 : 3}" fill="${color}"><title>${p.x}: ${fmt(p.y)} ${unit}</title></circle>`).join('')}
+        ${points.map((p, i) => (i % step === 0 || i === points.length - 1) ? `<text x="${X(i).toFixed(1)}" y="${H - 8}" class="lc-axis" text-anchor="middle">${p.x}</text>` : '').join('')}
+        <text x="${X(points.length - 1).toFixed(1)}" y="${(Y(points[points.length - 1].y) - 9).toFixed(1)}" class="lc-last" text-anchor="end">${fmt(points[points.length - 1].y)} ${unit}</text>
+      </svg>`;
+  }
+
+  const shortDate = (ymd) => {
+    const [y, m, d] = ymd.split('-').map(Number);
+    return new Date(y, m - 1, d).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' });
+  };
+
+  // ═══════════════════════════════════════════════════════
+  // 🏋️ SPOR: haftalık program
+  // ═══════════════════════════════════════════════════════
+
+  const WorkoutPlan = {
+    KEY: 'asi_workout_plan',
+    CATS: {
+      gogus: { name: 'Göğüs', icon: '🫁' }, sirt: { name: 'Sırt', icon: '🦇' }, omuz: { name: 'Omuz', icon: '🛡️' },
+      biceps: { name: 'Biceps', icon: '💪' }, triceps: { name: 'Triceps', icon: '🔱' }, karin: { name: 'Karın', icon: '🍫' },
+      bacak: { name: 'Bacak', icon: '🦵' }, onkol: { name: 'Ön Kol', icon: '🤜' }, kardiyo: { name: 'Kardiyo', icon: '🏃' }
+    },
+    DAYS: [[1, 'Pazartesi'], [2, 'Salı'], [3, 'Çarşamba'], [4, 'Perşembe'], [5, 'Cuma'], [6, 'Cumartesi'], [0, 'Pazar']],
+
+    get() { const p = Storage.get(this.KEY, {}); return p && typeof p === 'object' ? p : {}; },
+    catsFor(day) { const c = this.get()[day]; return Array.isArray(c) ? c : []; },
+    todayCats() { return this.catsFor(new Date().getDay()); },
+
+    open() {
+      const plan = this.get();
+      const html = `
+        <p class="sheet-hint">Her güne çalışacağın kas gruplarını seç. Spor sayfası o gün <strong>📅 Bugün</strong> filtresiyle açılır; boş bıraktığın günler dinlenme günüdür.</p>
+        <div class="plan-days">
+          ${this.DAYS.map(([d, name]) => `
+            <div class="plan-day" data-day="${d}">
+              <div class="plan-day-name">${name}${d === new Date().getDay() ? ' <span class="badge-today">Bugün</span>' : ''}</div>
+              <div class="plan-chips">
+                ${Object.entries(this.CATS).map(([id, c]) => `<button type="button" class="plan-chip ${(plan[d] || []).includes(id) ? 'active' : ''}" data-cat="${id}">${c.icon} ${c.name}</button>`).join('')}
+              </div>
+            </div>`).join('')}
+        </div>
+        <label class="plan-sync"><input type="checkbox" id="plan-sync-rem" checked> Antrenman hatırlatıcısı da bu günlerde gelsin</label>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-ghost" id="plan-clear">Temizle</button>
+          <button type="button" class="btn btn-primary" id="plan-save">Kaydet</button>
+        </div>`;
+      const body = openSheet('📅 Haftalık Antrenman Programı', html);
+      if (!body) return;
+      body.querySelectorAll('.plan-chip').forEach(b => b.addEventListener('click', () => b.classList.toggle('active')));
+      body.querySelector('#plan-clear').addEventListener('click', () => body.querySelectorAll('.plan-chip.active').forEach(b => b.classList.remove('active')));
+      body.querySelector('#plan-save').addEventListener('click', () => {
+        const next = {};
+        body.querySelectorAll('.plan-day').forEach(row => {
+          const cats = [...row.querySelectorAll('.plan-chip.active')].map(b => b.dataset.cat);
+          if (cats.length) next[row.dataset.day] = cats;
+        });
+        Storage.set(this.KEY, next);
+        if (body.querySelector('#plan-sync-rem')?.checked) {
+          const cfg = Reminders.get();
+          cfg.workout.days = Object.keys(next).map(Number).sort();
+          Reminders.save(cfg);
+        }
+        closeSheet();
+        Workout.selectedCategory = this.todayCats().length ? 'today' : (Workout.selectedCategory === 'today' ? 'all' : Workout.selectedCategory);
+        $$('.workout-cat-btn').forEach(b => b.classList.toggle('active', b.dataset.cat === Workout.selectedCategory));
+        Workout.updateCategoryCounts();
+        Workout.updateProgressUI();
+        Workout.renderListOnly();
+        TodayPanel.render();
+        showToast('📅 Antrenman programı kaydedildi', 'success');
+      });
+    }
+  };
+
+  // ═══════════════════════════════════════════════════════
+  // 🏋️ SPOR: ağırlık grafiği ve kişisel rekorlar
+  // ═══════════════════════════════════════════════════════
+
+  const WorkoutStats = {
+    parseKg(w) {
+      if (w === null || w === undefined) return null;
+      const m = String(w).replace(',', '.').match(/(\d+(?:\.\d+)?)/);
+      return m ? parseFloat(m[1]) : null;
+    },
+    // Hareketin tarih sıralı ağırlık geçmişi (gün başına en yüksek)
+    series(exId) {
+      const byDate = new Map();
+      (Storage.get('asi_workout_history', []) || []).forEach(h => {
+        if (!h || h.exerciseId !== exId || !h.date) return;
+        if (!(Array.isArray(h.completedSets) ? h.completedSets.length : h.completed)) return;
+        const kg = this.parseKg(h.weight);
+        const prev = byDate.get(h.date);
+        if (!prev || (kg || 0) > (prev.kg || 0)) byDate.set(h.date, { date: h.date, kg, sets: Array.isArray(h.completedSets) ? h.completedSets.length : (h.sets || 0), reps: h.reps });
+      });
+      return [...byDate.values()].sort((a, b) => a.date.localeCompare(b.date));
+    },
+    best(exId) {
+      const s = this.series(exId).filter(x => x.kg);
+      if (!s.length) return null;
+      const top = s.reduce((a, b) => (b.kg > a.kg ? b : a));
+      return { value: top.kg, date: top.date };
+    },
+    // Tüm hareketlerde, önceki en yükseği geçen antrenman sayısı
+    prCount() {
+      const ids = new Set((Storage.get('asi_workout_history', []) || []).map(h => h && h.exerciseId).filter(Boolean));
+      let n = 0;
+      ids.forEach(id => {
+        let max = null;
+        this.series(id).forEach(x => {
+          if (!x.kg) return;
+          if (max !== null && x.kg > max) n++;
+          if (max === null || x.kg > max) max = x.kg;
+        });
+      });
+      return n;
+    },
+    checkPR(ex, date) {
+      const kg = this.parseKg(ex.weight);
+      if (!kg) return;
+      const prior = this.series(ex.id).filter(x => x.date < date && x.kg);
+      if (!prior.length) return;
+      const max = Math.max(...prior.map(x => x.kg));
+      if (kg > max) showToast(`🏆 Yeni kişisel rekor! ${ex.name}: ${kg} kg (önceki ${max} kg)`, 'success');
+    },
+    openChart(exId) {
+      const ex = (Workout._exercises || []).find(e => e.id === exId);
+      if (!ex) return;
+      const esc = Dashboard.escapeHtml;
+      const s = this.series(exId);
+      const withKg = s.filter(x => x.kg);
+      const best = this.best(exId);
+      const first = withKg[0], last = withKg[withKg.length - 1];
+      const diff = first && last ? Math.round((last.kg - first.kg) * 10) / 10 : 0;
+      const html = `
+        <div class="chart-stats">
+          <div><span>Rekor</span><strong>${best ? best.value + ' kg' : '—'}</strong></div>
+          <div><span>Antrenman</span><strong>${s.length}</strong></div>
+          <div><span>Gelişim</span><strong class="${diff > 0 ? 'up' : diff < 0 ? 'down' : ''}">${withKg.length > 1 ? (diff > 0 ? '+' : '') + diff + ' kg' : '—'}</strong></div>
+        </div>
+        ${withKg.length ? lineChartSvg(withKg.slice(-20).map(x => ({ x: shortDate(x.date), y: x.kg })), { unit: 'kg', color: '#F97316' }) :
+          '<div class="chart-empty">Bu hareket için henüz ağırlık kaydı yok. Seti tamamladıkça burada gelişimini göreceksin. Ağırlığı değiştirmek için ✏️ ile hareketi düzenle.</div>'}
+        ${s.length ? `<div class="chart-list-title">Son antrenmanlar</div>
+        <ul class="chart-list">
+          ${s.slice(-8).reverse().map(x => `<li><span>${shortDate(x.date)}</span><span>${x.sets} set × ${esc(String(x.reps || '-'))}</span><strong>${x.kg ? x.kg + ' kg' : '—'}${best && x.kg === best.value ? ' 🏆' : ''}</strong></li>`).join('')}
+        </ul>` : ''}`;
+      openSheet(`📈 ${ex.name}`, html);
+    }
+  };
+
+  // ═══════════════════════════════════════════════════════
+  // ⚖️ VKİ / KİLO GEÇMİŞİ
+  // ═══════════════════════════════════════════════════════
+
+  const VkiHistory = {
+    KEY: 'asi_vki_history',
+    list() { const l = Storage.get(this.KEY, []); return Array.isArray(l) ? l : []; },
+    record(height, weight) {
+      if (!height || !weight) return;
+      const date = formatDateShort(new Date());
+      const bmi = Math.round(weight / ((height / 100) ** 2) * 10) / 10;
+      const l = this.list().filter(x => x.date !== date);
+      l.push({ date, weight: Math.round(weight * 10) / 10, height, bmi });
+      l.sort((a, b) => a.date.localeCompare(b.date));
+      Storage.set(this.KEY, l.slice(-365));
+      this.render();
+    },
+    render() {
+      const box = $('#vki-history');
+      if (!box) return;
+      const l = this.list();
+      if (l.length < 2) {
+        box.innerHTML = `<div class="vki-hist-empty">📉 Kilonu farklı günlerde güncelledikçe burada kilo grafiğin oluşur.${l.length ? ` İlk kayıt: ${shortDate(l[0].date)} · ${l[0].weight} kg` : ''}</div>`;
+        return;
+      }
+      const first = l[0], last = l[l.length - 1];
+      const d = Math.round((last.weight - first.weight) * 10) / 10;
+      box.innerHTML = `
+        <div class="vki-hist-head"><strong>Kilo geçmişi</strong><span>${shortDate(first.date)}'den beri <b class="${d < 0 ? 'down' : d > 0 ? 'up' : ''}">${d > 0 ? '+' : ''}${d} kg</b></span></div>
+        ${lineChartSvg(l.slice(-30).map(x => ({ x: shortDate(x.date), y: x.weight })), { unit: 'kg', color: '#06B6D4', height: 150 })}`;
+    }
+  };
+
+  // ═══════════════════════════════════════════════════════
+  // 📚 OKUMA: kitap bazlı alıntı & notlar
+  // ═══════════════════════════════════════════════════════
+
+  const BookQuotes = {
+    KEY: 'asi_book_quotes',
+    all() { const a = Storage.get(this.KEY, {}); return a && typeof a === 'object' ? a : {}; },
+    of(bookId) { return Array.isArray(this.all()[bookId]) ? this.all()[bookId] : []; },
+    setFor(bookId, list) { const a = this.all(); a[bookId] = list; Storage.set(this.KEY, a); },
+
+    mount(container, bookId) {
+      const wrap = document.createElement('div');
+      wrap.className = 'book-quotes';
+      container.appendChild(wrap);
+      const draw = () => {
+        const esc = Dashboard.escapeHtml;
+        const list = this.of(bookId).slice().sort((a, b) => (a.page || 0) - (b.page || 0) || a.created - b.created);
+        wrap.innerHTML = `
+          <div class="bq-head"><h4>💬 Alıntılar & Notlar <small>${list.length}</small></h4></div>
+          <form class="bq-form">
+            <textarea class="bq-text" rows="2" placeholder="Altını çizdiğin cümle ya da aklına gelen not…" required></textarea>
+            <div class="bq-form-row">
+              <label class="bq-kind"><input type="checkbox" class="bq-is-note"> Kendi notum</label>
+              <input type="number" class="bq-page" min="0" placeholder="Sayfa" aria-label="Sayfa">
+              <button type="submit" class="btn btn-primary btn-sm">Ekle</button>
+            </div>
+          </form>
+          ${list.length ? `<ul class="bq-list">${list.map(q => `
+            <li class="bq-item ${q.kind === 'note' ? 'is-note' : ''}">
+              <div class="bq-body">${q.kind === 'note' ? '' : '<span class="bq-mark">“</span>'}${esc(q.text)}</div>
+              <div class="bq-meta">${q.page ? `s. ${q.page} · ` : ''}${new Date(q.created).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' })}
+                <button type="button" class="bq-copy" data-id="${q.id}" title="Kopyala">📋</button>
+                <button type="button" class="bq-del" data-id="${q.id}" title="Sil">🗑️</button></div>
+            </li>`).join('')}</ul>` : '<div class="bq-empty">Henüz alıntı yok. Okurken beğendiğin cümleleri buraya kaydet.</div>'}`;
+        wrap.querySelector('.bq-form').addEventListener('submit', (e) => {
+          e.preventDefault();
+          const text = wrap.querySelector('.bq-text').value.trim();
+          if (!text) return;
+          const page = parseInt(wrap.querySelector('.bq-page').value, 10) || null;
+          const kind = wrap.querySelector('.bq-is-note').checked ? 'note' : 'quote';
+          this.setFor(bookId, [...this.of(bookId), { id: 'q-' + Date.now().toString(36), text, page, kind, created: Date.now() }]);
+          draw();
+          showToast(kind === 'note' ? '📝 Not kaydedildi' : '💬 Alıntı kaydedildi', 'success');
+        });
+        wrap.querySelectorAll('.bq-del').forEach(b => b.addEventListener('click', () => {
+          this.setFor(bookId, this.of(bookId).filter(q => q.id !== b.dataset.id));
+          draw();
+        }));
+        wrap.querySelectorAll('.bq-copy').forEach(b => b.addEventListener('click', async () => {
+          const q = this.of(bookId).find(x => x.id === b.dataset.id);
+          try { await navigator.clipboard.writeText(q.text); showToast('Kopyalandı', 'info'); } catch (_) {}
+        }));
+      };
+      draw();
+    }
+  };
+
+  // ═══════════════════════════════════════════════════════
+  // 📋 GÖREVLER: takvim görünümü
+  // ═══════════════════════════════════════════════════════
+
+  const TaskCalendar = {
+    VIEW_KEY: 'planova_kanban_view',
+    month: null, // Date (ayın 1'i)
+    selected: null,
+
+    init() {
+      const today = new Date();
+      this.month = new Date(today.getFullYear(), today.getMonth(), 1);
+      this.selected = formatDateShort(today);
+      $$('.kanban-view-btn').forEach(b => b.addEventListener('click', () => this.setView(b.dataset.view)));
+      let v = 'board';
+      try { v = localStorage.getItem(this.VIEW_KEY) || 'board'; } catch (_) {}
+      this.setView(v, true);
+    },
+
+    setView(view, silent) {
+      const cal = view === 'calendar';
+      $$('.kanban-view-btn').forEach(b => b.classList.toggle('active', b.dataset.view === view));
+      $('#page-kanban .kanban-board')?.classList.toggle('hidden', cal);
+      $('#kanban-calendar')?.classList.toggle('hidden', !cal);
+      try { localStorage.setItem(this.VIEW_KEY, view); } catch (_) {}
+      if (cal) this.render();
+    },
+
+    itemsByDate() {
+      const map = {};
+      const push = (d, item) => { (map[d] = map[d] || []).push(item); };
+      (Storage.get('asi_tasks', []) || []).forEach(t => { if (t && t.due) push(t.due, { kind: 'task', t }); });
+      (Storage.get('asi_exams', []) || []).forEach(e => { if (e && e.date) push(e.date, { kind: 'exam', e }); });
+      return map;
+    },
+
+    render() {
+      const box = $('#kanban-calendar');
+      if (!box || box.classList.contains('hidden')) return;
+      const esc = Dashboard.escapeHtml;
+      const map = this.itemsByDate();
+      const m = this.month;
+      const first = new Date(m.getFullYear(), m.getMonth(), 1);
+      const startOffset = (first.getDay() + 6) % 7;
+      const daysIn = new Date(m.getFullYear(), m.getMonth() + 1, 0).getDate();
+      const todayStr = formatDateShort(new Date());
+      const cells = [];
+      for (let i = 0; i < startOffset; i++) cells.push('<div class="cal-cell is-pad"></div>');
+      for (let d = 1; d <= daysIn; d++) {
+        const ymd = formatDateShort(new Date(m.getFullYear(), m.getMonth(), d));
+        const items = map[ymd] || [];
+        const open = items.filter(x => x.kind === 'exam' || x.t.status !== 'done');
+        const late = items.some(x => x.kind === 'task' && x.t.status !== 'done' && ymd < todayStr);
+        cells.push(`
+          <button type="button" class="cal-cell ${ymd === todayStr ? 'is-today' : ''} ${ymd === this.selected ? 'is-selected' : ''} ${late ? 'is-late' : ''}" data-date="${ymd}">
+            <span class="cal-num">${d}</span>
+            <span class="cal-dots">${open.slice(0, 4).map(x => `<i class="${x.kind === 'exam' ? 'is-exam' : (x.t.priority === 'high' ? 'is-high' : '')}"></i>`).join('')}</span>
+            ${open.length ? `<span class="cal-label">${esc(open[0].kind === 'exam' ? '🎓 ' + School.examTitle(open[0].e) : open[0].t.title)}</span>` : ''}
+          </button>`);
+      }
+      const sel = map[this.selected] || [];
+      box.innerHTML = `
+        <div class="cal-head">
+          <button type="button" class="wt-nav-btn" data-nav="-1" aria-label="Önceki ay">‹</button>
+          <strong>${m.toLocaleDateString('tr-TR', { month: 'long', year: 'numeric' })}</strong>
+          <button type="button" class="wt-nav-btn" data-nav="1" aria-label="Sonraki ay">›</button>
+        </div>
+        <div class="cal-grid">
+          ${['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'].map(d => `<div class="cal-dow">${d}</div>`).join('')}
+          ${cells.join('')}
+        </div>
+        <div class="cal-day-panel">
+          <div class="cal-day-head">
+            <strong>${new Date(this.selected + 'T00:00:00').toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', weekday: 'long' })}</strong>
+            <button type="button" class="btn btn-primary btn-sm" id="cal-add-task">+ Bu güne görev</button>
+          </div>
+          ${sel.length ? `<ul class="cal-day-list">${sel.map(x => x.kind === 'exam'
+            ? `<li class="is-exam">🎓 <span>${esc(School.examTitle(x.e))}</span><em>${esc(x.e.time || '')}</em></li>`
+            : `<li class="${x.t.status === 'done' ? 'is-done' : ''}" data-task="${x.t.id}">${x.t.status === 'done' ? '✅' : x.t.priority === 'high' ? '🔴' : '📝'} <span>${esc(x.t.title)}</span>${x.t.repeat && x.t.repeat !== 'none' ? '<em>🔁</em>' : ''}</li>`).join('')}</ul>`
+            : '<div class="cal-empty">Bu gün için görev ya da sınav yok.</div>'}
+        </div>`;
+      box.querySelectorAll('[data-nav]').forEach(b => b.addEventListener('click', () => {
+        this.month = new Date(m.getFullYear(), m.getMonth() + Number(b.dataset.nav), 1);
+        this.render();
+      }));
+      box.querySelectorAll('.cal-cell[data-date]').forEach(c => c.addEventListener('click', () => { this.selected = c.dataset.date; this.render(); }));
+      box.querySelector('#cal-add-task')?.addEventListener('click', () => { Kanban._prefillDue = this.selected; Kanban.openForm(); });
+      box.querySelectorAll('li[data-task]').forEach(li => li.addEventListener('click', () => Kanban.openForm(li.dataset.task)));
+    }
+  };
+
+  // ═══════════════════════════════════════════════════════
+  // 🎓 OKUL: ders programı, sınavlar, devamsızlık uyarısı
+  // ═══════════════════════════════════════════════════════
+
+  const School = {
+    DAY_NAMES: ['Pazar', 'Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi'],
+    EXAM_TYPES: { vize: 'Vize', final: 'Final', quiz: 'Quiz', proje: 'Proje', but: 'Bütünleme', diger: 'Diğer' },
+
+    courses() { return Storage.get('asi_attendance_courses', DEFAULT_ATT_COURSES) || []; },
+    absences(courseId) { return (Storage.get('asi_attendance_records', []) || []).filter(r => r.courseId === courseId && r.status === 'absent').length; },
+    left(c) { return Math.max(0, (c.maxWeeks || 4) - this.absences(c.id)); },
+    exams() { return (Storage.get('asi_exams', []) || []).slice().sort((a, b) => (a.date + (a.time || '')).localeCompare(b.date + (b.time || ''))); },
+    examTitle(e) {
+      const c = e.courseId ? this.courses().find(x => x.id === e.courseId) : null;
+      return `${c ? c.name : (e.title || 'Sınav')} ${this.EXAM_TYPES[e.type] || ''}`.trim();
+    },
+    startMins(time) { const m = String(time || '').match(/(\d{1,2})[:.](\d{2})/); return m ? Number(m[1]) * 60 + Number(m[2]) : 9999; },
+
+    todayInfo() {
+      const dayName = this.DAY_NAMES[new Date().getDay()];
+      const courses = this.courses().filter(c => c.day === dayName)
+        .sort((a, b) => this.startMins(a.time) - this.startMins(b.time))
+        .map(c => ({ ...c, left: this.left(c) }));
+      const upcoming = this.exams().map(e => ({ ...e, days: daysFromToday(e.date), title: this.examTitle(e) })).filter(e => e.days >= 0);
+      const nextExam = upcoming.length && upcoming[0].days <= 14 ? upcoming[0] : null;
+      return { courses, nextExam };
+    },
+
+    init() {
+      $$('.att-tab').forEach(b => b.addEventListener('click', () => this.setTab(b.dataset.tab)));
+      $('#exam-add-btn')?.addEventListener('click', () => this.openExamForm());
+      let t = 'absence';
+      try { t = localStorage.getItem('planova_att_tab') || 'absence'; } catch (_) {}
+      this.setTab(t);
+    },
+
+    setTab(tab) {
+      ['absence', 'timetable', 'exams'].forEach(id => $(`#att-tab-${id}`)?.classList.toggle('hidden', id !== tab));
+      $$('.att-tab').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+      try { localStorage.setItem('planova_att_tab', tab); } catch (_) {}
+      if (tab === 'timetable') this.renderTimetable();
+      if (tab === 'exams') this.renderExams();
+    },
+
+    renderTimetable() {
+      const box = $('#att-timetable');
+      if (!box) return;
+      const esc = Dashboard.escapeHtml;
+      const courses = this.courses();
+      const days = ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi', 'Pazar']
+        .filter((d, i) => i < 5 || courses.some(c => c.day === d));
+      const todayName = this.DAY_NAMES[new Date().getDay()];
+      if (!courses.length) { box.innerHTML = '<div class="cal-empty">Henüz ders yok. Devamsızlık sekmesinden ders ekleyebilirsin.</div>'; return; }
+      box.innerHTML = days.map(d => {
+        const list = courses.filter(c => c.day === d).sort((a, b) => this.startMins(a.time) - this.startMins(b.time));
+        return `
+          <div class="tt-day ${d === todayName ? 'is-today' : ''}">
+            <div class="tt-day-name">${d}${d === todayName ? ' <span class="badge-today">Bugün</span>' : ''}</div>
+            ${list.length ? list.map(c => {
+              const left = this.left(c);
+              const cls = left === 0 ? 'is-over' : left === 1 ? 'is-warn' : '';
+              return `<div class="tt-course ${cls}">
+                <div class="tt-time">${esc(c.time || '')}</div>
+                <div class="tt-name">${esc(c.name)}</div>
+                <div class="tt-meta">${esc(c.code || '')}<span class="tt-left">${left === 0 ? '⛔ Hak bitti' : left === 1 ? '⚠️ 1 hak kaldı' : `${left} hak`}</span></div>
+              </div>`;
+            }).join('') : '<div class="tt-free">Ders yok</div>'}
+          </div>`;
+      }).join('');
+    },
+
+    renderExams() {
+      const box = $('#att-exams-list');
+      if (!box) return;
+      const esc = Dashboard.escapeHtml;
+      const all = this.exams().map(e => ({ ...e, days: daysFromToday(e.date) }));
+      const up = all.filter(e => e.days >= 0), past = all.filter(e => e.days < 0).reverse();
+      const row = (e) => `
+        <li class="exam-item ${e.days < 0 ? 'is-past' : e.days <= 3 ? 'is-soon' : ''}">
+          <div class="exam-count">${e.days < 0 ? '✓' : e.days === 0 ? 'Bugün' : e.days === 1 ? 'Yarın' : `<strong>${e.days}</strong><small>gün</small>`}</div>
+          <div class="exam-info">
+            <strong>${esc(this.examTitle(e))}</strong>
+            <span>${new Date(e.date + 'T00:00:00').toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', weekday: 'short' })}${e.time ? ' · ' + esc(e.time) : ''}${e.place ? ' · ' + esc(e.place) : ''}</span>
+            ${e.note ? `<em>${esc(e.note)}</em>` : ''}
+          </div>
+          <div class="exam-actions">
+            <button type="button" class="workout-action-btn" data-edit="${e.id}" title="Düzenle">✏️</button>
+            <button type="button" class="workout-action-btn" data-del="${e.id}" title="Sil">🗑️</button>
+          </div>
+        </li>`;
+      box.innerHTML = `
+        ${up.length ? `<ul class="exam-list">${up.map(row).join('')}</ul>` : '<div class="cal-empty">Yaklaşan sınav yok. “+ Sınav Ekle” ile vize ve finallerini gir; geri sayım ve hatırlatıcı gelsin.</div>'}
+        ${past.length ? `<details class="exam-past"><summary>Geçmiş sınavlar (${past.length})</summary><ul class="exam-list">${past.map(row).join('')}</ul></details>` : ''}`;
+      box.querySelectorAll('[data-edit]').forEach(b => b.addEventListener('click', () => this.openExamForm(b.dataset.edit)));
+      box.querySelectorAll('[data-del]').forEach(b => b.addEventListener('click', () => {
+        Storage.set('asi_exams', (Storage.get('asi_exams', []) || []).filter(x => x.id !== b.dataset.del));
+        this.renderExams();
+        TodayPanel.render();
+      }));
+    },
+
+    openExamForm(id) {
+      const e = id ? (Storage.get('asi_exams', []) || []).find(x => x.id === id) : null;
+      const esc = Dashboard.escapeHtml;
+      const html = `
+        <form id="exam-form" class="modal-form">
+          <div class="form-group"><label>Ders</label>
+            <select id="exam-course">
+              <option value="">— Listede yok (başlık yaz) —</option>
+              ${this.courses().map(c => `<option value="${c.id}" ${e && e.courseId === c.id ? 'selected' : ''}>${esc(c.name)}</option>`).join('')}
+            </select></div>
+          <div class="form-group" id="exam-title-group"><label>Başlık</label><input type="text" id="exam-title" placeholder="Örn: İngilizce Yeterlilik" value="${esc(e?.title || '')}"></div>
+          <div class="form-row">
+            <div class="form-group"><label>Tür</label><select id="exam-type">${Object.entries(this.EXAM_TYPES).map(([k, v]) => `<option value="${k}" ${e?.type === k ? 'selected' : ''}>${v}</option>`).join('')}</select></div>
+            <div class="form-group"><label>Tarih</label><input type="date" id="exam-date" required value="${e?.date || ''}"></div>
+            <div class="form-group"><label>Saat</label><input type="time" id="exam-time" value="${e?.time || ''}"></div>
+          </div>
+          <div class="form-group"><label>Yer (isteğe bağlı)</label><input type="text" id="exam-place" placeholder="Örn: B-204" value="${esc(e?.place || '')}"></div>
+          <div class="form-group"><label>Not (isteğe bağlı)</label><input type="text" id="exam-note" placeholder="Konular, hatırlatma…" value="${esc(e?.note || '')}"></div>
+          <div class="modal-actions"><button type="button" class="btn btn-ghost" data-modal="gen-modal">İptal</button><button type="submit" class="btn btn-primary">Kaydet</button></div>
+        </form>`;
+      const body = openSheet(e ? '📝 Sınavı Düzenle' : '📝 Sınav Ekle', html);
+      if (!body) return;
+      const sync = () => body.querySelector('#exam-title-group').classList.toggle('hidden', !!body.querySelector('#exam-course').value);
+      body.querySelector('#exam-course').addEventListener('change', sync); sync();
+      body.querySelector('#exam-form').addEventListener('submit', (ev) => {
+        ev.preventDefault();
+        const courseId = body.querySelector('#exam-course').value;
+        const title = body.querySelector('#exam-title').value.trim();
+        const date = body.querySelector('#exam-date').value;
+        if (!date) return;
+        if (!courseId && !title) { showToast('Bir ders seç ya da başlık yaz.', 'warning'); return; }
+        const item = {
+          id: e?.id || 'ex-' + Date.now().toString(36),
+          courseId, title: courseId ? '' : title,
+          type: body.querySelector('#exam-type').value,
+          date, time: body.querySelector('#exam-time').value,
+          place: body.querySelector('#exam-place').value.trim(),
+          note: body.querySelector('#exam-note').value.trim()
+        };
+        const list = (Storage.get('asi_exams', []) || []).filter(x => x.id !== item.id);
+        list.push(item);
+        Storage.set('asi_exams', list);
+        closeSheet();
+        this.setTab('exams');
+        TodayPanel.render();
+        showToast('📝 Sınav kaydedildi', 'success');
+      });
+    }
+  };
+
+  // ═══════════════════════════════════════════════════════
+  // 🕌 İBADET ARAÇLARI: kaza, Kur'an, zikirmatik, imsakiye
+  // ═══════════════════════════════════════════════════════
+
+  const Ibadet = {
+    init() {
+      $$('.ibadet-tab').forEach(b => b.addEventListener('click', () => this.setTab(b.dataset.tab)));
+      let t = 'kaza';
+      try { t = localStorage.getItem('planova_ibadet_tab') || 'kaza'; } catch (_) {}
+      this.setTab(t);
+    },
+    setTab(tab) {
+      ['kaza', 'quran', 'zikir', 'imsakiye'].forEach(id => $(`#ibadet-${id}`)?.classList.toggle('hidden', id !== tab));
+      $$('.ibadet-tab').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+      try { localStorage.setItem('planova_ibadet_tab', tab); } catch (_) {}
+      ({ kaza: Kaza, quran: Quran, zikir: Zikir, imsakiye: Imsakiye })[tab]?.render();
+    }
+  };
+
+  const Kaza = {
+    KEY: 'asi_kaza',
+    ITEMS: [['fajr', 'Sabah'], ['dhuhr', 'Öğle'], ['asr', 'İkindi'], ['maghrib', 'Akşam'], ['isha', 'Yatsı'], ['witr', 'Vitir']],
+    get() {
+      const k = Storage.get(this.KEY, null) || {};
+      return { debt: k.debt || {}, done: k.done || {}, log: k.log || {} };
+    },
+    set(k) { Storage.set(this.KEY, k); },
+    render() {
+      const box = $('#ibadet-kaza');
+      if (!box) return;
+      const k = this.get();
+      const today = formatDateShort(new Date());
+      const totalDebt = this.ITEMS.reduce((t, [id]) => t + (Number(k.debt[id]) || 0), 0);
+      const totalDone = this.ITEMS.reduce((t, [id]) => t + (Number(k.done[id]) || 0), 0);
+      box.innerHTML = `
+        <div class="ib-summary">
+          <div><span>Kalan borç</span><strong>${totalDebt}</strong></div>
+          <div><span>Kılınan kaza</span><strong>${totalDone}</strong></div>
+          <div><span>Bugün</span><strong>${Number(k.log[today]) || 0}</strong></div>
+        </div>
+        <ul class="kaza-list">
+          ${this.ITEMS.map(([id, name]) => `
+            <li class="kaza-row" data-id="${id}">
+              <span class="kaza-name">${name}</span>
+              <div class="kaza-debt">
+                <button type="button" class="kaza-step" data-d="-1" aria-label="Azalt">−</button>
+                <input type="number" min="0" class="kaza-input" value="${Number(k.debt[id]) || 0}" aria-label="${name} kaza borcu">
+                <button type="button" class="kaza-step" data-d="1" aria-label="Artır">+</button>
+              </div>
+              <button type="button" class="kaza-done-btn" ${Number(k.debt[id]) > 0 ? '' : 'disabled'}>✓ Kıldım</button>
+            </li>`).join('')}
+        </ul>
+        <div class="kaza-years">
+          <span>Borcu yıl olarak ekle:</span>
+          <input type="number" min="1" max="60" id="kaza-years-input" placeholder="Yıl" aria-label="Yıl">
+          <button type="button" class="btn btn-secondary btn-sm" id="kaza-years-add">Her vakte ekle</button>
+        </div>
+        <p class="ib-note">Kaza namazı borcu sende tutulur; “✓ Kıldım” borcu 1 azaltır ve bugünün sayısına ekler.</p>`;
+      const save = (mut) => { const kk = this.get(); mut(kk); this.set(kk); this.render(); };
+      box.querySelectorAll('.kaza-row').forEach(row => {
+        const id = row.dataset.id;
+        row.querySelectorAll('.kaza-step').forEach(b => b.addEventListener('click', () => save(kk => { kk.debt[id] = Math.max(0, (Number(kk.debt[id]) || 0) + Number(b.dataset.d)); })));
+        row.querySelector('.kaza-input').addEventListener('change', (e) => save(kk => { kk.debt[id] = Math.max(0, parseInt(e.target.value, 10) || 0); }));
+        row.querySelector('.kaza-done-btn').addEventListener('click', () => {
+          save(kk => {
+            if ((Number(kk.debt[id]) || 0) <= 0) return;
+            kk.debt[id] = Number(kk.debt[id]) - 1;
+            kk.done[id] = (Number(kk.done[id]) || 0) + 1;
+            kk.log[today] = (Number(kk.log[today]) || 0) + 1;
+          });
+          if (navigator.vibrate) { try { navigator.vibrate(30); } catch (_) {} }
+          showToast('🤲 Allah kabul etsin', 'success');
+        });
+      });
+      box.querySelector('#kaza-years-add').addEventListener('click', () => {
+        const y = parseInt(box.querySelector('#kaza-years-input').value, 10);
+        if (!y || y < 1) return;
+        confirmAction(`${y} yıllık borç (her vakit için ${y * 365}) eklensin mi?`, () => {
+          save(kk => this.ITEMS.forEach(([id]) => { kk.debt[id] = (Number(kk.debt[id]) || 0) + y * 365; }));
+        });
+      });
+    }
+  };
+
+  const Quran = {
+    KEY: 'asi_quran',
+    PAGES: 604,
+    get() {
+      const q = Storage.get(this.KEY, null) || {};
+      return { page: Number(q.page) || 0, hatims: Number(q.hatims) || 0, daily: Number(q.daily) || 5, log: q.log || {} };
+    },
+    juzOf(page) { return page <= 0 ? 1 : page <= 21 ? 1 : Math.min(30, Math.floor((page - 22) / 20) + 2); },
+    add(n) {
+      const q = this.get();
+      const today = formatDateShort(new Date());
+      let page = q.page + n;
+      let hatim = false;
+      if (page >= this.PAGES) { page = 0; q.hatims += 1; hatim = true; }
+      page = Math.max(0, page);
+      const delta = hatim ? this.PAGES - q.page : page - q.page;
+      q.log[today] = Math.max(0, (Number(q.log[today]) || 0) + delta);
+      q.page = page;
+      Storage.set(this.KEY, q);
+      if (hatim) showToast(`🌟 Tebrikler! ${q.hatims}. hatmini tamamladın. Allah kabul etsin!`, 'success');
+      this.render();
+    },
+    render() {
+      const box = $('#ibadet-quran');
+      if (!box) return;
+      const q = this.get();
+      const today = formatDateShort(new Date());
+      const todayPages = Number(q.log[today]) || 0;
+      const pct = Math.round(q.page / this.PAGES * 100);
+      // son 14 günün ortalaması (yoksa günlük hedef) ile tahmini bitiş
+      let sum = 0, active = 0;
+      for (let i = 0; i < 14; i++) { const d = new Date(); d.setDate(d.getDate() - i); const n = Number(q.log[formatDateShort(d)]) || 0; sum += n; if (n > 0) active++; }
+      // Yeterli geçmiş yoksa (3 günden az) günlük hedefe göre tahmin et
+      const pace = active >= 3 ? Math.max(sum / 14, 0.5) : q.daily;
+      const daysLeft = Math.ceil((this.PAGES - q.page) / Math.max(0.5, pace));
+      const finish = new Date(); finish.setDate(finish.getDate() + daysLeft);
+      box.innerHTML = `
+        <div class="quran-top">
+          <div class="quran-ring" style="--p:${pct}">
+            <div><strong>${pct}%</strong><small>${q.hatims ? q.hatims + '. hatim sonrası' : 'hatim'}</small></div>
+          </div>
+          <div class="quran-info">
+            <div class="quran-page">Sayfa <strong>${q.page}</strong> / ${this.PAGES}</div>
+            <div class="quran-juz">${this.juzOf(q.page)}. cüz · ${q.hatims} hatim</div>
+            <div class="quran-today ${todayPages >= q.daily ? 'is-ok' : ''}">Bugün ${todayPages} / ${q.daily} sayfa ${todayPages >= q.daily ? '✓' : ''}</div>
+            <div class="quran-eta">${q.page === 0 && !Object.keys(q.log).length ? 'Kaldığın sayfayı gir ya da +1 ile başla' : `Bu hızla hatim: <strong>${finish.toLocaleDateString('tr-TR', finish.getFullYear() === new Date().getFullYear() ? { day: 'numeric', month: 'long' } : { day: 'numeric', month: 'long', year: 'numeric' })}</strong> (~${daysLeft} gün)`}</div>
+          </div>
+        </div>
+        <div class="quran-btns">
+          <button type="button" class="btn btn-primary" data-add="1">+1 sayfa</button>
+          <button type="button" class="btn btn-secondary" data-add="5">+5</button>
+          <button type="button" class="btn btn-secondary" data-add="20">+1 cüz</button>
+          <button type="button" class="btn btn-ghost" data-add="-1" title="Geri al">−1</button>
+        </div>
+        <div class="quran-set">
+          <label>Kaldığım sayfa <input type="number" min="0" max="${this.PAGES}" id="quran-page-input" value="${q.page}"></label>
+          <label>Günlük hedef <select id="quran-daily">${[1, 2, 3, 5, 10, 20].map(n => `<option value="${n}" ${q.daily === n ? 'selected' : ''}>${n} sayfa</option>`).join('')}</select></label>
+        </div>`;
+      box.querySelectorAll('[data-add]').forEach(b => b.addEventListener('click', () => this.add(Number(b.dataset.add))));
+      box.querySelector('#quran-page-input').addEventListener('change', (e) => {
+        const v = Math.max(0, Math.min(this.PAGES, parseInt(e.target.value, 10) || 0));
+        const qq = this.get(); qq.page = v; Storage.set(this.KEY, qq); this.render();
+      });
+      box.querySelector('#quran-daily').addEventListener('change', (e) => {
+        const qq = this.get(); qq.daily = Number(e.target.value); Storage.set(this.KEY, qq); this.render();
+      });
+    }
+  };
+
+  const Zikir = {
+    KEY: 'asi_zikir',
+    DEFAULTS: [
+      { id: 'subhanallah', name: 'Sübhânallah', target: 33 },
+      { id: 'elhamdulillah', name: 'Elhamdülillah', target: 33 },
+      { id: 'allahuekber', name: 'Allâhu Ekber', target: 34 },
+      { id: 'estagfirullah', name: 'Estağfirullah', target: 100 },
+      { id: 'salavat', name: 'Salavât', target: 100 },
+      { id: 'kelimetevhid', name: 'Lâ ilâhe illallah', target: 100 }
+    ],
+    get() {
+      const z = Storage.get(this.KEY, null) || {};
+      return { items: Array.isArray(z.items) && z.items.length ? z.items : this.DEFAULTS, counts: z.counts || {}, active: z.active || 'subhanallah', lifetime: Number(z.lifetime) || 0, day: z.day || {} };
+    },
+    save(z) { Storage.set(this.KEY, z); },
+    tap() {
+      const z = this.get();
+      const it = z.items.find(i => i.id === z.active) || z.items[0];
+      const today = formatDateShort(new Date());
+      z.counts[it.id] = (Number(z.counts[it.id]) || 0) + 1;
+      z.lifetime += 1;
+      z.day = { [today]: (Number(z.day[today]) || 0) + 1 };
+      this.save(z);
+      const c = z.counts[it.id];
+      if (it.target && c % it.target === 0) {
+        if (navigator.vibrate) { try { navigator.vibrate([120, 60, 120]); } catch (_) {} }
+        showToast(`📿 ${it.name}: ${c / it.target}. tur tamam`, 'success');
+      } else if (navigator.vibrate) { try { navigator.vibrate(15); } catch (_) {} }
+      this.paint();
+    },
+    paint() {
+      const z = this.get();
+      const it = z.items.find(i => i.id === z.active) || z.items[0];
+      const c = Number(z.counts[it.id]) || 0;
+      const inRound = it.target ? (c % it.target) : c;
+      const rounds = it.target ? Math.floor(c / it.target) : 0;
+      const pct = it.target ? (inRound / it.target) * 100 : 0;
+      const btn = $('#zikir-btn');
+      if (btn) btn.style.setProperty('--p', pct);
+      if ($('#zikir-count')) $('#zikir-count').textContent = inRound;
+      if ($('#zikir-sub')) $('#zikir-sub').textContent = it.target ? `/ ${it.target} · ${rounds} tur` : `${c}`;
+      const today = formatDateShort(new Date());
+      if ($('#zikir-today')) $('#zikir-today').textContent = `Bugün ${Number(z.day[today]) || 0} · Toplam ${z.lifetime}`;
+    },
+    render() {
+      const box = $('#ibadet-zikir');
+      if (!box) return;
+      const z = this.get();
+      const esc = Dashboard.escapeHtml;
+      box.innerHTML = `
+        <div class="zikir-chips">
+          ${z.items.map(i => `<button type="button" class="zikir-chip ${i.id === z.active ? 'active' : ''}" data-id="${i.id}">${esc(i.name)}<small>${i.target || '∞'}</small></button>`).join('')}
+          <button type="button" class="zikir-chip is-add" id="zikir-add">+ Ekle</button>
+        </div>
+        <button type="button" id="zikir-btn" class="zikir-btn" aria-label="Zikir çek">
+          <span id="zikir-count" class="zikir-count">0</span>
+          <span id="zikir-sub" class="zikir-sub"></span>
+        </button>
+        <div id="zikir-today" class="zikir-today"></div>
+        <div class="zikir-actions">
+          <button type="button" class="btn btn-ghost btn-sm" id="zikir-reset">↺ Bu zikri sıfırla</button>
+          ${z.items.find(i => i.id === z.active)?.custom ? '<button type="button" class="btn btn-ghost btn-sm" id="zikir-del">🗑️ Zikri sil</button>' : ''}
+        </div>
+        <p class="ib-note">Ekrana dokundukça sayar, hedefte titreşir. Bilgisayarda boşluk tuşuyla da çekebilirsin.</p>`;
+      box.querySelectorAll('.zikir-chip[data-id]').forEach(b => b.addEventListener('click', () => { const zz = this.get(); zz.active = b.dataset.id; this.save(zz); this.render(); }));
+      box.querySelector('#zikir-btn').addEventListener('click', () => this.tap());
+      box.querySelector('#zikir-reset').addEventListener('click', () => { const zz = this.get(); zz.counts[zz.active] = 0; this.save(zz); this.paint(); });
+      box.querySelector('#zikir-del')?.addEventListener('click', () => {
+        const zz = this.get(); zz.items = zz.items.filter(i => i.id !== zz.active); zz.active = zz.items[0]?.id; this.save(zz); this.render();
+      });
+      box.querySelector('#zikir-add').addEventListener('click', () => {
+        const body = openSheet('📿 Yeni Zikir', `
+          <form id="zikir-form" class="modal-form">
+            <div class="form-group"><label>Zikir</label><input type="text" id="zk-name" required placeholder="Örn: Hasbünallah"></div>
+            <div class="form-group"><label>Hedef (bir tur)</label><input type="number" id="zk-target" min="1" value="33"></div>
+            <div class="modal-actions"><button type="button" class="btn btn-ghost" data-modal="gen-modal">İptal</button><button type="submit" class="btn btn-primary">Ekle</button></div>
+          </form>`);
+        body.querySelector('#zikir-form').addEventListener('submit', (e) => {
+          e.preventDefault();
+          const name = body.querySelector('#zk-name').value.trim();
+          if (!name) return;
+          const zz = this.get();
+          const id = 'z-' + Date.now().toString(36);
+          zz.items = [...zz.items, { id, name, target: parseInt(body.querySelector('#zk-target').value, 10) || 0, custom: true }];
+          zz.active = id;
+          this.save(zz);
+          closeSheet();
+          this.render();
+        });
+      });
+      this.paint();
+    },
+    initKeys() {
+      document.addEventListener('keydown', (e) => {
+        if (e.code !== 'Space' || e.repeat) return;
+        const box = $('#ibadet-zikir');
+        if (!box || box.classList.contains('hidden') || !$('#page-prayer')?.classList.contains('active')) return;
+        if (/INPUT|TEXTAREA|SELECT|BUTTON/.test(document.activeElement?.tagName || '') && document.activeElement.id !== 'zikir-btn') return;
+        e.preventDefault();
+        this.tap();
+      });
+    }
+  };
+
+  const Imsakiye = {
+    cacheKey(city, hy) { return `planova_imsakiye_${city}_${hy}`; },
+    hijriYear() {
+      const h = PrayerManager.dateData?.hijri;
+      let y = Number(h?.year) || 1448;
+      const m = Number(h?.month?.number) || 0;
+      if (m > 9) y += 1; // Ramazan geçtiyse gelecek yılınki
+      return y;
+    },
+    load(force) {
+      const city = PrayerManager.city || 'Istanbul';
+      const hy = this.hijriYear();
+      const key = this.cacheKey(city, hy);
+      if (!force) {
+        try { const c = JSON.parse(localStorage.getItem(key) || 'null'); if (c && c.length) return Promise.resolve(c); } catch (_) {}
+      }
+      const url = `https://api.aladhan.com/v1/hijriCalendarByCity/${hy}/9?city=${encodeURIComponent(city)}&country=Turkey&method=13`;
+      return fetch(url).then(r => r.json()).then(j => {
+        if (j.code !== 200 || !Array.isArray(j.data)) throw new Error('veri yok');
+        const days = j.data.map(d => {
+          const [dd, mm, yy] = d.date.gregorian.date.split('-');
+          const t = (k) => PrayerManager.cleanTime(d.timings[k]);
+          return { ymd: `${yy}-${mm}-${dd}`, day: Number(d.date.hijri.day), imsak: t('Fajr'), gunes: t('Sunrise'), ogle: t('Dhuhr'), ikindi: t('Asr'), iftar: t('Maghrib'), yatsi: t('Isha') };
+        });
+        try { localStorage.setItem(key, JSON.stringify(days)); } catch (_) {}
+        return days;
+      });
+    },
+    todayEntry() {
+      try {
+        const days = JSON.parse(localStorage.getItem(this.cacheKey(PrayerManager.city || 'Istanbul', this.hijriYear())) || 'null');
+        const today = formatDateShort(new Date());
+        return days ? days.find(d => d.ymd === today) : null;
+      } catch (_) { return null; }
+    },
+    render() {
+      const box = $('#ibadet-imsakiye');
+      if (!box) return;
+      box.innerHTML = '<div class="cal-empty">İmsakiye yükleniyor…</div>';
+      this.load(false).then(days => {
+        const today = formatDateShort(new Date());
+        const first = days[0], last = days[days.length - 1];
+        const until = daysFromToday(first.ymd);
+        const inRamadan = today >= first.ymd && today <= last.ymd;
+        const cityName = PrayerManager.cityNames?.[PrayerManager.city] || PrayerManager.city;
+        box.innerHTML = `
+          <div class="ims-head">
+            <div>
+              <strong>🌙 Ramazan ${this.hijriYear()} İmsakiyesi · ${cityName}</strong>
+              <span>${inRamadan ? `Ramazan'ın ${days.find(d => d.ymd === today)?.day}. günü` : until > 0 ? `Ramazan'a <b>${until}</b> gün kaldı (${shortDate(first.ymd)})` : 'Ramazan sona erdi'}</span>
+            </div>
+            <button type="button" class="btn btn-ghost btn-sm" id="ims-refresh">↺</button>
+          </div>
+          <div class="ims-table-wrap">
+            <table class="ims-table">
+              <thead><tr><th>Gün</th><th>Tarih</th><th>İmsak</th><th>Güneş</th><th>Öğle</th><th>İkindi</th><th>İftar</th><th>Yatsı</th></tr></thead>
+              <tbody>${days.map(d => `<tr class="${d.ymd === today ? 'is-today' : d.ymd < today ? 'is-past' : ''}"><td>${d.day}</td><td>${shortDate(d.ymd)}</td><td><b>${d.imsak}</b></td><td>${d.gunes}</td><td>${d.ogle}</td><td>${d.ikindi}</td><td><b>${d.iftar}</b></td><td>${d.yatsi}</td></tr>`).join('')}</tbody>
+            </table>
+          </div>
+          <p class="ib-note">Vakitler Diyanet hesaplama yöntemiyle alınır; şehri üstteki seçimden değiştirebilirsin.</p>`;
+        box.querySelector('#ims-refresh').addEventListener('click', () => { this.load(true).then(() => this.render()).catch(() => showToast('İmsakiye alınamadı', 'error')); });
+        if (inRamadan) box.querySelector('tr.is-today')?.scrollIntoView({ block: 'nearest' });
+      }).catch(() => {
+        box.innerHTML = '<div class="cal-empty">İmsakiye alınamadı. İnternet bağlantını kontrol edip tekrar dene.<br><button type="button" class="btn btn-secondary btn-sm" id="ims-retry" style="margin-top:.6rem">Tekrar dene</button></div>';
+        box.querySelector('#ims-retry')?.addEventListener('click', () => this.render());
+      });
+    }
+  };
+
   // ═══════════════════════════════════════════════════════
   // BAŞLATMA
   // ═══════════════════════════════════════════════════════
@@ -7888,6 +9411,15 @@
     profileAvatar: ProfileAvatar,
     vki: VkiManager,
     bookFocus: BookFocusManager,
+    today: TodayPanel,
+    week: WeekSummary,
+    reminders: Reminders,
+    workoutPlan: WorkoutPlan,
+    workoutStats: WorkoutStats,
+    school: School,
+    ibadet: Ibadet,
+    calendar: TaskCalendar,
+    pwa: PwaInstall,
     openModal,
     closeModal,
   };
@@ -7915,6 +9447,14 @@
     ProfileAvatar.init();
     VkiManager.init();
     BookFocusManager.init();
+    Reminders.init();
+    PwaInstall.init();
+    TaskCalendar.init();
+    School.init();
+    Ibadet.init();
+    Zikir.initKeys();
+    VkiHistory.render();
+    $('#workout-plan-btn')?.addEventListener('click', () => WorkoutPlan.open());
 
     // Saat
     updateClock();
@@ -7930,6 +9470,12 @@
     ]);
     Pomodoro.updateDisplay();
     await Dashboard.refresh();
+
+    // Ana ekran kısayolu / bildirimden gelen sayfa: ?page=prayer
+    try {
+      const page = new URLSearchParams(location.search).get('page');
+      if (page && ModuleManager.isModuleVisible(page) && document.getElementById(`page-${page}`)) Nav.goTo(page);
+    } catch (_) {}
   }
 
   if (document.readyState === 'loading') {
