@@ -13,7 +13,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Planova">
-  <link rel="stylesheet" href="style.css?v=5.8">
+  <link rel="stylesheet" href="style.css?v=5.9">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -2241,9 +2241,18 @@
     </div>
   </div>
 
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js" crossorigin="anonymous"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js" crossorigin="anonymous"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js" crossorigin="anonymous"></script>
+  <script>
+    /* Yedek yükleme: gstatic ulaşılamazsa (ağ/engelleyici) eksik Firebase parçalarını jsDelivr'den al */
+    (function () {
+      var has = function (k) { return !!(window.firebase && (k === 'app' || window.firebase[k])); };
+      ['app', 'auth', 'firestore'].forEach(function (n) {
+        if (!has(n)) document.write('<script src="https://cdn.jsdelivr.net/npm/firebase@10.12.2/firebase-' + n + '-compat.js" crossorigin="anonymous"><\/script>');
+      });
+    })();
+  </script>
   <script src="firebase-config.js"></script>
   <script>
     // PWA: service worker (yalnızca http/https üzerinde)
@@ -2253,7 +2262,7 @@
       });
     }
   </script>
-  <script src="auth.js?v=5.8"></script>
-  <script src="account.js?v=5.8"></script>
+  <script src="auth.js?v=5.9"></script>
+  <script src="account.js?v=5.9"></script>
 </body>
 </html>

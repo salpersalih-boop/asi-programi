@@ -1,13 +1,13 @@
 /* Planova service worker — çevrimdışı açılış + bildirim tıklaması.
    Yeni sürüm yayınlarken VERSION'ı artırın (index.html'deki ?v= ile aynı tutun). */
-const VERSION = 'planova-5.8';
+const VERSION = 'planova-5.9';
 const SHELL = [
   './',
   './index.html',
-  './style.css?v=5.8',
-  './auth.js?v=5.8',
-  './account.js?v=5.8',
-  './script.js?v=5.8',
+  './style.css?v=5.9',
+  './auth.js?v=5.9',
+  './account.js?v=5.9',
+  './script.js?v=5.9',
   './firebase-config.js',
   './planova-icon.png',
   './manifest.webmanifest',
@@ -15,7 +15,7 @@ const SHELL = [
   './icons/icon-512.png'
 ];
 // Dışarıdan önbelleğe alınabilecek statik kaynaklar (Firebase SDK, yazı tipleri)
-const CDN = /^https:\/\/(www\.gstatic\.com\/firebasejs\/|fonts\.googleapis\.com\/|fonts\.gstatic\.com\/)/;
+const CDN = /^https:\/\/(www\.gstatic\.com\/firebasejs\/|cdn\.jsdelivr\.net\/npm\/firebase@|fonts\.googleapis\.com\/|fonts\.gstatic\.com\/)/;
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -61,7 +61,9 @@ self.addEventListener('fetch', (event) => {
       cache.match(req).then((cached) => {
         const network = fetch(req)
           .then((res) => {
-            if (res && (res.ok || res.type === 'opaque')) cache.put(req, res.clone());
+            // Yalnızca başarılı yanıtlar önbelleğe girer. Doğrulanamayan (opak) yanıt sadece yazı tipleri için.
+            const okFont = res && res.type === 'opaque' && /^fonts\./.test(url.hostname);
+            if (res && (res.ok || okFont)) cache.put(req, res.clone());
             return res;
           })
           .catch(() => cached);

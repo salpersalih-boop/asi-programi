@@ -3,7 +3,7 @@
    Üst çubuktaki avatar tıklamasını belge düzeyinde yakalar, bu yüzden düğme ne zaman çizilirse çizilsin çalışır. */
 (function () {
   'use strict';
-  var PANEL_VERSION = '5.8';
+  var PANEL_VERSION = '5.9';
 
   const $ = (id) => document.getElementById(id);
   const A = () => window.PlanovaAuth || {};
@@ -234,7 +234,19 @@
       });
 
       // Hızlı mod → giriş ekranı
-      q('#acct-login-btn').addEventListener('click', () => { close(); A().signOut(); });
+      q('#acct-login-btn').addEventListener('click', async () => {
+        if (!A().configured) {
+          say('Giriş servisi (Firebase) yüklenemedi. Önbellek temizlenip sayfa yeniden açılıyor…', 'err');
+          try {
+            if (navigator.serviceWorker) (await navigator.serviceWorker.getRegistrations()).forEach((r) => r.unregister());
+            if (window.caches) (await caches.keys()).forEach((k) => caches.delete(k));
+          } catch (_) {}
+          setTimeout(() => location.reload(), 900);
+          return;
+        }
+        close();
+        A().signOut();
+      });
 
       // Çıkış
       q('#acct-out-yes').addEventListener('click', () => { close(); A().signOut(); });
@@ -251,7 +263,7 @@
       q('#acct-name').textContent = name || (quick ? 'Misafir' : 'Planova kullanıcısı');
       q('#acct-mail').textContent = quick ? 'Giriş yapılmadı · veriler yalnızca bu cihazda' : ((A().user && A().user.email) || '');
       const prov = providers();
-      q('#acct-prov').textContent = quick ? '⚡ Hızlı mod' : prov.includes('google.com') ? '🔵 Google ile giriş' : '✉️ E-posta ile giriş';
+      q('#acct-prov').textContent = quick ? (A().configured ? '⚡ Hızlı mod' : '⚡ Hızlı mod · giriş servisi yok') : prov.includes('google.com') ? '🔵 Google ile giriş' : '✉️ E-posta ile giriş';
       q('#acct-prov').className = 'acct-chip ' + (quick ? 'quick' : 'ok');
 
       const txt = (id) => { const el = $(id); return el ? el.textContent.trim() : ''; };
