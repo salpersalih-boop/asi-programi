@@ -6283,7 +6283,7 @@
     _visibility: {},
 
     // Özel modüller: yalnızca bu e-posta özetlerine sahip hesaplarda görünür (SHA-256 'planova:' + e-posta)
-    PRIVATE_OK: ['e2bd6db33bf138f71a37e78f3c23fc34792e7c650cb239893a7aee9ca7a5d289'],
+    PRIVATE_OK: ['b9199544b103a505fc198c79e4f9386cab4b892492e3315f9c8ee3b80da303b5'],
     _access: false,
 
     async resolveAccess() {
