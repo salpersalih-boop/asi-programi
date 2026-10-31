@@ -10011,3 +10011,104 @@ body.no-scroll-focus { overflow: hidden; }
   #page-schedule .workout-header-btns { flex-direction: row; flex-wrap: wrap; }
   #page-schedule .workout-header-btns .btn { flex: 1; }
 }
+
+/* ═══════════ v5.6 · Seviye rozeti ═══════════ */
+.badges-level {
+  display: inline-flex; align-items: center; gap: .25rem;
+  margin-left: .35rem; padding: .15rem .55rem; border-radius: 999px;
+  font-size: .75rem; font-weight: 700; white-space: nowrap;
+  background: var(--accent-turquoise-glow); color: var(--accent-turquoise-dark);
+  border: 1px solid var(--border-turquoise); cursor: help;
+}
+[data-theme="dark"] .badges-level { color: #67E8F9; }
+.badges-level:empty { display: none; }
+
+/* ═══════════ v5.6 · Kalori & Su ═══════════ */
+.nut-daynav { display: flex; align-items: center; gap: .4rem; font-weight: 700; }
+.nut-daynav #nut-day-label { min-width: 7.5rem; text-align: center; }
+.nut-daynav .btn { font-size: 1.2rem; line-height: 1; padding: .25rem .65rem; }
+.nut-daynav .btn:disabled { opacity: .35; cursor: default; }
+.nut-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.nut-card { padding: 1.1rem 1.2rem; border-radius: var(--radius); margin-bottom: 1rem; }
+.nut-grid .nut-card { margin-bottom: 0; }
+.nut-grid { margin-bottom: 1rem; }
+.nut-head { display: flex; align-items: center; justify-content: space-between; gap: .5rem; margin-bottom: .7rem; }
+.nut-head h3 { margin: 0; font-size: 1.05rem; }
+.nut-big { font-size: .95rem; color: var(--text-muted); display: flex; align-items: baseline; gap: .35rem; flex-wrap: wrap; }
+.nut-big strong { font-size: 2rem; color: var(--text-primary); line-height: 1.1; }
+.nut-pct { margin-left: auto; font-weight: 800; color: var(--accent-turquoise); }
+.nut-pct.is-ok { color: var(--success); }
+.nut-cups { display: flex; flex-wrap: wrap; gap: .35rem; margin: .8rem 0; }
+.nut-cup {
+  width: 22px; height: 28px; border-radius: 3px 3px 7px 7px;
+  border: 2px solid var(--border-turquoise); background: transparent;
+  clip-path: polygon(0 0, 100% 0, 88% 100%, 12% 100%);
+}
+.nut-cup.is-full { background: linear-gradient(180deg, #67E8F9, #0891B2); border-color: #0891B2; }
+.nut-btns { display: grid; grid-template-columns: 2fr 1fr auto; gap: .4rem; }
+.nut-btns small { opacity: .8; font-weight: 500; }
+.nut-bar { height: 10px; border-radius: 999px; background: var(--bg-box); overflow: hidden; margin: .8rem 0 .4rem; }
+.nut-bar > div { height: 100%; border-radius: inherit; background: var(--accent-gradient); transition: width .3s; }
+.nut-sub { font-size: .85rem; color: var(--text-muted); }
+.nut-meal-sum { display: grid; grid-template-columns: repeat(4, 1fr); gap: .4rem; margin-top: .8rem; }
+.nut-meal-sum span { display: flex; flex-direction: column; gap: .1rem; padding: .45rem .5rem; border-radius: var(--radius-sm); background: var(--bg-box); font-size: .72rem; color: var(--text-muted); }
+.nut-meal-sum strong { font-size: 1rem; color: var(--text-primary); }
+.nut-form { display: grid; grid-template-columns: 1fr 90px 130px auto; gap: .45rem; }
+.nut-form input, .nut-form select {
+  min-width: 0; padding: .55rem .7rem; border-radius: var(--radius-sm);
+  border: 1px solid var(--border); background: var(--bg-input); color: var(--text-primary); font: inherit;
+}
+.nut-recent { display: flex; flex-wrap: wrap; align-items: center; gap: .35rem; margin-top: .7rem; }
+.nut-recent-lbl { font-size: .78rem; color: var(--text-muted); margin-right: .1rem; }
+.nut-chip {
+  border: 1px solid var(--border); background: var(--bg-box); color: var(--text-primary);
+  border-radius: 999px; padding: .25rem .65rem; font: inherit; font-size: .8rem; cursor: pointer;
+}
+.nut-chip em { font-style: normal; color: var(--text-muted); margin-left: .2rem; }
+.nut-chip:hover { border-color: var(--border-turquoise); }
+.nut-meal { margin-top: 1rem; }
+.nut-meal-title { font-weight: 700; font-size: .9rem; margin-bottom: .35rem; }
+.nut-meal ul { list-style: none; margin: 0; padding: 0; }
+.nut-meal li { display: flex; align-items: center; gap: .6rem; padding: .45rem .2rem; border-bottom: 1px dashed var(--border); }
+.nut-meal li span { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.nut-meal li strong { font-size: .85rem; white-space: nowrap; }
+.nut-del { border: 0; background: transparent; color: var(--text-muted); cursor: pointer; font-size: .9rem; padding: .2rem .4rem; border-radius: 6px; }
+.nut-del:hover { color: var(--danger); background: rgba(239, 68, 68, .1); }
+.nut-empty { color: var(--text-muted); font-size: .9rem; margin: 1rem 0 .2rem; }
+.nut-legend { display: flex; align-items: center; gap: .35rem; font-size: .78rem; color: var(--text-muted); }
+.nut-legend i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; margin-left: .3rem; }
+.nut-legend .lg-w, .nut-wbar.w > div { background: #06B6D4; }
+.nut-legend .lg-k, .nut-wbar.k > div { background: #F97316; }
+.nut-week-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: .35rem; margin-bottom: .6rem; }
+.nut-wday {
+  display: flex; flex-direction: column; align-items: center; gap: .3rem;
+  border: 1px solid transparent; background: transparent; color: var(--text-muted);
+  border-radius: var(--radius-sm); padding: .35rem .1rem; cursor: pointer; font: inherit; font-size: .75rem;
+}
+.nut-wday.is-sel { border-color: var(--border-turquoise); background: var(--accent-turquoise-glow); color: var(--text-primary); font-weight: 700; }
+.nut-wbars { display: flex; align-items: flex-end; gap: 3px; height: 90px; }
+.nut-wbar { width: 10px; height: 100%; display: flex; align-items: flex-end; background: var(--bg-box); border-radius: 4px; overflow: hidden; }
+.nut-wbar > div { width: 100%; border-radius: 4px; min-height: 0; }
+
+@media (max-width: 700px) {
+  .nut-grid { grid-template-columns: 1fr; }
+  .nut-card { padding: .95rem; }
+  .nut-form { grid-template-columns: 1fr 80px; }
+  .nut-form select { grid-column: 1; }
+  .nut-form .btn { grid-column: 2; }
+  .nut-meal-sum { grid-template-columns: repeat(2, 1fr); }
+  .page-header .nut-daynav { width: 100%; justify-content: space-between; }
+}
+
+/* v5.6 · Kenar menüsünde ayrı Sağlık paneli */
+.nav-group {
+  margin: .6rem .85rem .6rem; padding: .55rem .45rem .2rem;
+  border: 1px solid var(--border-turquoise); border-radius: var(--radius);
+  background: linear-gradient(160deg, rgba(16,185,129,.08), rgba(6,182,212,.06));
+}
+.nav-group-title {
+  font-size: .7rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase;
+  color: var(--success); padding: 0 .6rem .35rem;
+}
+.nav-group .nav-list { padding: 0; }
+.nav-group .nav-link { margin-bottom: 4px; }

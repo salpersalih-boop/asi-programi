@@ -13,7 +13,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Planova">
-  <link rel="stylesheet" href="style.css?v=5.5">
+  <link rel="stylesheet" href="style.css?v=5.6">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -120,6 +120,14 @@
         <li data-module="books"><a href="#" class="nav-link" data-page="books"><span class="nav-icon">📚</span> Kitaplığım</a></li>
         <li data-module="pomodoro"><a href="#" class="nav-link" data-page="pomodoro"><span class="nav-icon">⏱️</span> Pomodoro</a></li>
         <li data-module="prayer"><a href="#" class="nav-link" data-page="prayer"><span class="nav-icon">🕌</span> Namaz & İbadet</a></li>
+      </ul>
+      <div class="nav-group" id="nav-group-health" data-group-for="nutrition">
+        <div class="nav-group-title">💚 Sağlık</div>
+        <ul class="nav-list nav-list-group">
+          <li data-module="nutrition"><a href="#" class="nav-link" data-page="nutrition"><span class="nav-icon">🥗</span> Kalori & Su</a></li>
+        </ul>
+      </div>
+      <ul class="nav-list nav-list-bottom">
         <li data-module="settings"><a href="#" class="nav-link" data-page="settings"><span class="nav-icon">⚙️</span> Ayarlar</a></li>
       </ul>
     </nav>
@@ -399,7 +407,7 @@
           <!-- Emoji Rozetleri Vitrini -->
           <div class="badges-showcase">
             <div class="badges-showcase-title">
-              <span>🏅 Rozetlerim <span class="badges-total" id="badges-total">0/0</span></span>
+              <span>🏅 Rozetlerim <span class="badges-total" id="badges-total">0/0</span> <span class="badges-level" id="badges-level"></span></span>
               <span class="text-xs text-muted">Detay için rozete dokun</span>
             </div>
             <div class="badges-tabs" id="badges-tabs" role="tablist"></div>
@@ -1224,19 +1232,27 @@
           </div>
         </div>
 
-        <!-- 🕋 İbadet araçları -->
-        <div class="ibadet-card glass-card">
-          <div class="ibadet-tabs seg-toggle" role="tablist">
-            <button type="button" class="ibadet-tab active" data-tab="kaza">🕋 Kaza</button>
-            <button type="button" class="ibadet-tab" data-tab="quran">📖 Kur'an</button>
-            <button type="button" class="ibadet-tab" data-tab="zikir">📿 Zikirmatik</button>
-            <button type="button" class="ibadet-tab" data-tab="imsakiye">🌙 İmsakiye</button>
+      </section>
+
+      <!-- ════════ KALORİ & SU ════════ -->
+      <section id="page-nutrition" class="page">
+        <div class="page-header">
+          <div>
+            <h2>🥗 Kalori & Su Takibi</h2>
+            <p class="section-subtitle">Gün içinde içtiğin suyu ve yediklerini kaydet.</p>
           </div>
-          <div id="ibadet-kaza" class="ibadet-pane"></div>
-          <div id="ibadet-quran" class="ibadet-pane hidden"></div>
-          <div id="ibadet-zikir" class="ibadet-pane hidden"></div>
-          <div id="ibadet-imsakiye" class="ibadet-pane hidden"></div>
+          <div class="nut-daynav">
+            <button type="button" class="btn btn-ghost btn-sm" id="nut-prev" aria-label="Önceki gün">‹</button>
+            <span id="nut-day-label">Bugün</span>
+            <button type="button" class="btn btn-ghost btn-sm" id="nut-next" aria-label="Sonraki gün">›</button>
+          </div>
         </div>
+        <div class="nut-grid">
+          <div class="glass-card nut-card" id="nut-water"></div>
+          <div class="glass-card nut-card" id="nut-kcal"></div>
+        </div>
+        <div class="glass-card nut-card" id="nut-meals"></div>
+        <div class="glass-card nut-card" id="nut-week"></div>
       </section>
 
       <!-- ════════ AYARLAR & TEMA ════════ -->
@@ -2237,6 +2253,6 @@
       });
     }
   </script>
-  <script src="auth.js?v=5.5"></script>
+  <script src="auth.js?v=5.6"></script>
 </body>
 </html>

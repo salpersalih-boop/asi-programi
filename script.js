@@ -181,7 +181,7 @@
 
   // ─── Güvenli LocalStorage Yardımcısı (Kota Kontrollü & Hata Yakalamalı) ───
   // Değişince rozet kontrolü tetikleyen veri anahtarları
-  const BADGE_WATCH = /^asi_(tasks|goals|notes|quicknotes|books|reading_sessions|workouts|workout_history|prayer_checks_|attendance_|user_vki_data|pomodoro_stats|book_quotes|kaza|quran|zikir|exams|workout_plan)/;
+  const BADGE_WATCH = /^asi_(tasks|goals|notes|quicknotes|books|reading_sessions|workouts|workout_history|prayer_checks_|attendance_|user_vki_data|pomodoro_stats|book_quotes|kaza|quran|zikir|exams|workout_plan|nutrition)/;
 
   const Storage = {
     get(key, fallback) {
@@ -1331,6 +1331,9 @@
           break;
         case 'prayer': 
           if (typeof PrayerManager !== 'undefined') PrayerManager.renderPage(); 
+          break;
+        case 'nutrition':
+          Nutrition.render();
           break;
       }
     }
@@ -6268,6 +6271,7 @@
     MODULES: [
       { id: 'kanban', name: 'Görev Panosu', icon: '📋', desc: 'Yapılacaklar, yapılanlar ve görev akışı' },
       { id: 'schedule', name: 'Spor Programı', icon: '🏋️', desc: 'Antrenman takibi, dinlenme sayacı ve VKİ hesaplayıcı' },
+      { id: 'nutrition', name: 'Kalori & Su', icon: '🥗', desc: 'Günlük su ve kalori takibi', private: true },
       { id: 'attendance', name: 'Devamsızlık Takibi', icon: '🎓', desc: 'Dönemlik dersler ve 14 haftalık devamsızlık matrisi' },
       { id: 'goals', name: 'Haftalık Hedefler', icon: '🎯', desc: 'Haftalık hedefler ve gelişim göstergeleri' },
       { id: 'notebook', name: 'Not Defterim', icon: '📝', desc: 'Ders notları, zengin metin düzenleyici ve arama' },
@@ -6277,6 +6281,26 @@
     ],
 
     _visibility: {},
+
+    // Özel modüller: yalnızca bu e-posta özetlerine sahip hesaplarda görünür (SHA-256 'planova:' + e-posta)
+    PRIVATE_OK: ['e2bd6db33bf138f71a37e78f3c23fc34792e7c650cb239893a7aee9ca7a5d289'],
+    _access: false,
+
+    async resolveAccess() {
+      this._access = false;
+      try {
+        if (/^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname)) { this._access = true; return; }
+        const email = String(window.PlanovaAuth?.user?.email || '').trim().toLowerCase();
+        if (!email || !(window.crypto && crypto.subtle)) return;
+        const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('planova:' + email));
+        const hex = Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+        this._access = this.PRIVATE_OK.includes(hex);
+      } catch (_) { this._access = false; }
+    },
+    hasAccess(id) {
+      const m = this.MODULES.find(x => x.id === id);
+      return !m || !m.private || this._access;
+    },
 
     init() {
       this.load();
@@ -6296,6 +6320,7 @@
       const defaults = {
         kanban: true,
         schedule: true,
+        nutrition: true,
         attendance: true,
         goals: true,
         notebook: true,
@@ -6314,6 +6339,7 @@
 
     isModuleVisible(id) {
       if (id === 'dashboard' || id === 'settings') return true;
+      if (!this.hasAccess(id)) return false;
       return this._visibility[id] !== false;
     },
 
@@ -6354,6 +6380,8 @@
         if (navLi) {
           navLi.style.display = isVis ? '' : 'none';
         }
+        const navGroup = $(`#sidebar .nav-group[data-group-for="${m.id}"]`);
+        if (navGroup) navGroup.style.display = isVis ? '' : 'none';
 
         // Hızlı erişim kartı
         const quickBtn = $(`.quick-card[data-module="${m.id}"]`);
@@ -6397,7 +6425,7 @@
         const container = $(containerId);
         if (!container) return;
 
-        container.innerHTML = this.MODULES.map(m => {
+        container.innerHTML = this.MODULES.filter(m => this.hasAccess(m.id)).map(m => {
           const isChecked = this.isModuleVisible(m.id);
           return `
             <div class="module-switch-item ${!isChecked ? 'is-disabled' : ''}">
@@ -6924,6 +6952,7 @@
       notes:   { label: 'Notlar', icon: '📝' },
       focus:   { label: 'Odak', icon: '⏱️' },
       school:  { label: 'Okul', icon: '🎒' },
+      health:  { label: 'Sağlık', icon: '🥗' },
       general: { label: 'Genel', icon: '⚡' }
     },
 
@@ -6996,11 +7025,6 @@
       { id: 'pr-10',         group: 'workout', emoji: '🥇', title: 'Rekor Avcısı',       metric: 'prCount',          target: 10,   unit: 'rekor',  desc: '10 kez kişisel rekor kır.' },
       { id: 'quote-1',       group: 'reading', emoji: '💬', title: 'Altını Çizdim',      metric: 'quotesCount',      target: 1,    unit: 'alıntı', desc: 'Bir kitaptan ilk alıntını kaydet.' },
       { id: 'quote-25',      group: 'reading', emoji: '🖋️', title: 'Alıntı Defteri',     metric: 'quotesCount',      target: 25,   unit: 'alıntı', desc: '25 alıntı ya da not biriktir.' },
-      { id: 'kaza-10',       group: 'prayer',  emoji: '🕋', title: 'Borç Kapatıyorum',   metric: 'kazaDone',         target: 10,   unit: 'vakit',  desc: '10 vakit kaza namazı kıl.' },
-      { id: 'kaza-100',      group: 'prayer',  emoji: '🤲', title: 'Sabırlı Kul',        metric: 'kazaDone',         target: 100,  unit: 'vakit',  desc: '100 vakit kaza namazı kıl.' },
-      { id: 'quran-100',     group: 'prayer',  emoji: '📖', title: 'Kur\'an Dostu',      metric: 'quranPages',       target: 100,  unit: 'sayfa',  desc: '100 sayfa Kur\'an-ı Kerim oku.' },
-      { id: 'hatim-1',       group: 'prayer',  emoji: '🌟', title: 'İlk Hatim',          metric: 'hatims',           target: 1,    unit: 'hatim',  desc: 'Kur\'an-ı Kerim\'i baştan sona bir kez hatmet.' },
-      { id: 'zikir-1000',    group: 'prayer',  emoji: '📿', title: 'Zikir Ehli',         metric: 'zikirTotal',       target: 1000, unit: 'zikir',  desc: 'Zikirmatik ile toplam 1000 zikir çek.' },
       { id: 'exam-planner',  group: 'school',  emoji: '🗓️', title: 'Planlı Öğrenci',     metric: 'examsAdded',       target: 1,    unit: 'sınav',  desc: 'Sınav takvimine ilk sınavını ekle.' },
       { id: 'profile-done',  group: 'general', emoji: '🪪', title: 'Ben Buradayım',      metric: 'profileComplete',  target: 1,    unit: '',       desc: 'Profiline adını ve bir fotoğraf ya da emoji ekle.' },
       { id: 'active-3',      group: 'general', emoji: '🌱', title: 'Filizlenme',         metric: 'activeStreak',     target: 3,    unit: 'gün',    desc: '3 gün üst üste okuma, spor veya ibadet kaydı yap.' },
@@ -7009,13 +7033,85 @@
       { id: 'active-100',    group: 'general', emoji: '🌋', title: 'Durdurulamaz',       metric: 'activeStreak',     target: 100,  unit: 'gün',    desc: '100 gün üst üste aktif ol.' },
       { id: 'collector-10',  group: 'general', emoji: '🎖️', title: 'Koleksiyoncu',       metric: 'badgesEarned',     target: 10,   unit: 'rozet',  desc: '10 rozet kazan.' },
       { id: 'collector-25',  group: 'general', emoji: '🏵️', title: 'Rozet Avcısı',       metric: 'badgesEarned',     target: 25,   unit: 'rozet',  desc: '25 rozet kazan.' },
-      { id: 'legend',        group: 'general', emoji: '🌈', title: 'Efsane',             metric: 'badgesEarned',     target: 50,   unit: 'rozet',  desc: '50 rozet kazan.' }
+      { id: 'legend',        group: 'general', emoji: '🌈', title: 'Efsane',             metric: 'badgesEarned',     target: 50,   unit: 'rozet',  desc: '50 rozet kazan.' },
+      // ─── v5.6: 100 rozete tamamlayan ek kademeler ───
+      { id: 'pages-2500',    group: 'reading', emoji: '📚', title: 'Sayfa Avcısı',       metric: 'pagesRead',        target: 2500, unit: 'sayfa',  desc: 'Toplam 2.500 sayfa oku.' },
+      { id: 'books-50',      group: 'reading', emoji: '🏰', title: 'Yaşayan Kütüphane',  metric: 'booksCompleted',   target: 50,   unit: 'kitap',  desc: '50 kitap bitir.' },
+      { id: 'read-50h',      group: 'reading', emoji: '🕯️', title: '50 Saat Okuma',      metric: 'readingMinutes',   target: 3000, unit: 'dk',     desc: 'Toplam 50 saat (3.000 dk) okuma yap.' },
+      { id: 'quote-100',     group: 'reading', emoji: '💎', title: 'Alıntı Hazinesi',    metric: 'quotesCount',      target: 100,  unit: 'alıntı', desc: '100 alıntı ya da not biriktir.' },
+      { id: 'workout-25',    group: 'workout', emoji: '🥉', title: 'Çeyrek Yüz',         metric: 'workoutDays',      target: 25,   unit: 'gün',    desc: 'Toplam 25 farklı günde antrenman yap.' },
+      { id: 'workout-200',   group: 'workout', emoji: '🦁', title: 'İki Yüz Antrenman',  metric: 'workoutDays',      target: 200,  unit: 'gün',    desc: 'Toplam 200 farklı günde antrenman yap.' },
+      { id: 'workout-streak-14', group: 'workout', emoji: '⛓️', title: 'Çelik İrade',    metric: 'workoutStreak',    target: 14,   unit: 'gün',    desc: '14 gün üst üste spor yap.' },
+      { id: 'pr-25',         group: 'workout', emoji: '🚀', title: 'Rekor Makinesi',     metric: 'prCount',          target: 25,   unit: 'rekor',  desc: '25 kez kişisel rekor kır.' },
+      { id: 'full-day-7',    group: 'prayer',  emoji: '🌙', title: 'Tam Hafta',          metric: 'prayerFullDays',   target: 7,    unit: 'gün',    desc: '7 gün 5 vaktin tamamını kıl.' },
+      { id: 'fajr-30',       group: 'prayer',  emoji: '🌄', title: 'Sabah Yıldızı',      metric: 'fajrCount',        target: 30,   unit: 'sabah',  desc: '30 kez sabah namazını kıl.' },
+      { id: 'prayer-streak-100', group: 'prayer', emoji: '🕋', title: 'Yüz Gün Huzur',   metric: 'prayerStreak',     target: 100,  unit: 'gün',    desc: '100 gün üst üste namaz takibi yap.' },
+      { id: 'prayer-1000',   group: 'prayer',  emoji: '👑', title: 'Bin Vakit',          metric: 'prayerChecks',     target: 1000, unit: 'vakit',  desc: 'Toplam 1.000 vakit namaz kıl.' },
+      { id: 'tasks-25',      group: 'tasks',   emoji: '🐝', title: 'Çalışkan Arı',       metric: 'tasksDone',        target: 25,   unit: 'görev',  desc: '25 görev tamamla.' },
+      { id: 'tasks-250',     group: 'tasks',   emoji: '⚙️', title: 'Görev Ustası',       metric: 'tasksDone',        target: 250,  unit: 'görev',  desc: '250 görev tamamla.' },
+      { id: 'goals-5',       group: 'tasks',   emoji: '🎯', title: 'Hedef Odaklı',       metric: 'goalsDone',        target: 5,    unit: 'hedef',  desc: '5 hedef tamamla.' },
+      { id: 'goals-25',      group: 'tasks',   emoji: '🏔️', title: 'Hedef Avcısı',       metric: 'goalsDone',        target: 25,   unit: 'hedef',  desc: '25 hedef tamamla.' },
+      { id: 'notes-25',      group: 'notes',   emoji: '📓', title: 'Defter Dolusu',      metric: 'notesCount',       target: 25,   unit: 'not',    desc: '25 not oluştur.' },
+      { id: 'notes-100',     group: 'notes',   emoji: '🗄️', title: 'Not Arşivi',         metric: 'notesCount',       target: 100,  unit: 'not',    desc: '100 not oluştur.' },
+      { id: 'pomo-5',        group: 'focus',   emoji: '🔥', title: 'Isınma Turu',        metric: 'pomodoroCount',    target: 5,    unit: 'seans',  desc: '5 odaklanma seansı tamamla.' },
+      { id: 'pomo-25',       group: 'focus',   emoji: '🎧', title: 'Odak Serisi',        metric: 'pomodoroCount',    target: 25,   unit: 'seans',  desc: '25 odaklanma seansı tamamla.' },
+      { id: 'pomo-100',      group: 'focus',   emoji: '🌌', title: 'Odak Efsanesi',      metric: 'pomodoroCount',    target: 100,  unit: 'seans',  desc: '100 odaklanma seansı tamamla.' },
+      { id: 'present-50',    group: 'school',  emoji: '📒', title: 'Düzenli Öğrenci',    metric: 'attendancePresent', target: 50,  unit: 'ders',   desc: '50 kez derste "Katıldım" işaretle.' },
+      { id: 'present-250',   group: 'school',  emoji: '🎓', title: 'Okulun Demirbaşı',   metric: 'attendancePresent', target: 250, unit: 'ders',   desc: '250 kez derste "Katıldım" işaretle.' },
+      { id: 'courses-5',     group: 'school',  emoji: '🗂️', title: 'Dolu Dönem',         metric: 'attendanceCourses', target: 5,   unit: 'ders',   desc: 'Devamsızlık takibine 5 ders ekle.' },
+      { id: 'water-first',   group: 'health',  emoji: '💧', title: 'İlk Yudum',          metric: 'waterDays',        target: 1,    unit: 'gün',    desc: 'İlk bardak suyunu kaydet.' },
+      { id: 'water-goal-1',  group: 'health',  emoji: '🥤', title: 'Su Gibi',            metric: 'waterGoalDays',    target: 1,    unit: 'gün',    desc: 'Bir gün su hedefini tamamla.' },
+      { id: 'water-streak-3', group: 'health', emoji: '🌊', title: 'Dalga',              metric: 'waterStreak',      target: 3,    unit: 'gün',    desc: '3 gün üst üste su hedefini tamamla.' },
+      { id: 'water-streak-7', group: 'health', emoji: '🐬', title: 'Yunus',              metric: 'waterStreak',      target: 7,    unit: 'gün',    desc: '7 gün üst üste su hedefini tamamla.' },
+      { id: 'water-streak-30', group: 'health', emoji: '🐋', title: 'Okyanus',           metric: 'waterStreak',      target: 30,   unit: 'gün',    desc: '30 gün üst üste su hedefini tamamla.' },
+      { id: 'water-100l',    group: 'health',  emoji: '🏞️', title: 'Yüz Litre',          metric: 'waterLiters',      target: 100,  unit: 'litre',  desc: 'Toplam 100 litre su iç.' },
+      { id: 'meal-first',    group: 'health',  emoji: '🍽️', title: 'İlk Öğün',           metric: 'foodEntries',      target: 1,    unit: 'kayıt',  desc: 'İlk yemek kaydını ekle.' },
+      { id: 'meal-100',      group: 'health',  emoji: '🧺', title: 'Sofra Defteri',      metric: 'foodEntries',      target: 100,  unit: 'kayıt',  desc: '100 yemek kaydı ekle.' },
+      { id: 'food-log-7',    group: 'health',  emoji: '🥗', title: 'Düzenli Kayıt',      metric: 'foodLogDays',      target: 7,    unit: 'gün',    desc: '7 farklı gün yediklerini kaydet.' },
+      { id: 'food-log-30',   group: 'health',  emoji: '📔', title: 'Beslenme Günlüğü',   metric: 'foodLogDays',      target: 30,   unit: 'gün',    desc: '30 farklı gün yediklerini kaydet.' },
+      { id: 'active-14',     group: 'general', emoji: '🌿', title: 'Alışkanlık',         metric: 'activeStreak',     target: 14,   unit: 'gün',    desc: '14 gün üst üste aktif ol.' },
+      { id: 'active-60',     group: 'general', emoji: '🗿', title: 'Demir İrade',        metric: 'activeStreak',     target: 60,   unit: 'gün',    desc: '60 gün üst üste aktif ol.' },
+      { id: 'collector-75',  group: 'general', emoji: '🎗️', title: 'Rozet Ustası',       metric: 'badgesEarned',     target: 75,   unit: 'rozet',  desc: '75 rozet kazan.' },
+      { id: 'collector-90',  group: 'general', emoji: '💯', title: 'Kusursuz',           metric: 'badgesEarned',     target: 85,   unit: 'rozet',  desc: '85 rozet kazan. Neredeyse hepsi!' },
+      { id: 'all-rounder',   group: 'general', emoji: '🧭', title: 'Çok Yönlü',          metric: 'groupsTouched',    target: 7,    unit: 'alan',   desc: '7 farklı alanın her birinden en az bir rozet kazan.' }
     ],
 
     activeTab: 'all',
     _stats: null,
 
+    // Seviye: kazanılan rozet sayısına göre (100 rozet → 10 seviye, ilerledikçe aralık açılır)
+    LEVELS: [
+      { min: 0,  name: 'Çaylak',        emoji: '🌱' },
+      { min: 5,  name: 'Filiz',         emoji: '🌿' },
+      { min: 12, name: 'Kararlı',       emoji: '🍀' },
+      { min: 20, name: 'Azimli',        emoji: '🔥' },
+      { min: 30, name: 'Disiplinli',    emoji: '⚡' },
+      { min: 42, name: 'Usta',          emoji: '🛡️' },
+      { min: 55, name: 'Uzman',         emoji: '💎' },
+      { min: 68, name: 'Bilge',         emoji: '🦉' },
+      { min: 82, name: 'Efsane',        emoji: '👑' },
+      { min: 95, name: 'Planova Ustası', emoji: '🌈' }
+    ],
+    levelInfo(n) {
+      const k = this.BADGES.length / 100;
+      const L = this.LEVELS.map(l => ({ ...l, min: Math.round(l.min * k) }));
+      let i = 0;
+      L.forEach((l, j) => { if (n >= l.min) i = j; });
+      const cur = L[i], next = L[i + 1] || null;
+      const pct = next ? Math.round((n - cur.min) / (next.min - cur.min) * 100) : 100;
+      return { level: i + 1, ...cur, next, need: next ? next.min - n : 0, pct };
+    },
+    groupsTouched(earned) {
+      const g = new Set();
+      Object.keys(earned).forEach(id => { const b = this.getBadge(id); if (b && b.group !== 'general') g.add(b.group); });
+      return g.size;
+    },
+
     init() {
+      if (!ModuleManager.hasAccess('nutrition')) {
+        this.BADGES = this.BADGES.filter(b => b.group !== 'health');
+        delete this.GROUPS.health;
+      }
       $('#badges-tabs')?.addEventListener('click', (e) => {
         const btn = e.target.closest('[data-group]');
         if (!btn) return;
@@ -7129,6 +7225,8 @@
         hatims: Number((Storage.get('asi_quran', null) || {}).hatims) || 0,
         zikirTotal: Number((Storage.get('asi_zikir', null) || {}).lifetime) || 0,
         examsAdded: (Storage.get('asi_exams', []) || []).length,
+        ...Nutrition.stats(),
+        groupsTouched: 0,
         badgesEarned: 0
       };
     },
@@ -7146,6 +7244,7 @@
       // Koleksiyon rozetleri diğerlerine bağlı olduğu için iki tur
       for (let pass = 0; pass < 2; pass++) {
         stats.badgesEarned = Object.keys(earned).filter(id => this.getBadge(id)).length;
+        stats.groupsTouched = this.groupsTouched(earned);
         this.BADGES.forEach(b => {
           if (!earned[b.id] && (stats[b.metric] || 0) >= b.target) {
             earned[b.id] = Date.now();
@@ -7206,7 +7305,14 @@
       }
 
       const total = $('#badges-total');
-      if (total) total.textContent = `${Object.keys(earned).filter(id => this.getBadge(id)).length}/${this.BADGES.length}`;
+      const earnedN = Object.keys(earned).filter(id => this.getBadge(id)).length;
+      if (total) total.textContent = `${earnedN}/${this.BADGES.length}`;
+      const lvlEl = $('#badges-level');
+      if (lvlEl) {
+        const L = this.levelInfo(earnedN);
+        lvlEl.innerHTML = `${L.emoji} Seviye ${L.level} · ${L.name}`;
+        lvlEl.title = L.next ? `Sonraki seviye (${L.next.name}) için ${L.need} rozet daha` : 'En yüksek seviyedesin!';
+      }
 
       const list = (this.activeTab === 'all' ? this.BADGES : this.BADGES.filter(b => b.group === this.activeTab))
         .slice()
@@ -8095,6 +8201,20 @@
         }
       }
 
+      // 🥗 Su & kalori
+      if (vis('nutrition')) {
+        const d = Nutrition.day(today), st = Nutrition.settings();
+        const kcal = Nutrition.kcalOf(d);
+        tiles.push({
+          page: 'nutrition', icon: '💧', title: 'Su & Kalori',
+          main: `${(d.water / 1000).toLocaleString('tr-TR', { maximumFractionDigits: 2 })} / ${(st.waterGoal / 1000).toLocaleString('tr-TR', { maximumFractionDigits: 2 })} L`,
+          sub: kcal ? `${kcal} kcal kaydedildi` : 'Bugün yemek kaydı yok',
+          pct: Math.min(100, d.water / st.waterGoal * 100),
+          ok: d.water >= st.waterGoal,
+          action: '<button type="button" class="today-mini-btn" data-act="water">💧 +1 bardak</button>'
+        });
+      }
+
       // 📚 Okuma
       if (vis('books')) {
         const pages = (Storage.get('asi_reading_sessions', []) || [])
@@ -8128,6 +8248,7 @@
       grid.querySelectorAll('.today-tile').forEach(el => {
         const go = (e) => {
           if (e.target.closest('[data-act="read"]')) { BookFocusManager.startFocusFlow(); return; }
+          if (e.target.closest('[data-act="water"]')) { Nutrition.addWater(1, formatDateShort(new Date())); TodayPanel.render(); return; }
           Nav.goTo(el.dataset.page);
         };
         el.addEventListener('click', go);
@@ -9068,6 +9189,246 @@
     }
   };
 
+
+  // ═══════════════════════════════════════════════════════
+  // 🥗 KALORİ & SU TAKİBİ
+  // asi_nutrition: { settings:{waterGoal, cupMl, kcalGoal}, days:{ 'YYYY-MM-DD': { water, foods:[{id,name,kcal,meal}] } } }
+  // ═══════════════════════════════════════════════════════
+
+  const Nutrition = {
+    KEY: 'asi_nutrition',
+    MEALS: [['breakfast', '🍳 Kahvaltı'], ['lunch', '🍲 Öğle'], ['dinner', '🍽️ Akşam'], ['snack', '🍎 Ara öğün']],
+    viewDate: null,
+
+    data() {
+      const n = Storage.get(this.KEY, null) || {};
+      return { settings: { waterGoal: 2500, cupMl: 250, kcalGoal: 2000, ...(n.settings || {}) }, days: n.days || {} };
+    },
+    save(n) { Storage.set(this.KEY, n); },
+    settings() { return this.data().settings; },
+    day(date) {
+      const d = this.data().days[date] || {};
+      return { water: Number(d.water) || 0, foods: Array.isArray(d.foods) ? d.foods : [] };
+    },
+    kcalOf(d) { return d.foods.reduce((t, f) => t + (Number(f.kcal) || 0), 0); },
+    current() { return this.viewDate || formatDateShort(new Date()); },
+
+    updateDay(date, fn) {
+      const n = this.data();
+      const d = { water: 0, foods: [], ...(n.days[date] || {}) };
+      fn(d);
+      if (!d.water && !d.foods.length) delete n.days[date]; else n.days[date] = d;
+      this.save(n);
+    },
+
+    addWater(cups, date) {
+      const st = this.settings();
+      const before = this.day(date).water;
+      this.updateDay(date, d => { d.water = Math.max(0, (Number(d.water) || 0) + cups * st.cupMl); });
+      const after = this.day(date).water;
+      if (before < st.waterGoal && after >= st.waterGoal) showToast('💧 Günlük su hedefini tamamladın!', 'success');
+    },
+
+    stats() {
+      const n = this.data();
+      const goal = n.settings.waterGoal;
+      const goalDates = new Set();
+      let waterDays = 0, ml = 0, foods = 0, foodDays = 0;
+      Object.entries(n.days).forEach(([date, d]) => {
+        const w = Number(d.water) || 0;
+        if (w > 0) waterDays++;
+        if (w >= goal) goalDates.add(date);
+        ml += w;
+        const f = Array.isArray(d.foods) ? d.foods.length : 0;
+        foods += f;
+        if (f > 0) foodDays++;
+      });
+      return {
+        waterDays, waterGoalDays: goalDates.size,
+        waterStreak: StreakManager.calculateStreak(goalDates),
+        waterLiters: Math.floor(ml / 1000),
+        foodEntries: foods, foodLogDays: foodDays
+      };
+    },
+
+    init() {
+      $('#nut-prev')?.addEventListener('click', () => this.shift(-1));
+      $('#nut-next')?.addEventListener('click', () => this.shift(1));
+    },
+    shift(delta) {
+      const [y, m, d] = this.current().split('-').map(Number);
+      const dt = new Date(y, m - 1, d + delta);
+      const today = formatDateShort(new Date());
+      const v = formatDateShort(dt);
+      if (v > today) return;
+      this.viewDate = v === today ? null : v;
+      this.render();
+    },
+
+    // Daha önce eklenen yemekler: hızlı ekleme için son 8 farklı isim
+    recentFoods() {
+      const seen = new Map();
+      Object.keys(this.data().days).sort().reverse().forEach(date => {
+        this.day(date).foods.slice().reverse().forEach(f => {
+          const k = (f.name || '').trim().toLocaleLowerCase('tr-TR');
+          if (k && !seen.has(k)) seen.set(k, f);
+        });
+      });
+      return [...seen.values()].slice(0, 8);
+    },
+
+    render() {
+      const date = this.current();
+      const today = formatDateShort(new Date());
+      const esc = Dashboard.escapeHtml;
+      const st = this.settings();
+      const d = this.day(date);
+      const kcal = this.kcalOf(d);
+
+      const lbl = $('#nut-day-label');
+      if (lbl) {
+        const [y, m, dd] = date.split('-').map(Number);
+        const diff = daysFromToday(date);
+        lbl.textContent = diff === 0 ? 'Bugün' : diff === -1 ? 'Dün' : new Date(y, m - 1, dd).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', weekday: 'short' });
+      }
+      const nextBtn = $('#nut-next');
+      if (nextBtn) nextBtn.disabled = date >= today;
+
+      // 💧 Su
+      const w = $('#nut-water');
+      if (w) {
+        const cups = Math.ceil(st.waterGoal / st.cupMl);
+        const filled = Math.floor(d.water / st.cupMl);
+        const pct = Math.min(100, Math.round(d.water / st.waterGoal * 100));
+        w.innerHTML = `
+          <div class="nut-head"><h3>💧 Su</h3><button type="button" class="btn btn-ghost btn-sm" data-nut="settings">⚙️ Hedef</button></div>
+          <div class="nut-big"><strong>${(d.water / 1000).toLocaleString('tr-TR', { maximumFractionDigits: 2 })}</strong> / ${(st.waterGoal / 1000).toLocaleString('tr-TR', { maximumFractionDigits: 2 })} L <span class="nut-pct ${pct >= 100 ? 'is-ok' : ''}">%${pct}</span></div>
+          <div class="nut-cups">${Array.from({ length: Math.max(cups, filled) }, (_, i) => `<span class="nut-cup ${i < filled ? 'is-full' : ''}"></span>`).join('')}</div>
+          <div class="nut-btns">
+            <button type="button" class="btn btn-primary" data-water="1">+1 bardak <small>(${st.cupMl} ml)</small></button>
+            <button type="button" class="btn btn-secondary" data-water="2">+2</button>
+            <button type="button" class="btn btn-ghost" data-water="-1" ${d.water ? '' : 'disabled'} title="Geri al">−1</button>
+          </div>`;
+        w.querySelectorAll('[data-water]').forEach(b => b.addEventListener('click', () => { this.addWater(Number(b.dataset.water), date); this.render(); }));
+        w.querySelector('[data-nut="settings"]').addEventListener('click', () => this.openSettings());
+      }
+
+      // 🔥 Kalori özeti
+      const k = $('#nut-kcal');
+      if (k) {
+        const pct = Math.min(100, Math.round(kcal / st.kcalGoal * 100));
+        const left = st.kcalGoal - kcal;
+        k.innerHTML = `
+          <div class="nut-head"><h3>🔥 Kalori</h3><button type="button" class="btn btn-ghost btn-sm" data-nut="settings">⚙️ Hedef</button></div>
+          <div class="nut-big"><strong>${kcal.toLocaleString('tr-TR')}</strong> / ${st.kcalGoal.toLocaleString('tr-TR')} kcal</div>
+          <div class="nut-bar"><div style="width:${pct}%"></div></div>
+          <div class="nut-sub">${left >= 0 ? `Hedefe ${left.toLocaleString('tr-TR')} kcal var` : `Hedefin ${(-left).toLocaleString('tr-TR')} kcal üstünde`}</div>
+          <div class="nut-meal-sum">${this.MEALS.map(([id, name]) => {
+            const t = d.foods.filter(f => f.meal === id).reduce((a, f) => a + (Number(f.kcal) || 0), 0);
+            return `<span>${name}<strong>${t}</strong></span>`;
+          }).join('')}</div>`;
+        k.querySelector('[data-nut="settings"]').addEventListener('click', () => this.openSettings());
+      }
+
+      // 🍽️ Öğünler
+      const mbox = $('#nut-meals');
+      if (mbox) {
+        const recent = this.recentFoods();
+        const hour = new Date().getHours();
+        const defMeal = hour < 11 ? 'breakfast' : hour < 16 ? 'lunch' : hour < 21 ? 'dinner' : 'snack';
+        mbox.innerHTML = `
+          <div class="nut-head"><h3>🍽️ Yediklerim</h3></div>
+          <form class="nut-form" id="nut-form">
+            <input type="text" id="nut-name" placeholder="Ne yedin? (örn. Mercimek çorbası)" maxlength="60" required>
+            <input type="number" id="nut-kcal-in" placeholder="kcal" min="0" max="5000" inputmode="numeric" required>
+            <select id="nut-meal">${this.MEALS.map(([id, name]) => `<option value="${id}" ${id === defMeal ? 'selected' : ''}>${name}</option>`).join('')}</select>
+            <button type="submit" class="btn btn-primary">Ekle</button>
+          </form>
+          ${recent.length ? `<div class="nut-recent"><span class="nut-recent-lbl">Hızlı ekle:</span>${recent.map((f, i) => `<button type="button" class="nut-chip" data-recent="${i}">${esc(f.name)} <em>${f.kcal}</em></button>`).join('')}</div>` : ''}
+          ${this.MEALS.map(([id, name]) => {
+            const list = d.foods.filter(f => f.meal === id);
+            if (!list.length) return '';
+            return `<div class="nut-meal"><div class="nut-meal-title">${name}</div><ul>${list.map(f => `
+              <li><span>${esc(f.name)}</span><strong>${f.kcal} kcal</strong><button type="button" class="nut-del" data-del="${f.id}" aria-label="Sil">✕</button></li>`).join('')}</ul></div>`;
+          }).join('') || '<p class="nut-empty">Bu gün için kayıt yok.</p>'}`;
+        mbox.querySelector('#nut-form').addEventListener('submit', (e) => {
+          e.preventDefault();
+          const name = mbox.querySelector('#nut-name').value.trim();
+          const kc = Math.max(0, Math.min(5000, parseInt(mbox.querySelector('#nut-kcal-in').value, 10) || 0));
+          if (!name) return;
+          this.addFood(date, name, kc, mbox.querySelector('#nut-meal').value);
+        });
+        mbox.querySelectorAll('[data-recent]').forEach(b => b.addEventListener('click', () => {
+          const f = recent[Number(b.dataset.recent)];
+          this.addFood(date, f.name, Number(f.kcal) || 0, mbox.querySelector('#nut-meal').value);
+        }));
+        mbox.querySelectorAll('[data-del]').forEach(b => b.addEventListener('click', () => {
+          this.updateDay(date, dd => { dd.foods = dd.foods.filter(f => f.id !== b.dataset.del); });
+          this.render();
+        }));
+      }
+
+      // 📊 Son 7 gün
+      const wk = $('#nut-week');
+      if (wk) {
+        const days = [];
+        for (let i = 6; i >= 0; i--) { const dt = new Date(); dt.setDate(dt.getDate() - i); days.push(dt); }
+        const rows = days.map(dt => { const key = formatDateShort(dt); const x = this.day(key); return { key, dt, water: x.water, kcal: this.kcalOf(x) }; });
+        const maxW = Math.max(st.waterGoal, ...rows.map(r => r.water));
+        const maxK = Math.max(st.kcalGoal, ...rows.map(r => r.kcal));
+        const bar = (v, max, cls) => `<div class="nut-wbar ${cls}"><div style="height:${Math.round(v / max * 100)}%"></div></div>`;
+        const avgW = rows.reduce((a, r) => a + r.water, 0) / 7;
+        const logged = rows.filter(r => r.kcal > 0);
+        const avgK = logged.length ? Math.round(logged.reduce((a, r) => a + r.kcal, 0) / logged.length) : 0;
+        wk.innerHTML = `
+          <div class="nut-head"><h3>📊 Son 7 Gün</h3><span class="nut-legend"><i class="lg-w"></i>Su <i class="lg-k"></i>Kalori</span></div>
+          <div class="nut-week-grid">${rows.map(r => `
+            <button type="button" class="nut-wday ${r.key === date ? 'is-sel' : ''}" data-day="${r.key}" title="${(r.water / 1000).toLocaleString('tr-TR')} L · ${r.kcal} kcal">
+              <div class="nut-wbars">${bar(r.water, maxW, 'w')}${bar(r.kcal, maxK, 'k')}</div>
+              <span>${r.dt.toLocaleDateString('tr-TR', { weekday: 'short' })}</span>
+            </button>`).join('')}</div>
+          <div class="nut-sub">Ortalama su: <strong>${(avgW / 1000).toLocaleString('tr-TR', { maximumFractionDigits: 1 })} L</strong>${avgK ? ` · Kayıtlı günlerde ortalama: <strong>${avgK.toLocaleString('tr-TR')} kcal</strong>` : ''}</div>`;
+        wk.querySelectorAll('[data-day]').forEach(b => b.addEventListener('click', () => {
+          this.viewDate = b.dataset.day === today ? null : b.dataset.day;
+          this.render();
+        }));
+      }
+    },
+
+    addFood(date, name, kcal, meal) {
+      this.updateDay(date, d => { d.foods = [...(d.foods || []), { id: 'f-' + Date.now().toString(36), name, kcal, meal }]; });
+      this.render();
+    },
+
+    openSettings() {
+      const st = this.settings();
+      const body = openSheet('⚙️ Su & Kalori Hedefi', `
+          <form id="nut-set-form" class="modal-form">
+            <div class="form-row">
+              <div class="form-group"><label>Günlük su hedefi (ml)</label><input type="number" id="ns-water" min="500" max="6000" step="250" value="${st.waterGoal}" required></div>
+              <div class="form-group"><label>Bardak boyutu</label><select id="ns-cup">${[150, 200, 250, 300, 330, 500].map(v => `<option value="${v}" ${st.cupMl === v ? 'selected' : ''}>${v} ml</option>`).join('')}</select></div>
+            </div>
+            <div class="form-group"><label>Günlük kalori hedefi (kcal)</label><input type="number" id="ns-kcal" min="800" max="6000" step="50" value="${st.kcalGoal}" required></div>
+            <p class="text-xs text-muted">Kalori ihtiyacı yaşa, boya, kiloya ve hareketliliğe göre değişir. Emin değilsen doktora ya da diyetisyene danış.</p>
+            <div class="modal-actions"><button type="button" class="btn btn-ghost" data-modal="gen-modal">İptal</button><button type="submit" class="btn btn-primary">Kaydet</button></div>
+          </form>`);
+      if (!body) return;
+      body.querySelector('#nut-set-form').addEventListener('submit', (e) => {
+          e.preventDefault();
+          const n = this.data();
+          n.settings = {
+            waterGoal: Math.max(500, Math.min(6000, parseInt(body.querySelector('#ns-water').value, 10) || 2500)),
+            cupMl: Number(body.querySelector('#ns-cup').value) || 250,
+            kcalGoal: Math.max(800, Math.min(6000, parseInt(body.querySelector('#ns-kcal').value, 10) || 2000))
+          };
+          this.save(n);
+          closeSheet();
+          this.render();
+          showToast('Hedefler kaydedildi ✓', 'success');
+        });
+    }
+  };
+
   // ═══════════════════════════════════════════════════════
   // 🕌 İBADET ARAÇLARI: kaza, Kur'an, zikirmatik, imsakiye
   // ═══════════════════════════════════════════════════════
@@ -9418,6 +9779,7 @@
     workoutStats: WorkoutStats,
     school: School,
     ibadet: Ibadet,
+    nutrition: Nutrition,
     calendar: TaskCalendar,
     pwa: PwaInstall,
     openModal,
@@ -9431,6 +9793,7 @@
   async function boot() {
     Theme.init();
     Splash.init();
+    await ModuleManager.resolveAccess();
     ModuleManager.init();
     Nav.init();
     Kanban.init();
@@ -9451,8 +9814,7 @@
     PwaInstall.init();
     TaskCalendar.init();
     School.init();
-    Ibadet.init();
-    Zikir.initKeys();
+    Nutrition.init();
     VkiHistory.render();
     $('#workout-plan-btn')?.addEventListener('click', () => WorkoutPlan.open());
 
