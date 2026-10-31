@@ -10251,3 +10251,5 @@ body.acct-lock { overflow: hidden; }
   .acct-avatar-ring, .acct-avatar { animation: none; }
   .acct-panel, .acct-backdrop, .acct-sub { transition: none; }
 }
+
+.acct-ver { text-align: center; font-size: .68rem; color: var(--text-muted); margin-top: .6rem; opacity: .7; }
