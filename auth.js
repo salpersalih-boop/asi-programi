@@ -45,7 +45,7 @@
     if (appLoaded) return;
     appLoaded = true;
     const s  = document.createElement('script');
-    s.src    = 'script.js?v=6.5';
+    s.src    = 'script.js?v=6.6';
     document.body.appendChild(s);
   }
 
@@ -470,19 +470,32 @@
    */
   async function googleLogin() {
     const btn = $('auth-google');
-    if (!hasConsent() && !$('auth-consent')?.checked) {
-      $('auth-consent-wrap')?.classList.remove('hidden');
-      return showMsg('Google ile devam etmek için önce aşağıdaki Gizlilik Politikası kutusunu onayla.');
+    const consented = hasConsent() || !!$('auth-consent')?.checked;
+    // Kayıt sekmesinde yeni hesap açılırken KVKK onayı şart; zaten hesabı olanlardan istenmez
+    if (mode === 'register' && !consented) {
+      return showMsg('Hesap açmak için önce KVKK kutusunu onayla (kutuya basıp metni oku).');
     }
-    saveConsent();
     btn.disabled = true;
     showMsg('Google ile bağlanılıyor…', true);
+    authGuard = true;
     try {
       const provider = new firebase.auth.GoogleAuthProvider();
       provider.setCustomParameters({ prompt: 'select_account' });
-      await fbAuth.signInWithPopup(provider);
-      // Başarılı olduğunda fbAuth.onAuthStateChanged devralır
+      const cred = await fbAuth.signInWithPopup(provider);
+      const isNew = !!(cred.additionalUserInfo && cred.additionalUserInfo.isNewUser);
+      if (isNew && !consented) {
+        // Giriş sekmesinden gelen, hesabı olmayan biri: onaysız hesap bırakma
+        try { await cred.user.delete(); } catch (_) { try { await fbAuth.signOut(); } catch (__) {} }
+        authGuard = false;
+        setMode('register');
+        btn.disabled = false;
+        return showMsg('Bu Google hesabıyla kayıtlı bir hesap yok. Hesap açmak için KVKK kutusunu onayla, sonra tekrar "Google ile devam et"e bas.');
+      }
+      if (isNew) saveConsent();
+      authGuard = false;
+      await handleAuth(cred.user);
     } catch (err) {
+      authGuard = false;
       console.error('Planova Google Auth Hatası:', err);
       if (err.code === 'auth/operation-not-allowed') {
         showMsg("Firebase Console'da Google sağlayıcısı etkinleştirilmemiş! (Authentication > Sign-in method > Google sağlayıcısını açıp Kaydet butonuna tıklayın).");
@@ -630,7 +643,9 @@
     window.location.reload();
   };
 
-  fbAuth.onAuthStateChanged(async (user) => {
+  let authGuard = false; // Google girişinde yeni-hesap kontrolü bitene kadar oturum açılışını bekletir
+  const handleAuth = async (user) => {
+    if (user && authGuard) return;
     /* ── Kullanıcı ÇIKIŞ YAPTI veya OTURUM YOK ─── */
     if (!user) {
       uid = null;
@@ -728,7 +743,19 @@
       if (app) app.classList.remove('hidden');
       loadApp();
     }
-  });
+  };
+  fbAuth.onAuthStateChanged(handleAuth);
+
+  /* Hesap silindiğinde bu cihazdaki Planova verilerini (senkron kuyruğuna girmeden) temizler */
+  api.wipeLocal = function () {
+    const rm = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && (k.startsWith(PREFIX) || k.startsWith('planova_'))) rm.push(k);
+    }
+    rm.forEach((k) => origRem.call(localStorage, k));
+    dirty.clear();
+  };
 
   /* ══════════════════════════════════════════════════
      OLAYLARI BAĞLA (EVENT LISTENERS)

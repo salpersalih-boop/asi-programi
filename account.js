@@ -3,7 +3,7 @@
    Üst çubuktaki avatar tıklamasını belge düzeyinde yakalar, bu yüzden düğme ne zaman çizilirse çizilsin çalışır. */
 (function () {
   'use strict';
-  var PANEL_VERSION = '6.5';
+  var PANEL_VERSION = '6.6';
 
   const $ = (id) => document.getElementById(id);
   const A = () => window.PlanovaAuth || {};
@@ -101,6 +101,30 @@
 
           <div class="acct-item hidden" data-key="login" id="acct-item-login">
             <button type="button" class="acct-row" id="acct-login-btn"><span class="acct-ico">📧</span><span class="acct-txt"><b>E-postayla giriş yap / hesap aç</b><small>Verilerin telefon ve bilgisayar arasında eşitlenir</small></span><span class="acct-chev">›</span></button>
+          </div>
+
+          <div class="acct-item" data-key="backup" id="acct-item-backup">
+            <button type="button" class="acct-row"><span class="acct-ico">💾</span><span class="acct-txt"><b>Verilerimi yedekle / geri yükle</b><small>Tüm verilerini dosya olarak indir ya da yükle</small></span><span class="acct-chev">›</span></button>
+            <div class="acct-sub"><div class="acct-sub-in">
+              <p class="acct-note">Yedek dosyası (.json); görevlerini, alışkanlıklarını, notlarını ve tercihlerini içerir. Yedekten yüklemek mevcut verilerinin yerine geçer.</p>
+              <div class="acct-actions"><button type="button" class="acct-btn primary" id="acct-export">Verilerimi indir</button><button type="button" class="acct-btn" id="acct-import">Yedekten yükle…</button></div>
+              <input type="file" id="acct-import-file" accept="application/json,.json" hidden>
+            </div></div>
+          </div>
+
+          <div class="acct-item danger" data-key="del" id="acct-item-del">
+            <button type="button" class="acct-row"><span class="acct-ico">🗑️</span><span class="acct-txt"><b>Hesabımı ve verilerimi sil</b><small>Bu işlem geri alınamaz</small></span><span class="acct-chev">›</span></button>
+            <div class="acct-sub"><div class="acct-sub-in">
+              <p class="acct-note">Hesabın ve buluttaki tüm verilerin kalıcı olarak silinir. İstersen önce yukarıdan yedeğini indir.</p>
+              <div id="acct-del-pass">
+                <label class="acct-lbl" for="acct-del-pw">Şifren</label>
+                <div class="acct-pw"><input type="password" id="acct-del-pw" autocomplete="current-password"><button type="button" class="acct-eye" data-eye aria-label="Göster/gizle">👁</button></div>
+              </div>
+              <p class="acct-note hidden" id="acct-del-google">Silmeden önce Google hesabınla doğrulama penceresi açılacak.</p>
+              <label class="acct-lbl" for="acct-del-confirm">Onaylamak için SİL yaz</label>
+              <input type="text" id="acct-del-confirm" autocomplete="off" placeholder="SİL">
+              <div class="acct-actions"><button type="button" class="acct-btn danger" id="acct-del-yes">Kalıcı olarak sil</button><button type="button" class="acct-btn" data-acct-back>Vazgeç</button></div>
+            </div></div>
           </div>
 
           <div class="acct-item danger" data-key="out" id="acct-item-out">
@@ -249,6 +273,78 @@
         A().signOut();
       });
 
+
+      // Yedek: indir
+      q('#acct-export').addEventListener('click', () => {
+        try {
+          const data = {};
+          for (let i = 0; i < localStorage.length; i++) {
+            const k = localStorage.key(i);
+            if (k && k.startsWith('asi_') && !/^asi_(prayer_cache_|consent$)/.test(k)) data[k] = localStorage.getItem(k);
+          }
+          const out = { app: 'Planova', format: 1, exportedAt: new Date().toISOString(), email: (A().user && A().user.email) || null, data };
+          const blob = new Blob([JSON.stringify(out, null, 2)], { type: 'application/json' });
+          const a = document.createElement('a');
+          a.href = URL.createObjectURL(blob);
+          a.download = 'planova-yedek-' + new Date().toISOString().slice(0, 10) + '.json';
+          document.body.appendChild(a); a.click(); a.remove();
+          setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+          say('Yedek dosyası indirildi ✓', 'ok');
+        } catch (e) { say('Yedek oluşturulamadı: ' + e.message, 'err'); }
+      });
+
+      // Yedek: yükle
+      q('#acct-import').addEventListener('click', () => q('#acct-import-file').click());
+      q('#acct-import-file').addEventListener('change', async (e) => {
+        const f = e.target.files[0]; e.target.value = '';
+        if (!f) return;
+        try {
+          if (f.size > 8 * 1024 * 1024) throw new Error('Dosya çok büyük.');
+          const j = JSON.parse(await f.text());
+          if (!j || j.app !== 'Planova' || !j.data || typeof j.data !== 'object') throw new Error('Bu bir Planova yedek dosyası değil.');
+          const keys = Object.keys(j.data).filter((k) => /^asi_[A-Za-z0-9_\-]+$/.test(k) && !/^asi_(prayer_cache_|consent$)/.test(k) && typeof j.data[k] === 'string');
+          if (!keys.length) throw new Error('Dosyada geri yüklenecek veri yok.');
+          if (!window.confirm(keys.length + ' kayıt yüklenecek ve mevcut verilerinin yerine geçecek. Devam edilsin mi?')) return;
+          keys.forEach((k) => localStorage.setItem(k, j.data[k]));
+          say(keys.length + ' kayıt geri yüklendi ✓ Sayfa yenileniyor…', 'ok');
+          setTimeout(() => location.reload(), 1300);
+        } catch (err) { say(err.message || 'Yedek okunamadı.', 'err'); }
+      });
+
+      // Hesabı ve verileri sil
+      q('#acct-del-yes').addEventListener('click', async () => {
+        const u = firebase.auth().currentUser;
+        if (!u) return say('Oturum bulunamadı, tekrar giriş yap.', 'err');
+        if (q('#acct-del-confirm').value.trim().toLocaleUpperCase('tr-TR') !== 'SİL') return say('Onaylamak için kutuya SİL yaz.', 'err');
+        const hasPass = providers().includes('password');
+        const pw = q('#acct-del-pw').value;
+        if (hasPass && !pw) return say('Şifreni gir.', 'err');
+        const btn = q('#acct-del-yes'); btn.disabled = true; btn.textContent = 'Siliniyor…';
+        try {
+          if (hasPass) await u.reauthenticateWithCredential(firebase.auth.EmailAuthProvider.credential(u.email, pw));
+          else await u.reauthenticateWithPopup(new firebase.auth.GoogleAuthProvider());
+          const db = firebase.firestore();
+          const base = db.collection('users').doc(u.uid);
+          const docs = (await base.collection('data').get()).docs;
+          for (let i = 0; i < docs.length; i += 400) {
+            const b = db.batch();
+            docs.slice(i, i + 400).forEach((d) => b.delete(d.ref));
+            await b.commit();
+          }
+          try { await base.delete(); } catch (_) {}
+          await u.delete();
+          try { A().wipeLocal && A().wipeLocal(); } catch (_) {}
+          say('Hesabın ve verilerin silindi. Hoşça kal 👋', 'ok');
+          setTimeout(() => location.reload(), 1300);
+        } catch (e) {
+          const c = e && e.code;
+          say(c === 'auth/wrong-password' || c === 'auth/invalid-credential' ? 'Şifren hatalı.'
+            : c === 'auth/popup-closed-by-user' ? 'Doğrulama penceresi kapatıldı.'
+            : c === 'auth/requires-recent-login' ? 'Güvenlik için çıkış yapıp yeniden giriş yap, sonra tekrar dene.'
+            : (ERR[c] || (e && e.message) || 'Hesap silinemedi.'), 'err');
+        } finally { btn.disabled = false; btn.textContent = 'Kalıcı olarak sil'; }
+      });
+
       // Çıkış
       q('#acct-out-yes').addEventListener('click', () => { close(); A().signOut(); });
     }
@@ -284,6 +380,10 @@
       q('#acct-pass-hint').textContent = hasPass ? 'Mevcut şifreni girip yenisini belirle' : 'E-postayla da giriş yapabil';
       q('#acct-item-login').classList.toggle('hidden', !quick);
       q('#acct-item-out').classList.toggle('hidden', quick);
+      q('#acct-item-del').classList.toggle('hidden', quick);
+      q('#acct-del-pass').classList.toggle('hidden', !hasPass);
+      q('#acct-del-google').classList.toggle('hidden', hasPass);
+      q('#acct-del-pw').value = ''; q('#acct-del-confirm').value = '';
     }
 
     function open() {
