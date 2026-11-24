@@ -45,7 +45,7 @@
     if (appLoaded) return;
     appLoaded = true;
     const s  = document.createElement('script');
-    s.src    = 'script.js?v=6.4';
+    s.src    = 'script.js?v=6.5';
     document.body.appendChild(s);
   }
 
@@ -154,7 +154,7 @@
         if (app) app.classList.remove('hidden');
         loadApp();
       });
-      $('auth-switch')?.after(skipBtn);
+      ($('auth-forgot') || $('auth-google'))?.after(skipBtn);
     };
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', run);
     else run();
@@ -412,10 +412,12 @@
     $('auth-pass2-wrap').classList.toggle('hidden', isLogin);
     const pass2 = $('auth-pass2');
     if (pass2) pass2.required = !isLogin;
-    $('auth-switch').textContent = isLogin
-      ? 'Hesabın yok mu? Kayıt ol'
-      : 'Zaten hesabın var mı? Giriş yap';
     $('auth-forgot').classList.toggle('hidden', !isLogin);
+    document.querySelectorAll('.auth-tab').forEach((t) => {
+      const on = t.dataset.mode === m;
+      t.classList.toggle('active', on);
+      t.setAttribute('aria-selected', on ? 'true' : 'false');
+    });
     $('auth-consent-wrap')?.classList.toggle('hidden', isLogin);
     syncSubmit();
     showMsg('');
@@ -746,7 +748,7 @@
       $('auth-submit')?.addEventListener('click', (e) => submit(e));
     }
 
-    $('auth-switch')?.addEventListener('click', () => setMode(mode === 'login' ? 'register' : 'login'));
+    document.querySelectorAll('.auth-tab').forEach((t) => t.addEventListener('click', () => setMode(t.dataset.mode)));
     $('auth-forgot')?.addEventListener('click', forgotPassword);
     $('auth-google')?.addEventListener('click', googleLogin);
     $('auth-consent')?.addEventListener('change', () => { syncSubmit(); if ($('auth-consent').checked) showMsg(''); });
