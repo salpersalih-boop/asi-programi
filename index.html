@@ -13,7 +13,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Planova">
-  <link rel="stylesheet" href="style.css?v=6.4">
+  <link rel="stylesheet" href="style.css?v=6.5">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -2210,6 +2210,10 @@
     <div class="auth-card">
       <img src="planova-icon.png" alt="Planova" class="auth-logo">
       <h2 class="auth-brand">Planova ✨</h2>
+      <div class="auth-tabs" role="tablist">
+        <button type="button" id="auth-tab-login" class="auth-tab active" role="tab" aria-selected="true" data-mode="login">Giriş Yap</button>
+        <button type="button" id="auth-tab-register" class="auth-tab" role="tab" aria-selected="false" data-mode="register">Kayıt Ol</button>
+      </div>
       <h3 id="auth-title" class="auth-title">Giriş Yap</h3>
       <p class="auth-sub">Verilerin hesabına bağlı kalır; hangi cihazdan girersen gir hepsi seninle.</p>
       
@@ -2240,8 +2244,6 @@
         Google ile devam et
       </button>
       <button type="button" id="auth-forgot" class="auth-link">Şifremi unuttum</button>
-      <button type="button" id="auth-switch" class="auth-link">Hesabın yok mu? Kayıt ol</button>
-      <p class="auth-legal">Devam ederek <a href="javascript:void(0)" data-privacy>KVKK Aydınlatma Metni ve Kullanım Koşulları</a>'nı kabul etmiş olursun.</p>
     </div>
   </div>
 
@@ -2266,8 +2268,8 @@
       });
     }
   </script>
-  <script src="privacy.js?v=6.4"></script>
-  <script src="auth.js?v=6.4"></script>
-  <script src="account.js?v=6.4"></script>
+  <script src="privacy.js?v=6.5"></script>
+  <script src="auth.js?v=6.5"></script>
+  <script src="account.js?v=6.5"></script>
 </body>
 </html>
