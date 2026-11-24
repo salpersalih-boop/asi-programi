@@ -45,7 +45,7 @@
     if (appLoaded) return;
     appLoaded = true;
     const s  = document.createElement('script');
-    s.src    = 'script.js?v=6.0';
+    s.src    = 'script.js?v=6.1';
     document.body.appendChild(s);
   }
 
