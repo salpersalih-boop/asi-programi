@@ -45,7 +45,7 @@
     if (appLoaded) return;
     appLoaded = true;
     const s  = document.createElement('script');
-    s.src    = 'script.js?v=5.9';
+    s.src    = 'script.js?v=6.0';
     document.body.appendChild(s);
   }
 
@@ -380,6 +380,16 @@
     'auth/unauthorized-domain':     'Bu alan adı Firebase Console > Authentication > Settings > Authorized Domains listesinde olmalıdır.',
   };
 
+  const CONSENT_KEY = 'planova_consent';
+  function consentVersion() { return (window.PlanovaPrivacy && window.PlanovaPrivacy.VERSION) || '1'; }
+  function hasConsent() {
+    try { return (JSON.parse(origGet.call(localStorage, CONSENT_KEY) || 'null') || {}).v === consentVersion(); }
+    catch (_) { return false; }
+  }
+  function saveConsent() {
+    try { origSet.call(localStorage, CONSENT_KEY, JSON.stringify({ v: consentVersion(), at: new Date().toISOString() })); } catch (_) {}
+  }
+
   function showMsg(text, ok) {
     const el = $('auth-msg');
     if (!el) return;
@@ -399,6 +409,7 @@
       ? 'Hesabın yok mu? Kayıt ol'
       : 'Zaten hesabın var mı? Giriş yap';
     $('auth-forgot').classList.toggle('hidden', !isLogin);
+    $('auth-consent-wrap')?.classList.toggle('hidden', isLogin);
     showMsg('');
   }
 
@@ -418,6 +429,8 @@
       const pass2 = ($('auth-pass2').value || '');
       if (pass !== pass2) return showMsg('Şifreler birbiriyle eşleşmiyor.');
       if (pass.length < 6) return showMsg('Şifre en az 6 karakter olmalıdır.');
+      if (!$('auth-consent')?.checked) return showMsg('Hesap açmak için Gizlilik Politikası ve KVKK metnini okuyup onaylaman gerekiyor.');
+      saveConsent();
     }
 
     const btn = $('auth-submit');
@@ -447,6 +460,11 @@
    */
   async function googleLogin() {
     const btn = $('auth-google');
+    if (!hasConsent() && !$('auth-consent')?.checked) {
+      $('auth-consent-wrap')?.classList.remove('hidden');
+      return showMsg('Google ile devam etmek için önce aşağıdaki Gizlilik Politikası kutusunu onayla.');
+    }
+    saveConsent();
     btn.disabled = true;
     showMsg('Google ile bağlanılıyor…', true);
     try {
@@ -652,6 +670,7 @@
         persistDirty();
       }
       origSet.call(localStorage, UID_KEY, uid);
+      try { const c = origGet.call(localStorage, CONSENT_KEY); if (c) localStorage.setItem('asi_consent', c); } catch (_) {}
       if (dirty.size) flush();
 
       // 3. Giriş ekranını ve Splash ekranını anında kapat
