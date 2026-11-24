@@ -3,7 +3,7 @@
    Üst çubuktaki avatar tıklamasını belge düzeyinde yakalar, bu yüzden düğme ne zaman çizilirse çizilsin çalışır. */
 (function () {
   'use strict';
-  var PANEL_VERSION = '6.3';
+  var PANEL_VERSION = '6.4';
 
   const $ = (id) => document.getElementById(id);
   const A = () => window.PlanovaAuth || {};
@@ -104,7 +104,7 @@
           </div>
 
           <div class="acct-item danger" data-key="out" id="acct-item-out">
-            <button type="button" class="acct-row" data-privacy><span class="acct-ico">🔒</span><span class="acct-txt"><b>Gizlilik & KVKK</b><small>Verilerin nasıl işlendiğini oku</small></span><span class="acct-chev">›</span></button>
+            <button type="button" class="acct-row" data-privacy><span class="acct-ico">🔒</span><span class="acct-txt"><b>KVKK & Kullanım Koşulları</b><small>Verilerin nasıl işlendiğini oku</small></span><span class="acct-chev">›</span></button>
             <button type="button" class="acct-row"><span class="acct-ico">🚪</span><span class="acct-txt"><b>Çıkış yap</b><small id="acct-out-hint">Oturumu bu cihazda kapat</small></span><span class="acct-chev">›</span></button>
             <div class="acct-sub"><div class="acct-sub-in">
               <p class="acct-note" id="acct-out-note">Oturum kapatılsın mı? Verilerin hesabında güvende kalır.</p>

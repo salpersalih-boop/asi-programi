@@ -1,41 +1,58 @@
-/* Planova — Gizlilik Politikası ve KVKK Aydınlatma Metni (bağımsız modül) */
+/* Planova — KVKK Aydınlatma Metni ve Kullanım Koşulları (bağımsız modül) */
 (function () {
   'use strict';
-  const VERSION = '2026-11';
+  const VERSION = '2026-11-2';
   const CONTACT = 'salpersalih@gmail.com';
+  const MIN_SEC = 5;
 
   const HTML = `
-<h3>Gizlilik Politikası ve KVKK Aydınlatma Metni</h3>
+<h3 class="pv-h">KVKK Aydınlatma Metni</h3>
 <p class="pv-date">Sürüm: ${VERSION}</p>
+<p>6698 sayılı Kişisel Verilerin Korunması Kanunu (KVKK) uyarınca, kişisel verilerinizin nasıl işlendiğini aşağıda açıklıyoruz.</p>
 
 <h4>1. Veri sorumlusu</h4>
 <p>Planova uygulamasının veri sorumlusu Alper Salih Somkaya'dır. İletişim: <b>${CONTACT}</b></p>
 
-<h4>2. Hangi verileri işliyoruz?</h4>
+<h4>2. İşlenen veriler</h4>
 <ul>
-<li><b>Hesap verileri:</b> e-posta adresi, (Google ile girişte) Google hesabındaki ad ve profil resmi, şifren (yalnızca Firebase'de şifrelenmiş olarak tutulur; bize görünmez).</li>
-<li><b>Uygulama verileri:</b> görevler, alışkanlıklar, spor ve okuma kayıtları, notlar, odak süreleri, rozetler, tercihlerin, kullanıcı adın ve (kullanırsan) konum bilgin.</li>
-<li><b>Onay kaydı:</b> bu metni hangi sürümle ve ne zaman kabul ettiğin.</li>
+<li><b>Hesap verileri:</b> e-posta adresi; Google ile girişte Google hesabınızdaki ad ve profil resmi. Şifreniz yalnızca Firebase'de şifrelenmiş olarak tutulur, bize görünmez.</li>
+<li><b>Uygulama verileri:</b> görevler, alışkanlıklar, spor ve okuma kayıtları, notlar, odak süreleri, rozetler, tercihleriniz ve kullanıcı adınız.</li>
+<li><b>Onay kaydı:</b> bu metni hangi sürümle ve ne zaman kabul ettiğiniz.</li>
 </ul>
 
 <h4>3. Amaç ve hukuki sebep</h4>
-<p>Verilerin yalnızca hesabını açmak, giriş yapmanı sağlamak ve verilerini cihazların arasında eşitlemek için işlenir. Hukuki sebep: sözleşmenin kurulması ve ifası ile açık rızandır (KVKK m.5/2-c ve m.5/1). Verilerini reklam, profilleme veya satış için kullanmayız.</p>
+<p>Verileriniz yalnızca hesabınızı açmak, giriş yapmanızı sağlamak ve verilerinizi cihazlarınız arasında eşitlemek için işlenir. Hukuki sebep: sözleşmenin kurulması ve ifası ile açık rızanızdır (KVKK m.5/2-c ve m.5/1). Verileriniz reklam, profilleme veya satış amacıyla kullanılmaz.</p>
 
-<h4>4. Verilerin nerede tutulur, kimlere aktarılır?</h4>
-<p>Verilerin Google Firebase (Authentication ve Cloud Firestore) üzerinde saklanır. Sunucular Türkiye dışında olabilir; bu nedenle kayıt olurken verdiğin açık rıza, yurt dışına aktarım için de geçerlidir. Verilerine kurallar gereği yalnızca sen erişebilirsin. Yasal bir zorunluluk dışında üçüncü kişilerle paylaşılmaz.</p>
+<h4>4. Verilerin aktarımı</h4>
+<p>Verileriniz Google Firebase (Authentication ve Cloud Firestore) altyapısında saklanır. Sunucular Türkiye dışında olabilir; kayıt sırasında verdiğiniz açık rıza yurt dışına aktarım için de geçerlidir. Verilerinize kurallar gereği yalnızca siz erişebilirsiniz; yasal zorunluluk dışında üçüncü kişilerle paylaşılmaz. Rızanızı geri çekmek isterseniz hesabınızın silinmesini talep edebilirsiniz. Ayrıca yazı tipleri Google Fonts üzerinden yüklenir; bu istek sırasında IP adresiniz Google ile paylaşılır.</p>
 
-<h4>5. Ne kadar süre saklanır?</h4>
-<p>Hesabın açık olduğu sürece. Hesabını sildiğinde verilerin de silinir.</p>
+<h4>5. Saklama süresi</h4>
+<p>Verileriniz hesabınız açık kaldığı sürece saklanır. Silme talebiniz üzerine makul süre içinde silinir veya anonim hale getirilir.</p>
 
-<h4>6. Haklarının neler?</h4>
-<p>KVKK m.11 gereği; verilerinin işlenip işlenmediğini öğrenme, bilgi isteme, düzeltme, silme ve yok etme, işlemeye itiraz etme haklarına sahipsin. Başvuru için: <b>${CONTACT}</b>. Rızanı istediğin zaman geri çekebilirsin; bu durumda hesabın kapatılır.</p>
+<h4>6. Haklarınız (KVKK m. 11)</h4>
+<ul>
+<li>Verilerinizin işlenip işlenmediğini öğrenme ve bilgi talep etme,</li>
+<li>İşleme amacını ve amacına uygun kullanılıp kullanılmadığını öğrenme,</li>
+<li>Yurt içinde veya yurt dışında aktarıldığı üçüncü kişileri bilme,</li>
+<li>Eksik veya yanlış işlenmişse düzeltilmesini isteme,</li>
+<li>Kanunda öngörülen şartlarda silinmesini veya yok edilmesini isteme,</li>
+<li>Zararın giderilmesini talep etme.</li>
+</ul>
+<div class="pv-box">Başvurularınızı <b>${CONTACT}</b> adresine, hesabınızdaki e-posta adresinden göndermeniz yeterlidir. Talebiniz en geç 30 gün içinde yanıtlanır.</div>
 
-<h4>7. Çerezler / yerel depolama</h4>
-<p>Uygulama; oturum, tercihlerin ve çevrimdışı çalışma için tarayıcının yerel depolamasını ve önbelleğini kullanır. Reklam veya takip çerezi kullanılmaz.</p>
-
+<h3 class="pv-h pv-h2">Kullanım Koşulları</h3>
+<h4>1. Hizmet</h4>
+<p>Planova; görev, alışkanlık, spor, okuma ve odak takibi için hazırlanmış kişisel bir ajanda uygulamasıdır. Ücretsizdir ve “olduğu gibi” sunulur; kesintisiz veya hatasız çalışacağı garanti edilmez.</p>
+<h4>2. Hesabınız</h4>
+<p>Hesabınızın güvenliğinden ve şifrenizin gizli tutulmasından siz sorumlusunuz. Başkasına ait hesabı veya e-posta adresini kullanamazsınız.</p>
+<h4>3. Kullanım kuralları</h4>
+<p>Uygulamayı yasalara aykırı amaçlarla, hizmetin işleyişini bozacak veya başkalarının verilerine erişmeye çalışacak biçimde kullanamazsınız.</p>
+<h4>4. Verileriniz</h4>
+<p>Uygulamaya girdiğiniz veriler size aittir. Bunların işlenmesi yukarıdaki KVKK Aydınlatma Metni'ne göre yapılır. Önemli verilerinizin ayrıca yedeğini almanızı öneririz.</p>
+<h4>5. Değişiklik ve kapatma</h4>
+<p>Bu koşullar ve uygulama zaman zaman güncellenebilir; önemli değişikliklerde yeniden onayınız istenir. Hesabınızı istediğiniz zaman kapatmayı talep edebilirsiniz.</p>
 <p class="pv-note">Bu metin bilgilendirme amaçlıdır; hukuki danışmanlık değildir.</p>`;
 
-  const MIN_SEC = 5;
   let timer = null;
 
   function build() {
@@ -46,11 +63,17 @@
     el.className = 'pv-modal hidden';
     el.setAttribute('role', 'dialog');
     el.setAttribute('aria-modal', 'true');
-    el.innerHTML = '<div class="pv-card"><div class="pv-body" id="pv-body">' + HTML +
-      '</div><div class="pv-foot"><div class="pv-hint" id="pv-hint"></div>' +
-      '<button type="button" class="btn btn-primary pv-accept" id="pv-accept"></button></div></div>';
+    el.setAttribute('aria-label', 'KVKK Aydınlatma Metni ve Kullanım Koşulları');
+    el.innerHTML =
+      '<div class="pv-card">' +
+        '<div class="pv-head"><b>KVKK Aydınlatma Metni</b>' +
+        '<button type="button" class="pv-x" id="pv-x" aria-label="Kapat">✕</button></div>' +
+        '<div class="pv-body" id="pv-body">' + HTML + '</div>' +
+        '<div class="pv-foot"><div class="pv-hint" id="pv-hint"></div>' +
+        '<button type="button" class="btn btn-primary pv-accept" id="pv-accept"></button></div>' +
+      '</div>';
     el.addEventListener('click', (e) => {
-      if (e.target === el && !el.dataset.require) close();
+      if (e.target === el || e.target.closest('#pv-x')) close();
     });
     document.body.appendChild(el);
     return el;
@@ -63,7 +86,6 @@
     const btn = el.querySelector('#pv-accept');
     const hint = el.querySelector('#pv-hint');
     if (timer) clearInterval(timer);
-    if (require) el.dataset.require = '1'; else delete el.dataset.require;
     el.classList.remove('hidden');
     body.scrollTop = 0;
 
@@ -81,8 +103,8 @@
       const atEnd = body.scrollTop + body.clientHeight >= body.scrollHeight - 12;
       const ok = left === 0 && atEnd;
       btn.disabled = !ok;
-      btn.textContent = ok ? 'Okudum, kabul ediyorum' : (left > 0 ? 'Okudum, kabul ediyorum (' + left + ')' : 'Okudum, kabul ediyorum');
-      hint.textContent = ok ? '' : (atEnd ? 'Lütfen metni biraz daha oku…' : 'Devam etmek için metnin en altına kadar kaydır.');
+      btn.textContent = left > 0 ? 'Okudum (' + left + ')' : 'Okudum';
+      hint.textContent = ok ? '' : (!atEnd ? 'Devam etmek için metnin en altına kadar kaydır.' : '');
     };
     body.onscroll = state;
     state();
@@ -101,7 +123,7 @@
     if (el) el.classList.add('hidden');
   }
 
-  // [data-privacy] bağlantıları: sayfa değiştirmeden pencere açar (yakalama aşamasında, başka dinleyicilerden önce)
+  // [data-privacy] bağlantıları: sayfa değiştirmeden pencere açar
   document.addEventListener('click', (e) => {
     const a = e.target.closest('[data-privacy]');
     if (!a) return;
@@ -112,7 +134,7 @@
     open({ require: needRead });
   }, true);
 
-  // Onay kutusu: metin okunmadan işaretlenemez, tıklayınca önce metin açılır
+  // Onay kutusu: metin okunmadan işaretlenemez; tıklayınca önce metin açılır
   document.addEventListener('click', (e) => {
     const cb = e.target.closest('#auth-consent');
     if (!cb || e.target.closest('[data-privacy]')) return;
@@ -124,7 +146,7 @@
 
   document.addEventListener('keydown', (e) => {
     const el = document.getElementById('pv-modal');
-    if (e.key === 'Escape' && el && !el.classList.contains('hidden') && !el.dataset.require) close();
+    if (e.key === 'Escape' && el && !el.classList.contains('hidden')) close();
   });
 
   window.PlanovaPrivacy = { open, close, VERSION };

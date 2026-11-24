@@ -10259,16 +10259,22 @@ body.acct-lock { overflow: hidden; }
 .auth-consent.hidden { display: none; }
 .auth-consent input { margin-top: 0.15rem; width: 1.1rem; height: 1.1rem; flex: none; accent-color: var(--accent-turquoise); }
 .auth-consent a { color: var(--accent-turquoise); font-weight: 700; }
-.pv-modal { position: fixed; inset: 0; z-index: 100000; display: flex; align-items: center; justify-content: center; padding: 0.75rem; background: rgba(0,0,0,.65); }
+.pv-modal { position: fixed; inset: 0; z-index: 100000; display: flex; align-items: center; justify-content: center; padding: 0.75rem; background: rgba(0,0,0,.65); backdrop-filter: blur(3px); }
 .pv-modal.hidden { display: none; }
-.pv-card { width: 100%; max-width: 640px; height: min(86vh, 720px); display: flex; flex-direction: column; background: var(--bg-card); border: 1px solid var(--border); border-radius: 18px; padding: 1.1rem; box-shadow: var(--shadow-lg); }
-.pv-body { flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; font-size: 0.9rem; line-height: 1.55; color: var(--text-secondary); padding-right: 0.3rem; }
-.pv-body h3 { color: var(--text-primary); margin-bottom: 0.2rem; font-size: 1.1rem; }
-.pv-body h4 { color: var(--text-primary); margin: 1rem 0 0.25rem; font-size: 0.95rem; }
-.pv-body ul { padding-left: 1.1rem; }
+.pv-card { width: 100%; max-width: 660px; height: min(88vh, 740px); display: flex; flex-direction: column; background: var(--bg-card); border: 1px solid var(--border); border-radius: 20px; box-shadow: var(--shadow-lg); overflow: hidden; }
+.pv-head { flex: none; display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.2rem; border-bottom: 1px solid var(--border); color: var(--text-primary); font-size: 1.05rem; }
+.pv-x { background: none; border: none; color: var(--text-secondary); font-size: 1.15rem; cursor: pointer; padding: 0.2rem 0.4rem; border-radius: 8px; }
+.pv-x:hover { background: var(--bg-input); }
+.pv-body { flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; font-size: 0.92rem; line-height: 1.6; color: var(--text-secondary); padding: 1rem 1.2rem; }
+.pv-body .pv-h { color: var(--text-primary); font-size: 1.1rem; margin-bottom: 0.2rem; }
+.pv-body .pv-h2 { margin-top: 1.6rem; padding-top: 1.1rem; border-top: 1px solid var(--border); }
+.pv-body h4 { color: var(--text-primary); margin: 1.1rem 0 0.3rem; font-size: 0.97rem; }
+.pv-body ul { padding-left: 1.2rem; }
+.pv-body li { margin-bottom: 0.25rem; }
+.pv-box { margin-top: 0.9rem; padding: 0.8rem 0.95rem; border: 1px solid var(--border); border-radius: 12px; background: var(--bg-input); }
 .pv-date, .pv-note { color: var(--text-muted); font-size: 0.76rem; }
-.pv-foot { flex: none; padding-top: 0.8rem; }
+.pv-foot { flex: none; padding: 0.7rem 1.2rem 1.1rem; border-top: 1px solid var(--border); }
 .pv-hint { min-height: 1.1rem; font-size: 0.78rem; color: var(--text-muted); text-align: center; margin-bottom: 0.4rem; }
-.pv-accept { width: 100%; padding: 0.8rem; }
+.pv-accept { width: 100%; padding: 0.85rem; }
 .pv-accept:disabled { opacity: 0.45; cursor: not-allowed; }
-@media (max-width: 600px) { .pv-modal { padding: 0.4rem; } .pv-card { height: 94vh; border-radius: 16px; } }
+@media (max-width: 600px) { .pv-modal { padding: 0.4rem; } .pv-card { height: 95vh; border-radius: 16px; } }
