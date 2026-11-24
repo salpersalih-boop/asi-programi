@@ -45,7 +45,7 @@
     if (appLoaded) return;
     appLoaded = true;
     const s  = document.createElement('script');
-    s.src    = 'script.js?v=6.1';
+    s.src    = 'script.js?v=6.3';
     document.body.appendChild(s);
   }
 
@@ -397,6 +397,13 @@
     el.className   = 'auth-msg' + (text ? (ok ? ' ok' : ' err') : '');
   }
 
+  // Kayıt modunda onay kutusu işaretlenmeden "Kayıt Ol" düğmesi kapalı kalır
+  function syncSubmit() {
+    const b = $('auth-submit');
+    if (!b) return;
+    b.disabled = mode === 'register' && !$('auth-consent')?.checked;
+  }
+
   function setMode(m) {
     mode = m;
     const isLogin = m === 'login';
@@ -410,6 +417,7 @@
       : 'Zaten hesabın var mı? Giriş yap';
     $('auth-forgot').classList.toggle('hidden', !isLogin);
     $('auth-consent-wrap')?.classList.toggle('hidden', isLogin);
+    syncSubmit();
     showMsg('');
   }
 
@@ -741,6 +749,7 @@
     $('auth-switch')?.addEventListener('click', () => setMode(mode === 'login' ? 'register' : 'login'));
     $('auth-forgot')?.addEventListener('click', forgotPassword);
     $('auth-google')?.addEventListener('click', googleLogin);
+    $('auth-consent')?.addEventListener('change', () => { syncSubmit(); if ($('auth-consent').checked) showMsg(''); });
     $('auth-quick')?.addEventListener('click', enterQuick);
 
     // Enter tuşuna basıldığında formun yeniden yüklenmesini önle
