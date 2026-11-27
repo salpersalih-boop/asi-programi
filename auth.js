@@ -45,7 +45,7 @@
     if (appLoaded) return;
     appLoaded = true;
     const s  = document.createElement('script');
-    s.src    = 'script.js?v=6.6';
+    s.src    = 'script.js?v=6.9';
     document.body.appendChild(s);
   }
 
@@ -168,6 +168,7 @@
     firebase.initializeApp(cfg);
   }
   const fbAuth = firebase.auth();
+  try { fbAuth.languageCode = 'tr'; } catch (_) {} // doğrulama / sıfırlama e-postaları Türkçe gitsin
   const db     = firebase.firestore();
 
   let uid       = null;
@@ -254,6 +255,10 @@
             else batch.set(ref, { v, t: firebase.firestore.FieldValue.serverTimestamp() });
           });
           await batch.commit();
+          if (lastCloud) part.forEach((k) => {
+            const v = origGet.call(localStorage, k);
+            if (v === null) delete lastCloud[k]; else if (byteSize(v) <= MAX_DOC_BYTES) lastCloud[k] = v;
+          });
           part.forEach((k) => dirty.delete(k)); // yalnızca başarıyla yazılanlar temizlenir
           persistDirty();
         }
@@ -278,6 +283,19 @@
     const map  = {};
     snap.forEach((d) => { map[d.id] = d.data().v; });
     return map;
+  }
+
+  /* Bu cihazın bildiği son bulut durumu. Sekmeye dönünce yeniden yükleme kararı,
+     yerel veri ile değil, bulutun BU duruma göre gerçekten değişip değişmediğine bakılarak verilir. */
+  let lastCloud = null;
+  function cloudChanged(map) {
+    if (!lastCloud) return false;
+    const keys = new Set([...Object.keys(map), ...Object.keys(lastCloud)]);
+    for (const k of keys) {
+      if (dirty.has(k) || !isSyncable(k)) continue;
+      if (map[k] !== lastCloud[k]) return true;
+    }
+    return false;
   }
 
   /**
@@ -335,20 +353,28 @@
   /* ── Sekme görünürlük değişiminde veri sync ─────────
      Başka cihazda yapılan değişiklikler gelince ekranın eski veriyle kalmaması
      (ve eski verinin bir sonraki kayıtta bulutu ezmemesi) için sayfa yenilenir. */
+  let hiddenAt = 0;
   document.addEventListener('visibilitychange', async () => {
     if (!uid) return;
     if (document.visibilityState === 'hidden') {
+      hiddenAt = Date.now();
       await flush();
       return;
     }
     if (dirty.size) { await flush(); return; }
+    // Kısa sekme geçişlerinde (20 sn'den az) hiçbir şey yapma
+    if (hiddenAt && Date.now() - hiddenAt < 20000) return;
     try {
       const map = await pullCloud();
-      if (differsFromCloud(map)) {
+      if (cloudChanged(map)) {
+        // Başka cihazda gerçekten değişiklik yapılmış
         applyCloud(map);
+        lastCloud = map;
         setStatus('Buluttan güncellendi ✓');
         if (isEditing()) reloadWhenIdle = true;
         else window.location.reload();
+      } else if (!lastCloud) {
+        lastCloud = map;
       }
     } catch (e) { /* Çevrimdışı — sorun yok */ }
   });
@@ -370,7 +396,8 @@
     'auth/wrong-password':          'Girdiğiniz şifre hatalı.',
     'auth/invalid-credential':      'E-posta veya şifre hatalı.',
     'auth/email-already-in-use':    'Bu e-posta zaten kayıtlı. Lütfen "Giriş Yap" seçeneğini kullanın.',
-    'auth/weak-password':           'Şifre en az 6 karakter olmalıdır.',
+    'auth/weak-password':           'Şifre en az 8 karakter olmalıdır.',
+    'auth/password-does-not-meet-requirements': 'Şifre en az 8 karakter olmalıdır.',
     'auth/too-many-requests':       'Çok fazla deneme yapıldı. Lütfen biraz bekleyip tekrar deneyin.',
     'auth/network-request-failed':  'İnternet bağlantısı hatası. Lütfen ağınızı kontrol edin.',
     'auth/popup-closed-by-user':    'Google giriş penceresi kapatıldı.',
@@ -413,6 +440,8 @@
     const pass2 = $('auth-pass2');
     if (pass2) pass2.required = !isLogin;
     $('auth-forgot').classList.toggle('hidden', !isLogin);
+    const pw = $('auth-pass');
+    if (pw) { pw.placeholder = isLogin ? 'Şifren' : 'En az 8 karakter'; pw.autocomplete = isLogin ? 'current-password' : 'new-password'; }
     document.querySelectorAll('.auth-tab').forEach((t) => {
       const on = t.dataset.mode === m;
       t.classList.toggle('active', on);
@@ -438,7 +467,7 @@
     if (mode === 'register') {
       const pass2 = ($('auth-pass2').value || '');
       if (pass !== pass2) return showMsg('Şifreler birbiriyle eşleşmiyor.');
-      if (pass.length < 6) return showMsg('Şifre en az 6 karakter olmalıdır.');
+      if (pass.length < 8) return showMsg('Şifre en az 8 karakter olmalıdır.');
       if (!$('auth-consent')?.checked) return showMsg('Hesap açmak için Gizlilik Politikası ve KVKK metnini okuyup onaylaman gerekiyor.');
       saveConsent();
     }
@@ -451,7 +480,9 @@
       if (mode === 'login') {
         await fbAuth.signInWithEmailAndPassword(email, pass);
       } else {
-        await fbAuth.createUserWithEmailAndPassword(email, pass);
+        const created = await fbAuth.createUserWithEmailAndPassword(email, pass);
+        // E-posta doğrulama bağlantısı gönder (engellemez; hesap panelinde hatırlatılır)
+        try { await created.user.sendEmailVerification(); } catch (_) {}
       }
       // Başarılı olduğunda fbAuth.onAuthStateChanged tetiklenir ve yönlendirmeyi yapar
     } catch (err) {
@@ -649,6 +680,7 @@
     /* ── Kullanıcı ÇIKIŞ YAPTI veya OTURUM YOK ─── */
     if (!user) {
       uid = null;
+      lastCloud = null;
       api.user = null;
       if (wantsQuick()) { enterQuick(); return; }
       if (overlay) overlay.classList.remove('hidden');
@@ -676,6 +708,7 @@
       try {
         map = await pullCloud();
         cloudOk = true;
+        lastCloud = Object.assign({}, map);
       } catch (cloudErr) {
         console.warn('Planova: Bulut verisi alınamadı (yerel modla devam ediliyor):', cloudErr);
         setStatus('Yerel mod');

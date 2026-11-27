@@ -10125,7 +10125,7 @@ body.acct-lock { overflow: hidden; }
 .acct-root.show .acct-backdrop { opacity: 1; }
 .acct-panel {
   position: absolute; top: 68px; right: 18px; width: min(380px, calc(100vw - 24px));
-  max-height: calc(100vh - 90px); overflow-y: auto; overscroll-behavior: contain;
+  max-height: calc(100vh - 90px); max-height: calc(100dvh - 90px); overflow-y: auto; overscroll-behavior: contain;
   border-radius: 22px; background: var(--bg-card, var(--bg-input)); color: var(--text-primary);
   border: 1px solid var(--border-turquoise);
   box-shadow: 0 30px 80px rgba(0, 0, 0, .35), 0 0 0 1px rgba(255, 255, 255, .04) inset;
@@ -10241,7 +10241,7 @@ body.acct-lock { overflow: hidden; }
 
 @media (max-width: 700px) {
   .acct-panel {
-    top: auto; right: 0; left: 0; bottom: 0; width: 100%; max-height: 90vh;
+    top: auto; right: 0; left: 0; bottom: 0; width: 100%; max-height: 90vh; max-height: 90dvh;
     border-radius: 24px 24px 0 0; transform: translateY(100%); transform-origin: bottom;
   }
   .acct-root.show .acct-panel { transform: none; }
@@ -10284,3 +10284,30 @@ body.acct-lock { overflow: hidden; }
 .auth-tab { flex: 1; padding: 0.7rem 0.5rem; border: none; border-radius: 11px; background: transparent; color: var(--text-muted); font-weight: 700; font-size: 0.92rem; cursor: pointer; transition: background .2s, color .2s, box-shadow .2s; }
 .auth-tab:hover { color: var(--text-primary); }
 .auth-tab.active { background: var(--bg-card); color: var(--text-primary); box-shadow: 0 2px 10px rgba(0,0,0,.18); }
+
+/* Yardım bağlantısı + e-posta doğrulama bandı */
+.auth-help { font-size: 0.78rem; color: var(--text-muted); margin-top: 0.4rem; }
+.auth-help a { color: var(--accent-turquoise); font-weight: 700; }
+.acct-verify { margin: 0 0 0.9rem; padding: 0.8rem 0.9rem; border: 1px solid rgba(249,115,22,.55); border-radius: 14px; background: rgba(249,115,22,.12); }
+.acct-verify-txt { font-size: 0.86rem; line-height: 1.4; margin-bottom: 0.6rem; }
+
+/* Hesap paneli: daha kompakt, düşük ekranlarda daha da sıkı */
+.acct-head { padding: 1.1rem 1rem .9rem; }
+.acct-avatar-ring { width: 80px; height: 80px; margin-bottom: .5rem; }
+.acct-stats > div { padding: .5rem .3rem; }
+.acct-body { padding: .6rem .7rem .8rem; }
+.acct-item { margin-bottom: .2rem; }
+.acct-row { padding: .5rem .55rem; gap: .65rem; }
+.acct-ico { width: 36px; height: 36px; font-size: 1.05rem; border-radius: 11px; }
+.acct-txt b { font-size: .9rem; }
+.acct-txt small { font-size: .74rem; }
+@media (max-height: 820px) {
+  .acct-avatar-ring { width: 60px; height: 60px; margin-bottom: .35rem; }
+  .acct-head { padding: .8rem 1rem .6rem; }
+  .acct-stats > div { padding: .35rem .3rem; }
+  .acct-row { padding: .4rem .5rem; }
+  .acct-ico { width: 32px; height: 32px; font-size: .95rem; }
+  .acct-txt small { display: none; }
+}
+
+.acct-item { scroll-margin-bottom: 18px; }

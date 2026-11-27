@@ -3,7 +3,7 @@
    Üst çubuktaki avatar tıklamasını belge düzeyinde yakalar, bu yüzden düğme ne zaman çizilirse çizilsin çalışır. */
 (function () {
   'use strict';
-  var PANEL_VERSION = '6.6';
+  var PANEL_VERSION = '6.9';
 
   const $ = (id) => document.getElementById(id);
   const A = () => window.PlanovaAuth || {};
@@ -12,7 +12,8 @@
   const checkBadges = () => { try { window.ASI && window.ASI.streak && window.ASI.streak.updateStreaksAndBadges(); } catch (_) {} };
 
   const ERR = {
-    'auth/weak-password':          'Şifre en az 6 karakter olmalıdır.',
+    'auth/weak-password':          'Şifre en az 8 karakter olmalıdır.',
+    'auth/password-does-not-meet-requirements': 'Şifre en az 8 karakter olmalıdır.',
     'auth/too-many-requests':      'Çok fazla deneme yapıldı. Lütfen biraz bekleyip tekrar deneyin.',
     'auth/network-request-failed': 'İnternet bağlantısı hatası. Lütfen ağınızı kontrol edin.',
     'auth/user-not-found':         'Bu e-posta adresiyle kayıtlı bir hesap bulunamadı.'
@@ -63,6 +64,10 @@
           <div><strong id="acct-s-streak">—</strong><small>Seri</small></div>
         </div>
         <div class="acct-body">
+          <div class="acct-verify hidden" id="acct-verify">
+            <div class="acct-verify-txt">✉️ E-postan henüz doğrulanmadı. Gelen kutundaki bağlantıya bas.</div>
+            <div class="acct-actions"><button type="button" class="acct-btn primary" id="acct-verify-send">Bağlantıyı tekrar gönder</button><button type="button" class="acct-btn" id="acct-verify-check">Doğruladım</button></div>
+          </div>
           <div class="acct-title">Hesabı yönet</div>
           <div class="acct-msg" id="acct-msg" role="status" aria-live="polite"></div>
 
@@ -83,7 +88,7 @@
                 <div class="acct-pw"><input type="password" id="acct-pw-cur" autocomplete="current-password"><button type="button" class="acct-eye" data-eye aria-label="Göster/gizle">👁</button></div>
                 <label class="acct-lbl" for="acct-pw-new">Yeni şifre</label>
                 <div class="acct-pw"><input type="password" id="acct-pw-new" autocomplete="new-password"><button type="button" class="acct-eye" data-eye aria-label="Göster/gizle">👁</button></div>
-                <div class="acct-meter"><span id="acct-meter-bar"></span></div><div class="acct-meter-lbl" id="acct-meter-lbl">En az 6 karakter</div>
+                <div class="acct-meter"><span id="acct-meter-bar"></span></div><div class="acct-meter-lbl" id="acct-meter-lbl">En az 8 karakter</div>
                 <label class="acct-lbl" for="acct-pw-new2">Yeni şifre (tekrar)</label>
                 <div class="acct-pw"><input type="password" id="acct-pw-new2" autocomplete="new-password"><button type="button" class="acct-eye" data-eye aria-label="Göster/gizle">👁</button></div>
                 <div class="acct-actions"><button type="button" class="acct-btn primary" id="acct-pw-save">Şifreyi güncelle</button></div>
@@ -103,6 +108,10 @@
             <button type="button" class="acct-row" id="acct-login-btn"><span class="acct-ico">📧</span><span class="acct-txt"><b>E-postayla giriş yap / hesap aç</b><small>Verilerin telefon ve bilgisayar arasında eşitlenir</small></span><span class="acct-chev">›</span></button>
           </div>
 
+          <div class="acct-item" data-key="feedback">
+            <button type="button" class="acct-row" id="acct-feedback-btn"><span class="acct-ico">💬</span><span class="acct-txt"><b>Geri bildirim / hata bildir</b><small>Sorunu ya da önerini e-postayla yaz</small></span><span class="acct-chev">›</span></button>
+          </div>
+
           <div class="acct-item" data-key="backup" id="acct-item-backup">
             <button type="button" class="acct-row"><span class="acct-ico">💾</span><span class="acct-txt"><b>Verilerimi yedekle / geri yükle</b><small>Tüm verilerini dosya olarak indir ya da yükle</small></span><span class="acct-chev">›</span></button>
             <div class="acct-sub"><div class="acct-sub-in">
@@ -110,6 +119,10 @@
               <div class="acct-actions"><button type="button" class="acct-btn primary" id="acct-export">Verilerimi indir</button><button type="button" class="acct-btn" id="acct-import">Yedekten yükle…</button></div>
               <input type="file" id="acct-import-file" accept="application/json,.json" hidden>
             </div></div>
+          </div>
+
+          <div class="acct-item" data-key="legal">
+            <button type="button" class="acct-row" data-privacy><span class="acct-ico">🔒</span><span class="acct-txt"><b>KVKK & Kullanım Koşulları</b><small>Verilerin nasıl işlendiğini oku</small></span><span class="acct-chev">›</span></button>
           </div>
 
           <div class="acct-item danger" data-key="del" id="acct-item-del">
@@ -128,7 +141,6 @@
           </div>
 
           <div class="acct-item danger" data-key="out" id="acct-item-out">
-            <button type="button" class="acct-row" data-privacy><span class="acct-ico">🔒</span><span class="acct-txt"><b>KVKK & Kullanım Koşulları</b><small>Verilerin nasıl işlendiğini oku</small></span><span class="acct-chev">›</span></button>
             <button type="button" class="acct-row"><span class="acct-ico">🚪</span><span class="acct-txt"><b>Çıkış yap</b><small id="acct-out-hint">Oturumu bu cihazda kapat</small></span><span class="acct-chev">›</span></button>
             <div class="acct-sub"><div class="acct-sub-in">
               <p class="acct-note" id="acct-out-note">Oturum kapatılsın mı? Verilerin hesabında güvende kalır.</p>
@@ -157,14 +169,19 @@
       root.querySelectorAll('.acct-item').forEach((it) => {
         const open = it.dataset.key === key && !it.classList.contains('open');
         it.classList.toggle('open', open);
-        if (open) setTimeout(() => it.querySelector('input')?.focus(), 220);
+        if (open) {
+          const reveal = () => { try { it.scrollIntoView({ block: 'nearest' }); } catch (_) {} };
+          setTimeout(reveal, 320);   // açılma animasyonu (.26s) bittikten sonra görünür alana kaydır
+          setTimeout(reveal, 700);
+          setTimeout(() => { reveal(); const inp = it.querySelector('input'); if (inp) inp.focus({ preventScroll: true }); }, 380);
+        }
       });
     }
 
     function strength(pw) {
       let sc = 0;
-      if (pw.length >= 6) sc++;
-      if (pw.length >= 10) sc++;
+      if (pw.length >= 8) sc++;
+      if (pw.length >= 12) sc++;
       if (/[A-ZÇĞİÖŞÜ]/.test(pw) && /[a-zçğıöşü]/.test(pw)) sc++;
       if (/\d/.test(pw)) sc++;
       if (/[^A-Za-z0-9çğıöşüÇĞİÖŞÜ]/.test(pw)) sc++;
@@ -208,14 +225,14 @@
         const v = e.target.value, sc = v ? strength(v) : 0;
         q('#acct-meter-bar').style.width = (sc * 25) + '%';
         q('#acct-meter-bar').dataset.s = String(sc);
-        q('#acct-meter-lbl').textContent = !v ? 'En az 6 karakter' : ['Çok zayıf', 'Zayıf', 'Orta', 'İyi', 'Güçlü'][sc];
+        q('#acct-meter-lbl').textContent = !v ? 'En az 8 karakter' : ['Çok zayıf', 'Zayıf', 'Orta', 'İyi', 'Güçlü'][sc];
       });
 
       // Şifre değiştir
       q('#acct-pw-save').addEventListener('click', async () => {
         const cur = q('#acct-pw-cur').value, n1 = q('#acct-pw-new').value, n2 = q('#acct-pw-new2').value;
         if (!cur || !n1 || !n2) return say('Üç alanı da doldur.', 'err');
-        if (n1.length < 6) return say('Yeni şifre en az 6 karakter olmalı.', 'err');
+        if (n1.length < 8) return say('Yeni şifre en az 8 karakter olmalı.', 'err');
         if (n1 !== n2) return say('Yeni şifreler birbiriyle aynı değil.', 'err');
         if (n1 === cur) return say('Yeni şifre eskisiyle aynı olamaz.', 'err');
         const u = firebase.auth().currentUser;
@@ -226,7 +243,7 @@
           await u.updatePassword(n1);
           ['#acct-pw-cur', '#acct-pw-new', '#acct-pw-new2'].forEach((id) => { q(id).value = ''; q(id).type = 'password'; });
           q('#acct-meter-bar').style.width = '0';
-          q('#acct-meter-lbl').textContent = 'En az 6 karakter';
+          q('#acct-meter-lbl').textContent = 'En az 8 karakter';
           openItem('');
           say('Şifren güncellendi ✓', 'ok');
         } catch (e) {
@@ -273,6 +290,30 @@
         A().signOut();
       });
 
+
+
+      // Geri bildirim: hazır e-posta taslağı açar
+      q('#acct-feedback-btn').addEventListener('click', () => {
+        const body = 'Merhaba,\n\n[Sorunu ya da önerini buraya yaz]\n\n---\nPlanova v' + PANEL_VERSION + '\nTarayıcı: ' + navigator.userAgent;
+        window.location.href = 'mailto:salpersalih@gmail.com?subject=' + encodeURIComponent('Planova geri bildirim') + '&body=' + encodeURIComponent(body);
+      });
+
+      // E-posta doğrulama
+      q('#acct-verify-send').addEventListener('click', async () => {
+        const u = A().user; if (!u) return;
+        const btn = q('#acct-verify-send'); btn.disabled = true;
+        try { await u.sendEmailVerification(); say('Doğrulama bağlantısı ' + u.email + ' adresine gönderildi ✓', 'ok'); }
+        catch (e) { say(ERR[e.code] || e.message || 'Gönderilemedi.', 'err'); }
+        finally { btn.disabled = false; }
+      });
+      q('#acct-verify-check').addEventListener('click', async () => {
+        const u = A().user; if (!u) return;
+        try {
+          await u.reload();
+          if (u.emailVerified) { say('E-postan doğrulandı ✓', 'ok'); paint(); }
+          else say('Henüz doğrulanmamış görünüyor. Bağlantıya bastığından emin ol.', 'err');
+        } catch (e) { say(ERR[e.code] || e.message || 'Kontrol edilemedi.', 'err'); }
+      });
 
       // Yedek: indir
       q('#acct-export').addEventListener('click', () => {
@@ -381,6 +422,7 @@
       q('#acct-item-login').classList.toggle('hidden', !quick);
       q('#acct-item-out').classList.toggle('hidden', quick);
       q('#acct-item-del').classList.toggle('hidden', quick);
+      q('#acct-verify').classList.toggle('hidden', !(A().user && hasPass && A().user.emailVerified === false));
       q('#acct-del-pass').classList.toggle('hidden', !hasPass);
       q('#acct-del-google').classList.toggle('hidden', hasPass);
       q('#acct-del-pw').value = ''; q('#acct-del-confirm').value = '';
