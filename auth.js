@@ -45,7 +45,7 @@
     if (appLoaded) return;
     appLoaded = true;
     const s  = document.createElement('script');
-    s.src    = 'script.js?v=7.0';
+    s.src    = 'script.js?v=7.1';
     document.body.appendChild(s);
   }
 
@@ -492,6 +492,12 @@
       t.setAttribute('aria-selected', on ? 'true' : 'false');
     });
     $('auth-consent-wrap')?.classList.toggle('hidden', isLogin);
+    document.querySelectorAll('[data-auth-eye]').forEach((btn) => {
+      const input = btn.parentElement.querySelector('input');
+      if (input) input.type = 'password';
+      btn.setAttribute('aria-pressed', 'false');
+      btn.setAttribute('aria-label', 'Şifreyi göster');
+    });
     syncSubmit();
     updatePassHints();
     showMsg('');
@@ -857,6 +863,17 @@
     $('auth-forgot')?.addEventListener('click', forgotPassword);
     $('auth-google')?.addEventListener('click', googleLogin);
     $('auth-consent')?.addEventListener('change', () => { syncSubmit(); if ($('auth-consent').checked) showMsg(''); });
+    document.querySelectorAll('[data-auth-eye]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const input = btn.parentElement.querySelector('input');
+        if (!input) return;
+        const show = input.type === 'password';
+        input.type = show ? 'text' : 'password';
+        btn.setAttribute('aria-pressed', show ? 'true' : 'false');
+        btn.setAttribute('aria-label', show ? 'Şifreyi gizle' : 'Şifreyi göster');
+        input.focus({ preventScroll: true });
+      });
+    });
     $('auth-pass')?.addEventListener('input', updatePassHints);
     $('auth-pass2')?.addEventListener('input', updatePassHints);
     $('auth-quick')?.addEventListener('click', enterQuick);

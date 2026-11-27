@@ -10323,3 +10323,13 @@ body.acct-lock { overflow: hidden; }
 .auth-hint[data-k="bad"] { color: #ef4444; }
 .auth-hint[data-k="mid"] { color: #d97706; }
 .auth-hint[data-k="ok"] { color: #16a34a; }
+
+/* Şifreyi göster / gizle */
+.auth-pw { position: relative; }
+.auth-pw input { padding-right: 3rem !important; }
+.auth-eye { position: absolute; top: 50%; right: .35rem; transform: translateY(-50%); width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border: 0; background: transparent; color: var(--text-muted); border-radius: 10px; cursor: pointer; }
+.auth-eye:hover { color: var(--text-primary); background: var(--bg-input); }
+.auth-eye .eye-off { display: none; }
+.auth-eye[aria-pressed="true"] .eye-on { display: none; }
+.auth-eye[aria-pressed="true"] .eye-off { display: block; }
+.auth-eye[aria-pressed="true"] { color: var(--accent-turquoise); }
