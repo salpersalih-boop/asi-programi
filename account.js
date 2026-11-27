@@ -3,7 +3,7 @@
    Üst çubuktaki avatar tıklamasını belge düzeyinde yakalar, bu yüzden düğme ne zaman çizilirse çizilsin çalışır. */
 (function () {
   'use strict';
-  var PANEL_VERSION = '7.4';
+  var PANEL_VERSION = '7.5';
 
   const $ = (id) => document.getElementById(id);
   const A = () => window.PlanovaAuth || {};
@@ -103,17 +103,24 @@
           </div>
 
           <div class="acct-item" data-key="data">
-            <button type="button" class="acct-row"><span class="acct-ico">🛡️</span><span class="acct-txt"><b>Verilerim & gizlilik</b><small>Yedekle, KVKK metni, hesabı sil</small></span><span class="acct-chev">›</span></button>
+            <button type="button" class="acct-row"><span class="acct-ico">🛡️</span><span class="acct-txt"><b>Verilerim & gizlilik</b><small>Yedekle, geri yükle, KVKK metni</small></span><span class="acct-chev">›</span></button>
             <div class="acct-sub"><div class="acct-sub-in">
               <div class="acct-sec-t">Yedek</div>
               <small class="acct-sec-hint">Görevlerin, notların ve tercihlerin tek dosyada. Yedekten yüklemek mevcut verilerinin yerine geçer.</small>
               <div class="acct-actions"><button type="button" class="acct-btn primary" id="acct-export">Verilerimi indir</button><button type="button" class="acct-btn" id="acct-import">Yedekten yükle…</button></div>
               <input type="file" id="acct-import-file" accept="application/json,.json" hidden>
               <button type="button" class="acct-link-btn" data-privacy>🔒 KVKK Aydınlatma Metni & Kullanım Koşulları ›</button>
-              <div id="acct-item-del">
-                <button type="button" class="acct-link-btn danger acct-sec-sep" id="acct-del-open">🗑️ Hesabımı ve verilerimi sil ›</button>
-                <div class="hidden" id="acct-del-form">
-              <p class="acct-note">Hesabın ve buluttaki tüm verilerin kalıcı olarak silinir. İstersen önce yukarıdan yedeğini indir.</p>
+            </div></div>
+          </div>
+
+          <div class="acct-item" data-key="feedback">
+            <button type="button" class="acct-row" id="acct-feedback-btn"><span class="acct-ico">💬</span><span class="acct-txt"><b>Geri bildirim</b><small>Sorunu ya da önerini yaz</small></span><span class="acct-chev">›</span></button>
+          </div>
+
+          <div class="acct-item danger" data-key="del" id="acct-item-del">
+            <button type="button" class="acct-row"><span class="acct-ico">🗑️</span><span class="acct-txt"><b>Hesabımı sil</b><small>Hesap ve tüm veriler kalıcı olarak silinir</small></span><span class="acct-chev">›</span></button>
+            <div class="acct-sub"><div class="acct-sub-in">
+              <p class="acct-note">Hesabın ve buluttaki tüm verilerin kalıcı olarak silinir. İstersen önce "Verilerim &amp; gizlilik" bölümünden yedeğini indir.</p>
               <div id="acct-del-pass">
                 <label class="acct-lbl" for="acct-del-pw">Şifren</label>
                 <div class="acct-pw"><input type="password" id="acct-del-pw" autocomplete="current-password"><button type="button" class="acct-eye" data-eye aria-label="Göster/gizle">👁</button></div>
@@ -122,13 +129,7 @@
               <label class="acct-lbl" for="acct-del-confirm">Onaylamak için SİL yaz</label>
               <input type="text" id="acct-del-confirm" autocomplete="off" placeholder="SİL">
               <div class="acct-actions"><button type="button" class="acct-btn danger" id="acct-del-yes">Kalıcı olarak sil</button><button type="button" class="acct-btn" data-acct-back>Vazgeç</button></div>
-                </div>
-              </div>
             </div></div>
-          </div>
-
-          <div class="acct-item" data-key="feedback">
-            <button type="button" class="acct-row" id="acct-feedback-btn"><span class="acct-ico">💬</span><span class="acct-txt"><b>Geri bildirim</b><small>Sorunu ya da önerini yaz</small></span><span class="acct-chev">›</span></button>
           </div>
 
           <div class="acct-item danger" data-key="out" id="acct-item-out">
@@ -343,10 +344,6 @@
         } catch (err) { say(err.message || 'Yedek okunamadı.', 'err'); }
       });
 
-      q('#acct-del-open').addEventListener('click', () => {
-        const f = q('#acct-del-form'); f.classList.toggle('hidden');
-        if (!f.classList.contains('hidden')) setTimeout(() => { try { f.scrollIntoView({ block: 'nearest' }); } catch (_) {} }, 50);
-      });
       // Hesabı ve verileri sil
       q('#acct-del-yes').addEventListener('click', async () => {
         const u = firebase.auth().currentUser;
@@ -421,7 +418,6 @@
       q('#acct-del-pass').classList.toggle('hidden', !hasPass);
       q('#acct-del-google').classList.toggle('hidden', hasPass);
       q('#acct-del-pw').value = ''; q('#acct-del-confirm').value = '';
-      q('#acct-del-form').classList.add('hidden');
     }
 
     function open() {
