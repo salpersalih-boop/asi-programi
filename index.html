@@ -13,7 +13,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Planova">
-  <link rel="stylesheet" href="style.css?v=6.9">
+  <link rel="stylesheet" href="style.css?v=7.0">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -2225,14 +2225,17 @@
         <div class="auth-field">
           <label for="auth-pass">Şifre</label>
           <input type="password" id="auth-pass" autocomplete="current-password" placeholder="Şifren" required>
+          <div class="auth-meter hidden" id="auth-meter"><span id="auth-meter-bar"></span></div>
+          <div class="auth-hint hidden" id="auth-pass-hint"></div>
         </div>
         <div class="auth-field hidden" id="auth-pass2-wrap">
           <label for="auth-pass2">Şifre (Tekrar)</label>
           <input type="password" id="auth-pass2" autocomplete="new-password" placeholder="Şifrenizi tekrar girin">
+          <div class="auth-hint hidden" id="auth-pass2-hint"></div>
         </div>
         <label class="auth-consent hidden" id="auth-consent-wrap">
           <input type="checkbox" id="auth-consent">
-          <span><a href="javascript:void(0)" data-privacy>KVKK Aydınlatma Metni</a>'ni okudum; <a href="javascript:void(0)" data-privacy>Kullanım Koşulları</a>'nı kabul ediyor ve verilerimin Google (Firebase) altyapısında, yurt dışı sunucularda da saklanmasına onay veriyorum.</span>
+          <span><a href="javascript:void(0)" data-privacy>KVKK Aydınlatma Metni</a>'ni okudum; <a href="javascript:void(0)" data-privacy>Kullanım Koşulları</a>'nı kabul ediyorum.</span>
         </label>
         <div id="auth-msg" class="auth-msg"></div>
         <button type="submit" id="auth-submit" class="btn btn-primary auth-submit">Giriş Yap</button>
@@ -2269,8 +2272,8 @@
       });
     }
   </script>
-  <script src="privacy.js?v=6.9"></script>
-  <script src="auth.js?v=6.9"></script>
-  <script src="account.js?v=6.9"></script>
+  <script src="privacy.js?v=7.0"></script>
+  <script src="auth.js?v=7.0"></script>
+  <script src="account.js?v=7.0"></script>
 </body>
 </html>
