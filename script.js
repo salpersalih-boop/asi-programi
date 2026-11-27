@@ -76,29 +76,14 @@
     { id: 'ex-ca-4', name: 'Burpee', category: 'kardiyo', sets: 3, reps: 15, weight: 'Vücut Ağırlığı', sortOrder: 36 },
   ];
 
-  const DEFAULT_ATT_COURSES = [
-    { id: 'att-1', code: 'YZL 312', name: 'Veri Madenciliği', day: 'Pazartesi', time: '10:00 - 12:00', hours: 2, maxWeeks: 4 },
-    { id: 'att-2', code: 'YZL 455', name: 'Makine Öğrenmesi', day: 'Salı', time: '15:00 - 17:00', hours: 2, maxWeeks: 4 },
-    { id: 'att-3', code: 'YZL 225[BİL 205]', name: 'Veri Yapıları ve Algoritmalar (Lab)', day: 'Çarşamba', time: '09:00 - 11:00', hours: 2, maxWeeks: 3 },
-    { id: 'att-4', code: 'MHK 301', name: 'Mühendisler İçin Hukuk Kavramları', day: 'Çarşamba', time: '12:00 - 13:00', hours: 1, maxWeeks: 4 },
-    { id: 'att-5', code: 'YZL 315[BİL 303]', name: 'İşletim Sistemleri Tasarımı ve İnşası', day: 'Çarşamba', time: '13:00 - 16:00', hours: 3, maxWeeks: 4 },
-    { id: 'att-6', code: 'YZL 330[YZL 320]', name: 'Yazılım Proje Yönetimi', day: 'Perşembe', time: '09:00 - 12:00', hours: 3, maxWeeks: 4 },
-    { id: 'att-7', code: 'YZL 356', name: 'Algoritmaların Analizi', day: 'Perşembe', time: '15:00 - 18:00', hours: 3, maxWeeks: 4 },
-  ];
+  // Yeni kullanıcı boş başlar; dersleri kendisi ya da ders sihirbazıyla ekler
+  const DEFAULT_ATT_COURSES = [];
 
-  const DEFAULT_TASKS = [
-    { id: 't-1', title: 'Veri Madenciliği vize konularını tekrar et', desc: '1-4. haftalar arasındaki slaytları incele', color: '#06B6D4', status: 'todo', created: Date.now() - 3600000 },
-    { id: 't-2', title: 'Spor Programı - İlk gün antrenmanı', desc: 'Göğüs ve Kol hareketlerini tamamla', color: '#10B981', status: 'doing', created: Date.now() - 7200000 },
-    { id: 't-3', title: 'Haftalık ders programı ve hedefleri belirle', desc: 'Devamsızlık durumunu incele', color: '#F97316', status: 'done', created: Date.now() - 10800000 },
-  ];
+  const DEFAULT_TASKS = [];
 
-  const DEFAULT_NOTES = [
-    { id: 'n-1', title: 'Veri Madenciliği — Sınavda Çıkacak Konular', content: 'K-Means kümeleme, Karar Ağaçları formülleri ve Entropy hesaplama sınavda kesin çıkacak!', courseId: 'att-1', courseName: 'Veri Madenciliği', tag: 'exam', isExamTopic: true, color: '#FEF2F2', created: Date.now() - 3600000, updated: Date.now() - 3600000 }
-  ];
+  const DEFAULT_NOTES = [];
 
-  const DEFAULT_QUICK_NOTES = [
-    { id: 'qn-1', text: 'Kütüphaneden Algoritmalar kitabını almayı unutma! 📚', created: Date.now() }
-  ];
+  const DEFAULT_QUICK_NOTES = [];
 
   // Kullanıcının kendi kitaplarını ve oturumlarını sıfırdan ekleyebilmesi için boş liste
   const DEFAULT_BOOKS = [];
@@ -1320,6 +1305,7 @@
           Goals.render(); 
           break;
         case 'notebook': 
+          Notebook.activeNoteId = null; // sayfaya girince boş "yeni not" ekranıyla açılsın
           Notebook.render(); 
           break;
         case 'books': 
@@ -2693,6 +2679,7 @@
       if (addBtn) {
         addBtn.addEventListener('click', () => this.openCourseForm());
       }
+      $('#att-wizard-btn')?.addEventListener('click', () => this.openWizard());
 
       // Ders Formu Submit
       const form = $('#att-course-form');
@@ -2707,9 +2694,9 @@
       const resetBtn = $('#reset-attendance-btn');
       if (resetBtn) {
         resetBtn.addEventListener('click', () => {
-          confirmAction('Tüm devamsızlık kayıtları ve dersler varsayılan 7 üniversite dersine sıfırlansın mı?', async () => {
-            const courses = await apiFetch('/attendance/courses', 'POST', DEFAULT_ATT_COURSES);
-            this._courses = courses || DEFAULT_ATT_COURSES;
+          confirmAction('Tüm dersler ve devamsızlık kayıtları silinsin mi? Bu işlem geri alınamaz.', async () => {
+            await apiFetch('/attendance/courses', 'POST', []);
+            this._courses = [];
             const allRecs = (await apiFetch('/attendance/records')) || [];
             for (const r of allRecs) {
               await apiFetch('/attendance/records', 'POST', { courseId: r.courseId, week: r.week, status: 'none' });
@@ -2717,18 +2704,15 @@
             this._records = {};
             this.currentWeek = 1;
             await this.render();
-            showToast('Varsayılan 7 ders yüklendi ✓', 'success');
+            showToast('Dersler temizlendi', 'success');
           });
         });
       }
     },
 
     async loadData() {
-      let courses = await apiFetch('/attendance/courses');
-      if (!courses || courses.length === 0) {
-        courses = await apiFetch('/attendance/courses', 'POST', DEFAULT_ATT_COURSES);
-      }
-      this._courses = courses || DEFAULT_ATT_COURSES;
+      const courses = await apiFetch('/attendance/courses');
+      this._courses = Array.isArray(courses) ? courses : [];
 
       const recordsList = (await apiFetch('/attendance/records')) || [];
       const recordsDict = {};
@@ -2921,11 +2905,126 @@
       });
     },
 
+    /* ─── Ders sihirbazı: birden fazla dersi tek seferde ekler ─── */
+    openWizard() {
+      const DAYS = ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi', 'Pazar'];
+      let modal = document.getElementById('att-wizard-modal');
+      if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'att-wizard-modal';
+        modal.className = 'modal-overlay hidden';
+        modal.innerHTML = `
+          <div class="modal glass-card modal-lg">
+            <div class="modal-header">
+              <h3>✨ Ders programını ekle</h3>
+              <button type="button" class="modal-close" data-modal="att-wizard-modal">✕</button>
+            </div>
+            <div class="att-wiz-body">
+              <p class="att-wiz-intro">Her ders için kodu, adı, günü ve saati gir. Devamsızlık hakkı çoğu okulda 4 haftadır, gerekirse değiştir.</p>
+              <div class="att-wiz-head" aria-hidden="true"><span>Kod</span><span>Ders adı</span><span>Gün</span><span>Başlangıç</span><span>Bitiş</span><span>Hak (hf)</span><span></span></div>
+              <div id="att-wiz-rows"></div>
+              <button type="button" class="btn btn-ghost btn-sm" id="att-wiz-more">+ Bir ders daha</button>
+              <div class="att-wiz-msg" id="att-wiz-msg"></div>
+            </div>
+            <div class="modal-actions">
+              <button type="button" class="btn btn-ghost" data-modal="att-wizard-modal">Sonra</button>
+              <button type="button" class="btn btn-primary" id="att-wiz-save">Dersleri kaydet</button>
+            </div>
+          </div>`;
+        document.body.appendChild(modal);
+        modal.querySelector('#att-wiz-more').addEventListener('click', () => addRow(true));
+        modal.querySelector('#att-wiz-rows').addEventListener('click', (e) => {
+          const del = e.target.closest('[data-wiz-del]');
+          if (!del) return;
+          const rows = modal.querySelectorAll('.att-wiz-row');
+          if (rows.length > 1) del.closest('.att-wiz-row').remove();
+        });
+        modal.querySelector('#att-wiz-save').addEventListener('click', () => this.saveWizard());
+      }
+      const rowsEl = modal.querySelector('#att-wiz-rows');
+      const addRow = (focus) => {
+        const r = document.createElement('div');
+        r.className = 'att-wiz-row';
+        r.innerHTML = `
+          <input type="text" class="wz-code" placeholder="YZL 312" maxlength="30" aria-label="Ders kodu">
+          <input type="text" class="wz-name" placeholder="Ders adı" maxlength="80" aria-label="Ders adı">
+          <select class="wz-day form-select" aria-label="Gün">${DAYS.map(d => `<option>${d}</option>`).join('')}</select>
+          <input type="time" class="wz-start" value="09:00" aria-label="Başlangıç saati">
+          <input type="time" class="wz-end" value="11:00" aria-label="Bitiş saati">
+          <input type="number" class="wz-max" value="4" min="1" max="14" title="Devamsızlık hakkı (hafta)" aria-label="Devamsızlık hakkı (hafta)">
+          <button type="button" class="wz-del" data-wiz-del aria-label="Satırı sil">✕</button>`;
+        rowsEl.appendChild(r);
+        if (focus) r.querySelector('.wz-code').focus();
+      };
+      rowsEl.innerHTML = '';
+      addRow(false); addRow(false); addRow(false);
+      modal.querySelector('#att-wiz-msg').textContent = '';
+      openModal('att-wizard-modal');
+      setTimeout(() => rowsEl.querySelector('.wz-code')?.focus(), 80);
+    },
+
+    async saveWizard() {
+      const modal = document.getElementById('att-wizard-modal');
+      const msg = modal.querySelector('#att-wiz-msg');
+      const toMin = (t) => { const [h, m] = (t || '0:0').split(':').map(Number); return h * 60 + m; };
+      const added = [];
+      for (const r of modal.querySelectorAll('.att-wiz-row')) {
+        const code = r.querySelector('.wz-code').value.trim();
+        const name = r.querySelector('.wz-name').value.trim();
+        if (!code && !name) continue;              // boş satırı atla
+        if (!code || !name) { msg.textContent = 'Her ders için hem kod hem ad yazmalısın.'; return; }
+        const start = r.querySelector('.wz-start').value, end = r.querySelector('.wz-end').value;
+        const dur = toMin(end) - toMin(start);
+        if (!start || !end || dur <= 0) { msg.textContent = `"${code}" için bitiş saati başlangıçtan sonra olmalı.`; return; }
+        added.push({
+          id: 'att-' + Math.random().toString(36).slice(2, 8),
+          code, name,
+          day: r.querySelector('.wz-day').value,
+          time: `${start} - ${end}`,
+          hours: Math.max(1, Math.round(dur / 60)),
+          maxWeeks: Math.min(14, Math.max(1, parseInt(r.querySelector('.wz-max').value, 10) || 4)),
+        });
+      }
+      if (!added.length) { msg.textContent = 'En az bir ders yaz.'; return; }
+      const list = [...(this.getCourses() || []), ...added];
+      const saved = await apiFetch('/attendance/courses', 'POST', list);
+      this._courses = saved || list;
+      closeModal('att-wizard-modal');
+      await this.render();
+      showToast(`${added.length} ders eklendi ✓`, 'success');
+    },
+
     renderMatrixTable(courses, records) {
       const tbody = $('#att-matrix-tbody');
       if (!tbody) return;
 
       const esc = Dashboard.escapeHtml;
+
+      if (!courses.length) {
+        tbody.innerHTML = `
+          <tr class="att-empty-row"><td colspan="20">
+            <div class="att-empty">
+              <div class="att-empty-ico">🎓</div>
+              <h4>Henüz ders eklemedin</h4>
+              <p>Derslerini ekle, her hafta tek dokunuşla devamsızlığını takip et.</p>
+              <div class="att-empty-actions">
+                <button type="button" class="btn btn-primary" data-att-wizard>✨ Ders programımı ekle</button>
+                <button type="button" class="btn btn-ghost" data-att-add-one>+ Tek ders ekle</button>
+              </div>
+            </div>
+          </td></tr>`;
+        tbody.querySelector('[data-att-wizard]')?.addEventListener('click', () => this.openWizard());
+        tbody.querySelector('[data-att-add-one]')?.addEventListener('click', () => this.openCourseForm());
+        // İlk ziyarette sihirbazı kendiliğinden bir kez aç
+        try {
+          const onPage = document.getElementById('page-attendance')?.classList.contains('active');
+          if (onPage && !localStorage.getItem('planova_att_wizard_seen')) {
+            localStorage.setItem('planova_att_wizard_seen', '1');
+            setTimeout(() => this.openWizard(), 350);
+          }
+        } catch (_) {}
+        return;
+      }
 
       tbody.innerHTML = courses.map(c => {
         const cRecs = records[c.id] || {};
@@ -5085,8 +5184,6 @@
       if (this.activeNoteId && this._notes.some(n => n.id === this.activeNoteId)) {
         const cur = this._notes.find(n => n.id === this.activeNoteId);
         this.openEditor(cur, false);
-      } else if (this._notes.length > 0 && window.innerWidth > 800) {
-        this.openEditor(this._notes[0], false);
       } else {
         this.closeEditor();
       }
@@ -8120,6 +8217,7 @@
 
   const TodayPanel = {
     render() {
+      try { School.renderDash(); } catch (e) { console.warn('Okul kartı:', e); }
       const grid = $('#today-grid');
       if (!grid) return;
       const today = formatDateShort(new Date());
@@ -8183,22 +8281,6 @@
           sub: sets ? (planText ? `Program: ${planText}` : 'Bugün antrenman yaptın 💪') : (isDay ? `Antrenman günü · ${plan.time}` : 'Dinlenme günü ya da plan yok'),
           ok: sets > 0
         });
-      }
-
-      // 🎓 Okul: bugünün dersleri + yaklaşan sınav
-      if (vis('attendance')) {
-        const t = School.todayInfo();
-        if (t.courses.length || t.nextExam) {
-          const esc = Dashboard.escapeHtml;
-          const risky = t.courses.filter(c => c.left <= 1);
-          tiles.push({
-            page: 'attendance', icon: '🎓', title: 'Okul',
-            main: t.courses.length ? `${t.courses.length} ders` : (t.nextExam ? `Sınava ${t.nextExam.days} gün` : ''),
-            sub: risky.length ? `⚠️ ${esc(risky[0].name)}: ${risky[0].left === 0 ? 'hakkın bitti' : '1 hakkın kaldı'}` : t.nextExam ? `${esc(t.nextExam.title)} · ${t.nextExam.days === 0 ? 'bugün' : t.nextExam.days === 1 ? 'yarın' : t.nextExam.days + ' gün'}` : 'Bugün sınav yok',
-            warn: risky.length > 0 || (t.nextExam && t.nextExam.days <= 1),
-            list: t.courses.slice(0, 3).map(c => `<li class="${c.left <= 1 ? 'is-late' : ''}">${esc(c.name)} <em>${esc(c.time || '')}</em></li>`).join('')
-          });
-        }
       }
 
       // 🥗 Su & kalori
@@ -9042,6 +9124,26 @@
   // 🎓 OKUL: ders programı, sınavlar, devamsızlık uyarısı
   // ═══════════════════════════════════════════════════════
 
+
+  /* ─── Çevrimdışı göstergesi ─── */
+  (function NetStatus() {
+    const pill = document.createElement('div');
+    pill.id = 'net-pill';
+    pill.className = 'net-pill hidden';
+    pill.setAttribute('role', 'status');
+    pill.textContent = '📡 Çevrimdışısın — değişiklikler bağlantı gelince eşitlenecek';
+    const mount = () => { if (!pill.isConnected) document.body.appendChild(pill); };
+    const update = (announce) => {
+      mount();
+      const off = navigator.onLine === false;
+      pill.classList.toggle('hidden', !off);
+      if (announce && !off) { try { showToast('Tekrar çevrimiçisin ✓', 'success'); } catch (_) {} }
+    };
+    window.addEventListener('offline', () => update(false));
+    window.addEventListener('online', () => update(true));
+    if (document.body) update(false); else document.addEventListener('DOMContentLoaded', () => update(false));
+  })();
+
   const School = {
     DAY_NAMES: ['Pazar', 'Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi'],
     EXAM_TYPES: { vize: 'Vize', final: 'Final', quiz: 'Quiz', proje: 'Proje', but: 'Bütünleme', diger: 'Diğer' },
@@ -9064,6 +9166,113 @@
       const upcoming = this.exams().map(e => ({ ...e, days: daysFromToday(e.date), title: this.examTitle(e) })).filter(e => e.days >= 0);
       const nextExam = upcoming.length && upcoming[0].days <= 14 ? upcoming[0] : null;
       return { courses, nextExam };
+    },
+
+    /* ─── Ana sayfa Okul kartı ─── */
+    termStart() { return Storage.get('asi_att_term_start', null); },
+    currentWeek() {
+      const st = this.termStart();
+      if (!st) return null;
+      const days = -daysFromToday(st);           // dönem başlangıcından bu yana geçen gün
+      if (days < 0) return null;
+      const w = Math.floor(days / 7) + 1;
+      return w >= 1 && w <= 14 ? w : null;
+    },
+    recordOf(courseId, week) {
+      const r = (Storage.get('asi_attendance_records', []) || []).find(x => x.courseId === courseId && x.week === week);
+      return r ? r.status : null;
+    },
+
+    renderDash() {
+      const box = $('#school-card');
+      if (!box) return;
+      const visible = typeof ModuleManager === 'undefined' || ModuleManager.isModuleVisible('attendance');
+      const courses = this.courses();
+      const exams = this.exams().map(e => ({ ...e, days: daysFromToday(e.date) })).filter(e => e.days >= 0 && e.days <= 30);
+      if (!visible) { box.classList.add('hidden'); return; }
+      box.classList.remove('hidden');
+      const esc = Dashboard.escapeHtml;
+
+      if (!courses.length && !exams.length) {
+        box.innerHTML = `
+          <div class="today-head"><h3>🎓 Okul</h3></div>
+          <div class="sc-empty">Ders programını ekle; bugünkü derslerin, devamsızlık hakların ve sınav geri sayımın burada görünsün.
+            <button type="button" class="btn btn-primary btn-sm" data-sc="setup">✨ Ders programımı ekle</button></div>`;
+      } else {
+        const dayName = this.DAY_NAMES[new Date().getDay()];
+        const today = courses.filter(c => c.day === dayName).sort((a, b) => this.startMins(a.time) - this.startMins(b.time));
+        const week = this.currentWeek();
+        const risky = courses.map(c => ({ ...c, left: this.left(c) })).filter(c => c.left <= 1);
+
+        const warn = risky.length ? `<div class="sc-warn">${risky.map(c => `⚠️ <b>${esc(c.code || c.name)}</b>: ${c.left === 0 ? 'devamsızlık hakkın bitti' : 'son 1 hakkın kaldı'}`).join('<br>')}</div>` : '';
+
+        let todayHtml;
+        if (!today.length) {
+          todayHtml = '<div class="sc-muted">Bugün dersin yok 🎉</div>';
+        } else {
+          todayHtml = today.map(c => {
+            const st = week ? this.recordOf(c.id, week) : null;
+            return `<div class="sc-course">
+              <div class="sc-c-info"><span class="sc-time">${esc((c.time || '').split('-')[0].trim())}</span><span class="sc-name">${esc(c.name)}</span></div>
+              <div class="sc-c-btns">
+                <button type="button" class="sc-mark ${st === 'attended' ? 'on-ok' : ''}" data-mark="attended" data-id="${esc(c.id)}" ${week ? '' : 'disabled'} aria-pressed="${st === 'attended'}">✓ Girdim</button>
+                <button type="button" class="sc-mark ${st === 'absent' ? 'on-bad' : ''}" data-mark="absent" data-id="${esc(c.id)}" ${week ? '' : 'disabled'} aria-pressed="${st === 'absent'}">✗ Gitmedim</button>
+              </div></div>`;
+          }).join('');
+          if (!week) {
+            todayHtml += `<div class="sc-term">
+              <span>${this.termStart() ? 'Dönem 14 haftalık takibin dışında.' : 'Hangi haftada olduğunu bilmem için dönemin başladığı tarihi gir:'}</span>
+              <div class="sc-term-row"><input type="date" id="sc-term-date" value="${esc(this.termStart() || '')}" aria-label="Dönem başlangıç tarihi"><button type="button" class="btn btn-primary btn-sm" data-sc="term">Kaydet</button></div></div>`;
+          }
+        }
+
+        const examHtml = exams.length ? exams.slice(0, 3).map(e => `
+            <div class="sc-exam ${e.days <= 3 ? 'is-soon' : ''}">
+              <span class="sc-count">${e.days === 0 ? 'Bugün' : e.days === 1 ? 'Yarın' : `${e.days} gün`}</span>
+              <span class="sc-ex-title">${esc(this.examTitle(e))}</span>
+              <span class="sc-ex-date">${new Date(e.date + 'T00:00:00').toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' })}${e.time ? ' · ' + esc(e.time) : ''}</span>
+            </div>`).join('') : '<div class="sc-muted">Önümüzdeki 30 günde sınav yok.</div>';
+
+        box.innerHTML = `
+          <div class="today-head"><h3>🎓 Okul</h3><span class="today-sub">${week ? `${week}. hafta` : ''}</span></div>
+          ${warn}
+          <div class="sc-grid">
+            <div class="sc-col"><div class="sc-col-t">Bugünkü derslerim</div>${todayHtml}</div>
+            <div class="sc-col"><div class="sc-col-t">Yaklaşan sınavlar <button type="button" class="sc-link" data-sc="exam">+ Ekle</button></div>${examHtml}
+              ${exams.length > 3 ? `<button type="button" class="sc-link" data-sc="exams">Tümünü gör (${exams.length}) →</button>` : ''}</div>
+          </div>`;
+      }
+
+      if (!box._bound) {
+        box._bound = true;
+        box.addEventListener('click', async (ev) => {
+          const m = ev.target.closest('[data-mark]');
+          if (m && !m.disabled) {
+            const week = this.currentWeek();
+            if (!week) return;
+            const cur = this.recordOf(m.dataset.id, week);
+            const status = cur === m.dataset.mark ? 'none' : m.dataset.mark;
+            await apiFetch('/attendance/records', 'POST', { courseId: m.dataset.id, week, status });
+            this.renderDash();
+            if (status !== 'none') showToast(status === 'attended' ? 'Derse girdin olarak işaretlendi ✓' : 'Devamsızlık işlendi', status === 'attended' ? 'success' : 'warning');
+            return;
+          }
+          const a = ev.target.closest('[data-sc]');
+          if (!a) return;
+          const act = a.dataset.sc;
+          if (act === 'setup') { Nav.goTo('attendance'); setTimeout(() => Attendance.openWizard(), 400); }
+          else if (act === 'exam') this.openExamForm();
+          else if (act === 'exams') { Nav.goTo('attendance'); setTimeout(() => this.setTab('exams'), 200); }
+          else if (act === 'term') {
+            const v = box.querySelector('#sc-term-date')?.value;
+            if (!v) { showToast('Bir tarih seç.', 'warning'); return; }
+            Storage.set('asi_att_term_start', v);
+            this.renderDash();
+            const w = this.currentWeek();
+            showToast(w ? `Kaydedildi — şu an ${w}. haftadasın` : 'Kaydedildi', 'success');
+          }
+        });
+      }
     },
 
     init() {

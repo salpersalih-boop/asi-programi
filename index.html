@@ -13,7 +13,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Planova">
-  <link rel="stylesheet" href="style.css?v=7.1">
+  <link rel="stylesheet" href="style.css?v=7.4">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -164,6 +164,9 @@
             <!-- JS ile doldurulur -->
           </div>
         </div>
+
+        <!-- 🎓 Okul: bugünkü dersler, devamsızlık uyarısı, yaklaşan sınavlar -->
+        <div id="school-card" class="school-card glass-card hidden"></div>
 
         <!-- 📊 Haftalık özet -->
         <div id="week-card" class="week-card glass-card">
@@ -629,7 +632,8 @@
           </div>
           <div class="att-header-btns">
             <button id="add-att-course-btn" class="btn btn-primary btn-sm">+ Yeni Ders Ekle</button>
-            <button id="reset-attendance-btn" class="btn btn-ghost btn-sm">↺ Varsayılan Dersleri Yükle</button>
+            <button id="att-wizard-btn" class="btn btn-ghost btn-sm">✨ Toplu Ekle</button>
+            <button id="reset-attendance-btn" class="btn btn-ghost btn-sm">↺ Dersleri Temizle</button>
           </div>
         </div>
 
@@ -2272,8 +2276,8 @@
       });
     }
   </script>
-  <script src="privacy.js?v=7.1"></script>
-  <script src="auth.js?v=7.1"></script>
-  <script src="account.js?v=7.1"></script>
+  <script src="privacy.js?v=7.4"></script>
+  <script src="auth.js?v=7.4"></script>
+  <script src="account.js?v=7.4"></script>
 </body>
 </html>

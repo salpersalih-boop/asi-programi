@@ -3,7 +3,7 @@
    Üst çubuktaki avatar tıklamasını belge düzeyinde yakalar, bu yüzden düğme ne zaman çizilirse çizilsin çalışır. */
 (function () {
   'use strict';
-  var PANEL_VERSION = '7.1';
+  var PANEL_VERSION = '7.4';
 
   const $ = (id) => document.getElementById(id);
   const A = () => window.PlanovaAuth || {};
@@ -71,18 +71,15 @@
           <div class="acct-title">Hesabı yönet</div>
           <div class="acct-msg" id="acct-msg" role="status" aria-live="polite"></div>
 
-          <div class="acct-item" data-key="name">
-            <button type="button" class="acct-row"><span class="acct-ico">✏️</span><span class="acct-txt"><b>Adını değiştir</b><small>Profilinde ve ana sayfada görünür</small></span><span class="acct-chev">›</span></button>
+          <div class="acct-item" data-key="profile">
+            <button type="button" class="acct-row"><span class="acct-ico">👤</span><span class="acct-txt"><b>Profil & şifre</b><small>Adın, profil resmin ve şifren</small></span><span class="acct-chev">›</span></button>
             <div class="acct-sub"><div class="acct-sub-in">
-              <label class="acct-lbl" for="acct-name-in">Görünen adın</label>
-              <input type="text" id="acct-name-in" maxlength="30" autocomplete="nickname" placeholder="Örn: Salih">
-              <div class="acct-actions"><button type="button" class="acct-btn primary" id="acct-name-save">Kaydet</button></div>
-            </div></div>
-          </div>
-
-          <div class="acct-item" data-key="pass" id="acct-item-pass">
-            <button type="button" class="acct-row"><span class="acct-ico">🔑</span><span class="acct-txt"><b id="acct-pass-title">Şifreni değiştir</b><small id="acct-pass-hint">Mevcut şifreni girip yenisini belirle</small></span><span class="acct-chev">›</span></button>
-            <div class="acct-sub"><div class="acct-sub-in">
+              <div class="acct-sec-t">Görünen adın</div>
+              <div class="acct-inline"><input type="text" id="acct-name-in" maxlength="30" autocomplete="nickname" placeholder="Örn: Salih" aria-label="Görünen adın"><button type="button" class="acct-btn primary" id="acct-name-save">Kaydet</button></div>
+              <button type="button" class="acct-link-btn" id="acct-photo-btn">🖼️ Profil resmini & rozetini değiştir ›</button>
+              <div id="acct-item-pass">
+                <div class="acct-sec-t acct-sec-sep" id="acct-pass-title">Şifreni değiştir</div>
+                <small class="acct-sec-hint" id="acct-pass-hint">Mevcut şifreni girip yenisini belirle</small>
               <div id="acct-pass-form">
                 <label class="acct-lbl" for="acct-pw-cur">Mevcut şifre</label>
                 <div class="acct-pw"><input type="password" id="acct-pw-cur" autocomplete="current-password"><button type="button" class="acct-eye" data-eye aria-label="Göster/gizle">👁</button></div>
@@ -97,37 +94,25 @@
                 <p class="acct-note">Google hesabınla giriş yaptığın için ayrı bir şifren yok. E-postayla da girebilmek istersen şifre belirleme bağlantısını e-postana gönderebilirim.</p>
                 <div class="acct-actions"><button type="button" class="acct-btn primary" id="acct-pw-mail">Bağlantıyı gönder</button></div>
               </div>
+              </div>
             </div></div>
-          </div>
-
-          <div class="acct-item" data-key="photo">
-            <button type="button" class="acct-row" id="acct-photo-btn"><span class="acct-ico">🖼️</span><span class="acct-txt"><b>Profil resmi & rozetler</b><small>Emoji, fotoğraf ya da kazandığın rozet</small></span><span class="acct-chev">›</span></button>
           </div>
 
           <div class="acct-item hidden" data-key="login" id="acct-item-login">
             <button type="button" class="acct-row" id="acct-login-btn"><span class="acct-ico">📧</span><span class="acct-txt"><b>E-postayla giriş yap / hesap aç</b><small>Verilerin telefon ve bilgisayar arasında eşitlenir</small></span><span class="acct-chev">›</span></button>
           </div>
 
-          <div class="acct-item" data-key="feedback">
-            <button type="button" class="acct-row" id="acct-feedback-btn"><span class="acct-ico">💬</span><span class="acct-txt"><b>Geri bildirim / hata bildir</b><small>Sorunu ya da önerini e-postayla yaz</small></span><span class="acct-chev">›</span></button>
-          </div>
-
-          <div class="acct-item" data-key="backup" id="acct-item-backup">
-            <button type="button" class="acct-row"><span class="acct-ico">💾</span><span class="acct-txt"><b>Verilerimi yedekle / geri yükle</b><small>Tüm verilerini dosya olarak indir ya da yükle</small></span><span class="acct-chev">›</span></button>
+          <div class="acct-item" data-key="data">
+            <button type="button" class="acct-row"><span class="acct-ico">🛡️</span><span class="acct-txt"><b>Verilerim & gizlilik</b><small>Yedekle, KVKK metni, hesabı sil</small></span><span class="acct-chev">›</span></button>
             <div class="acct-sub"><div class="acct-sub-in">
-              <p class="acct-note">Yedek dosyası (.json); görevlerini, alışkanlıklarını, notlarını ve tercihlerini içerir. Yedekten yüklemek mevcut verilerinin yerine geçer.</p>
+              <div class="acct-sec-t">Yedek</div>
+              <small class="acct-sec-hint">Görevlerin, notların ve tercihlerin tek dosyada. Yedekten yüklemek mevcut verilerinin yerine geçer.</small>
               <div class="acct-actions"><button type="button" class="acct-btn primary" id="acct-export">Verilerimi indir</button><button type="button" class="acct-btn" id="acct-import">Yedekten yükle…</button></div>
               <input type="file" id="acct-import-file" accept="application/json,.json" hidden>
-            </div></div>
-          </div>
-
-          <div class="acct-item" data-key="legal">
-            <button type="button" class="acct-row" data-privacy><span class="acct-ico">🔒</span><span class="acct-txt"><b>KVKK & Kullanım Koşulları</b><small>Verilerin nasıl işlendiğini oku</small></span><span class="acct-chev">›</span></button>
-          </div>
-
-          <div class="acct-item danger" data-key="del" id="acct-item-del">
-            <button type="button" class="acct-row"><span class="acct-ico">🗑️</span><span class="acct-txt"><b>Hesabımı ve verilerimi sil</b><small>Bu işlem geri alınamaz</small></span><span class="acct-chev">›</span></button>
-            <div class="acct-sub"><div class="acct-sub-in">
+              <button type="button" class="acct-link-btn" data-privacy>🔒 KVKK Aydınlatma Metni & Kullanım Koşulları ›</button>
+              <div id="acct-item-del">
+                <button type="button" class="acct-link-btn danger acct-sec-sep" id="acct-del-open">🗑️ Hesabımı ve verilerimi sil ›</button>
+                <div class="hidden" id="acct-del-form">
               <p class="acct-note">Hesabın ve buluttaki tüm verilerin kalıcı olarak silinir. İstersen önce yukarıdan yedeğini indir.</p>
               <div id="acct-del-pass">
                 <label class="acct-lbl" for="acct-del-pw">Şifren</label>
@@ -137,7 +122,13 @@
               <label class="acct-lbl" for="acct-del-confirm">Onaylamak için SİL yaz</label>
               <input type="text" id="acct-del-confirm" autocomplete="off" placeholder="SİL">
               <div class="acct-actions"><button type="button" class="acct-btn danger" id="acct-del-yes">Kalıcı olarak sil</button><button type="button" class="acct-btn" data-acct-back>Vazgeç</button></div>
+                </div>
+              </div>
             </div></div>
+          </div>
+
+          <div class="acct-item" data-key="feedback">
+            <button type="button" class="acct-row" id="acct-feedback-btn"><span class="acct-ico">💬</span><span class="acct-txt"><b>Geri bildirim</b><small>Sorunu ya da önerini yaz</small></span><span class="acct-chev">›</span></button>
           </div>
 
           <div class="acct-item danger" data-key="out" id="acct-item-out">
@@ -352,6 +343,10 @@
         } catch (err) { say(err.message || 'Yedek okunamadı.', 'err'); }
       });
 
+      q('#acct-del-open').addEventListener('click', () => {
+        const f = q('#acct-del-form'); f.classList.toggle('hidden');
+        if (!f.classList.contains('hidden')) setTimeout(() => { try { f.scrollIntoView({ block: 'nearest' }); } catch (_) {} }, 50);
+      });
       // Hesabı ve verileri sil
       q('#acct-del-yes').addEventListener('click', async () => {
         const u = firebase.auth().currentUser;
@@ -426,6 +421,7 @@
       q('#acct-del-pass').classList.toggle('hidden', !hasPass);
       q('#acct-del-google').classList.toggle('hidden', hasPass);
       q('#acct-del-pw').value = ''; q('#acct-del-confirm').value = '';
+      q('#acct-del-form').classList.add('hidden');
     }
 
     function open() {
