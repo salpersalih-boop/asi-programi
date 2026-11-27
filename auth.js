@@ -45,7 +45,7 @@
     if (appLoaded) return;
     appLoaded = true;
     const s  = document.createElement('script');
-    s.src    = 'script.js?v=6.9';
+    s.src    = 'script.js?v=7.0';
     document.body.appendChild(s);
   }
 
@@ -431,6 +431,50 @@
     b.disabled = mode === 'register' && !$('auth-consent')?.checked;
   }
 
+  /* ── Kayıt: canlı şifre gücü ve eşleşme uyarısı ───── */
+  function passCheck(pw) {
+    const missing = [];
+    if (!/[a-zçğıöşü]/.test(pw)) missing.push('küçük harf');
+    if (!/[A-ZÇĞİÖŞÜ]/.test(pw)) missing.push('büyük harf');
+    if (!/\d/.test(pw)) missing.push('rakam');
+    if (!/[^A-Za-z0-9çğıöşüÇĞİÖŞÜ]/.test(pw)) missing.push('noktalama işareti');
+    let score = 0;
+    if (pw.length >= 8) score++;
+    if (pw.length >= 12) score++;
+    score += 4 - missing.length >= 3 ? 1 : 0;           // en az 3 çeşit karakter
+    if (missing.length === 0 && pw.length >= 8) score++;  // dört çeşidin hepsi
+    return { score: Math.min(4, pw.length < 8 ? 0 : score), missing };
+  }
+  function updatePassHints() {
+    const meter = $('auth-meter'), bar = $('auth-meter-bar'), hint = $('auth-pass-hint'), h2 = $('auth-pass2-hint');
+    if (!meter || !hint || !h2) return;
+    const register = mode === 'register';
+    const pw = $('auth-pass').value || '', pw2 = $('auth-pass2').value || '';
+    const showP = register && pw.length > 0;
+    meter.classList.toggle('hidden', !showP);
+    hint.classList.toggle('hidden', !showP);
+    if (showP) {
+      const { score, missing } = passCheck(pw);
+      bar.style.width = (pw.length < 8 ? 12 : 25 * Math.max(1, score)) + '%';
+      bar.dataset.s = String(pw.length < 8 ? 0 : score);
+      const names = ['Zayıf', 'Zayıf', 'Orta', 'İyi', 'Güçlü'];
+      if (pw.length < 8) {
+        hint.textContent = 'Eksik: şifre en az 8 karakter olmalı (şu an ' + pw.length + ').';
+        hint.dataset.k = 'bad';
+      } else {
+        hint.textContent = 'Şifre gücü: ' + names[score] + (missing.length ? ' — eksik: ' + missing.join(', ') : ' ✓');
+        hint.dataset.k = score >= 3 ? 'ok' : (score === 2 ? 'mid' : 'bad');
+      }
+    }
+    const showP2 = register && pw2.length > 0;
+    h2.classList.toggle('hidden', !showP2);
+    if (showP2) {
+      const same = pw === pw2;
+      h2.textContent = same ? 'Şifreler eşleşiyor ✓' : 'Şifreler uyuşmuyor.';
+      h2.dataset.k = same ? 'ok' : 'bad';
+    }
+  }
+
   function setMode(m) {
     mode = m;
     const isLogin = m === 'login';
@@ -449,6 +493,7 @@
     });
     $('auth-consent-wrap')?.classList.toggle('hidden', isLogin);
     syncSubmit();
+    updatePassHints();
     showMsg('');
   }
 
@@ -812,6 +857,8 @@
     $('auth-forgot')?.addEventListener('click', forgotPassword);
     $('auth-google')?.addEventListener('click', googleLogin);
     $('auth-consent')?.addEventListener('change', () => { syncSubmit(); if ($('auth-consent').checked) showMsg(''); });
+    $('auth-pass')?.addEventListener('input', updatePassHints);
+    $('auth-pass2')?.addEventListener('input', updatePassHints);
     $('auth-quick')?.addEventListener('click', enterQuick);
 
     // Enter tuşuna basıldığında formun yeniden yüklenmesini önle

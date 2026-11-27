@@ -10311,3 +10311,15 @@ body.acct-lock { overflow: hidden; }
 }
 
 .acct-item { scroll-margin-bottom: 18px; }
+
+/* Kayıt: şifre gücü ve eşleşme */
+.auth-meter { height: 6px; border-radius: 999px; background: var(--border); margin-top: .5rem; overflow: hidden; }
+.auth-meter.hidden, .auth-hint.hidden { display: none; }
+.auth-meter span { display: block; height: 100%; width: 0; border-radius: 999px; background: #ef4444; transition: width .25s ease, background .25s ease; }
+.auth-meter span[data-s="2"] { background: #f59e0b; }
+.auth-meter span[data-s="3"] { background: #84cc16; }
+.auth-meter span[data-s="4"] { background: #22c55e; }
+.auth-hint { font-size: .78rem; line-height: 1.35; margin-top: .35rem; text-align: left; color: var(--text-muted); }
+.auth-hint[data-k="bad"] { color: #ef4444; }
+.auth-hint[data-k="mid"] { color: #d97706; }
+.auth-hint[data-k="ok"] { color: #16a34a; }
