@@ -3,7 +3,7 @@
    Üst çubuktaki avatar tıklamasını belge düzeyinde yakalar, bu yüzden düğme ne zaman çizilirse çizilsin çalışır. */
 (function () {
   'use strict';
-  var PANEL_VERSION = '7.6';
+  var PANEL_VERSION = '7.7';
 
   const $ = (id) => document.getElementById(id);
   const A = () => window.PlanovaAuth || {};
