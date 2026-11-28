@@ -1,14 +1,14 @@
 /* Planova service worker — çevrimdışı açılış + bildirim tıklaması.
    Yeni sürüm yayınlarken VERSION'ı artırın (index.html'deki ?v= ile aynı tutun). */
-const VERSION = 'planova-7.5';
+const VERSION = 'planova-7.6';
 const SHELL = [
   './',
   './index.html',
-  './style.css?v=7.5',
-  './privacy.js?v=7.5',
-  './auth.js?v=7.5',
-  './account.js?v=7.5',
-  './script.js?v=7.5',
+  './style.css?v=7.6',
+  './privacy.js?v=7.6',
+  './auth.js?v=7.6',
+  './account.js?v=7.6',
+  './script.js?v=7.6',
   './firebase-config.js',
   './planova-icon.png',
   './manifest.webmanifest',
