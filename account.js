@@ -3,7 +3,7 @@
    Üst çubuktaki avatar tıklamasını belge düzeyinde yakalar, bu yüzden düğme ne zaman çizilirse çizilsin çalışır. */
 (function () {
   'use strict';
-  var PANEL_VERSION = '7.5';
+  var PANEL_VERSION = '7.6';
 
   const $ = (id) => document.getElementById(id);
   const A = () => window.PlanovaAuth || {};
@@ -89,6 +89,7 @@
                 <label class="acct-lbl" for="acct-pw-new2">Yeni şifre (tekrar)</label>
                 <div class="acct-pw"><input type="password" id="acct-pw-new2" autocomplete="new-password"><button type="button" class="acct-eye" data-eye aria-label="Göster/gizle">👁</button></div>
                 <div class="acct-actions"><button type="button" class="acct-btn primary" id="acct-pw-save">Şifreyi güncelle</button></div>
+                <button type="button" class="acct-forgot" id="acct-pw-forgot">Mevcut şifreni mi unuttun? E-postana sıfırlama bağlantısı gönder</button>
               </div>
               <div id="acct-pass-google" class="hidden">
                 <p class="acct-note">Google hesabınla giriş yaptığın için ayrı bir şifren yok. E-postayla da girebilmek istersen şifre belirleme bağlantısını e-postana gönderebilirim.</p>
@@ -156,8 +157,34 @@
       if (text && kind === 'ok') msgTimer = setTimeout(() => say(''), 4000);
     }
 
+    const CENTER = { profile: '👤 Profil & şifre', del: '🗑️ Hesabımı sil' };
+    let centerState = null;
+    function openCenter(key) {
+      closeCenter();
+      const it = q(`.acct-item[data-key="${key}"]`);
+      const inner = it && it.querySelector('.acct-sub-in');
+      if (!inner) return;
+      const body = q('#acct-center-body'), msg = q('#acct-msg');
+      centerState = { inner, home: inner.parentElement, msg, msgHome: msg.parentElement, msgNext: msg.nextSibling, key };
+      body.appendChild(inner);
+      body.appendChild(msg);
+      q('#acct-center-title').textContent = CENTER[key];
+      q('#acct-center').classList.toggle('is-danger', key === 'del');
+      q('#acct-center').classList.remove('hidden');
+      setTimeout(() => { const inp = inner.querySelector('input:not([type=hidden])'); if (inp) inp.focus(); }, 60);
+    }
+    function closeCenter() {
+      if (!centerState) return;
+      const c = centerState; centerState = null;
+      c.home.appendChild(c.inner);
+      c.msgHome.insertBefore(c.msg, c.msgNext);
+      q('#acct-center').classList.add('hidden');
+    }
+
     function openItem(key) {
       say('');
+      closeCenter();
+      if (CENTER[key]) { root.querySelectorAll('.acct-item.open').forEach((it) => it.classList.remove('open')); return openCenter(key); }
       root.querySelectorAll('.acct-item').forEach((it) => {
         const open = it.dataset.key === key && !it.classList.contains('open');
         it.classList.toggle('open', open);
@@ -187,9 +214,18 @@
       root.id = 'acct-root';
       root.className = 'acct-root hidden';
       root.innerHTML = HTML;
+      // Ortada açılan pencere (Profil & şifre, Hesabımı sil)
+      const center = document.createElement('div');
+      center.className = 'acct-center hidden';
+      center.id = 'acct-center';
+      center.innerHTML = '<div class="acct-center-card" role="dialog" aria-modal="true" aria-labelledby="acct-center-title">' +
+        '<div class="acct-center-head"><b id="acct-center-title"></b><button type="button" class="acct-center-x" data-center-close aria-label="Kapat">✕</button></div>' +
+        '<div class="acct-center-body" id="acct-center-body"></div></div>';
+      root.appendChild(center);
       document.body.appendChild(root);
 
       root.addEventListener('click', (e) => {
+        if (e.target.closest('[data-center-close]') || e.target.id === 'acct-center') { say(''); return closeCenter(); }
         if (e.target.closest('[data-acct-close]')) return close();
         if (e.target.closest('[data-acct-back]')) return openItem('');
         const eye = e.target.closest('[data-eye]');
@@ -197,7 +233,10 @@
         const row = e.target.closest('.acct-row');
         if (row && row.parentElement.querySelector('.acct-sub')) openItem(row.parentElement.dataset.key);
       });
-      document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !root.classList.contains('hidden')) close(); });
+      document.addEventListener('keydown', (e) => {
+        if (e.key !== 'Escape' || root.classList.contains('hidden')) return;
+        if (centerState) { say(''); closeCenter(); } else close();
+      });
 
       // Ad değiştir
       const saveName = () => {
@@ -244,6 +283,17 @@
             : c === 'auth/requires-recent-login' ? 'Güvenlik için çıkış yapıp yeniden giriş yap, sonra tekrar dene.'
             : (ERR[c] || (e && e.message) || 'Şifre değiştirilemedi.'), 'err');
         } finally { btn.disabled = false; btn.textContent = 'Şifreyi güncelle'; }
+      });
+
+      // Mevcut şifreyi unuttu: sıfırlama bağlantısı
+      q('#acct-pw-forgot').addEventListener('click', async () => {
+        if (!A().user || !A().user.email) return;
+        const btn = q('#acct-pw-forgot'); btn.disabled = true;
+        try {
+          await firebase.auth().sendPasswordResetEmail(A().user.email);
+          say(A().user.email + ' adresine şifre sıfırlama bağlantısı gönderildi ✓ Gelen kutunu (ve spam klasörünü) kontrol et.', 'ok');
+        } catch (e) { say(ERR[e.code] || e.message, 'err'); }
+        finally { btn.disabled = false; }
       });
 
       // Google hesabı: şifre belirleme bağlantısı
@@ -432,6 +482,7 @@
     }
     function close() {
       if (!root) return;
+      closeCenter();
       root.classList.remove('show');
       document.body.classList.remove('acct-lock');
       setTimeout(() => root.classList.add('hidden'), 220);
