@@ -10442,3 +10442,7 @@ body.acct-lock { overflow: hidden; }
 .acct-forgot:hover { text-decoration: underline; }
 .acct-forgot:disabled { opacity: .5; }
 @media (max-width: 600px) { .acct-center { align-items: flex-end; padding: 0; } .acct-center-card { width: 100%; border-radius: 20px 20px 0 0; max-height: 92dvh; } }
+/* Ortadaki pencerede odak çerçevesi kesilmesin */
+.acct-center-body .acct-sub-in { overflow: visible; }
+.acct-center-body { padding-left: 1.4rem; padding-right: 1.4rem; }
+.acct-center-body input:focus { outline-offset: 0; }
